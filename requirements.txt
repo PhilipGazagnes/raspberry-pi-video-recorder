@@ -1,0 +1,5 @@
+# Runtime dependencies
+# Add your project dependencies here
+# For example:
+# RPi.GPIO>=0.7.0  # For Raspberry Pi GPIO control
+# gpiozero>=1.6.0  # Alternative GPIO library

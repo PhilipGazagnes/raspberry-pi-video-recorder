@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "raspberry-pi-video-recorder"
+version = "0.1.0"
+description = "Raspberry Pi Video Recording Service"
+authors = [{name = "PhilipGazagnes"}]
+requires-python = ">=3.8"
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable a comprehensive set of rules
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # Pyflakes
+    "C90",   # mccabe complexity
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "S",     # bandit security
+    "B",     # flake8-bugbear
+    "A",     # flake8-builtins
+    "COM",   # flake8-commas
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "EM",    # flake8-errmsg
+    "EXE",   # flake8-executable
+    "FA",    # flake8-future-annotations
+    "ISC",   # flake8-implicit-str-concat
+    "ICN",   # flake8-import-conventions
+    "G",     # flake8-logging-format
+    "INP",   # flake8-no-pep420
+    "PIE",   # flake8-pie
+    "T20",   # flake8-print
+    "PYI",   # flake8-pyi
+    "PT",    # flake8-pytest-style
+    "Q",     # flake8-quotes
+    "RSE",   # flake8-raise
+    "RET",   # flake8-return
+    "SLF",   # flake8-self
+    "SLOT",  # flake8-slots
+    "SIM",   # flake8-simplify
+    "TID",   # flake8-tidy-imports
+    "TCH",   # flake8-type-checking
+    "INT",   # flake8-gettext
+    "ARG",   # flake8-unused-arguments
+    "PTH",   # flake8-use-pathlib
+    "ERA",   # eradicate
+    "PGH",   # pygrep-hooks
+    "PL",    # Pylint
+    "TRY",   # tryceratops
+    "FLY",   # flynt
+    "PERF",  # Perflint
+    "FURB",  # refurb
+    "LOG",   # flake8-logging
+    "RUF",   # Ruff-specific rules
+]
+
+ignore = [
+    "S101",  # Use of assert detected (common in tests)
+    "T20",   # Remove print statements (might be useful for debugging)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test_*.py" = ["S101"]  # Allow assert in test files
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
