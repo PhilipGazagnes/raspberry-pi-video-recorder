@@ -8,9 +8,9 @@
 import time
 
 from core.state_machine import StateMachine
-from hardware.audio_controller import AudioController
-from hardware.button_controller import ButtonController
-from hardware.led_controller import LEDController
+from hardware.controllers.audio_controller import AudioController
+from hardware.controllers.button_controller import ButtonController
+from hardware.controllers.led_controller import LEDController
 from recording.camera_manager import CameraManager
 from storage.storage_manager import StorageManager
 from upload.upload_manager import UploadManager
