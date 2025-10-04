@@ -1,0 +1,97 @@
+# Storage Module Configuration
+# Auto-generated default configuration
+# Modify values as needed for your deployment
+
+# ==============================================================================
+# STORAGE PATHS
+# ==============================================================================
+# Base directory for all video storage
+# IMPORTANT: Must be an absolute path
+storage_base_path: /home/pi/videos
+
+# ==============================================================================
+# STORAGE LIMITS
+# ==============================================================================
+# Maximum number of videos to keep in uploaded/ directory
+# Oldest videos beyond this limit will be cleaned up
+max_uploaded_videos: 30
+
+# How many days to keep uploaded videos as backup
+# Videos older than this will be deleted during cleanup
+uploaded_retention_days: 7
+
+# Minimum free disk space required to start recording (in bytes)
+# 5 GB = 5 * 1024 * 1024 * 1024 = 5368709120
+# Adjust based on your SD card size and recording duration
+min_free_space_bytes: 5368709120
+
+# Warning threshold for low disk space (in bytes)
+# 10 GB = 10 * 1024 * 1024 * 1024 = 10737418240
+# System will warn when free space drops below this
+low_space_warning_bytes: 10737418240
+
+# ==============================================================================
+# UPLOAD RETRY CONFIGURATION
+# ==============================================================================
+# Maximum number of retry attempts for failed uploads
+# After this many failures, video stays in failed/ directory for manual review
+max_upload_retries: 2
+
+# Delay between retry attempts (in seconds)
+# 300 seconds = 5 minutes
+# Prevents hammering the upload service with rapid retries
+retry_delay_seconds: 300
+
+# ==============================================================================
+# VIDEO VALIDATION
+# ==============================================================================
+# Minimum valid video file size (in bytes)
+# 1 MB = 1048576 bytes
+# Files smaller than this are considered corrupted
+min_video_size_bytes: 1048576
+
+# Enable advanced validation using ffmpeg probe
+# Set to false if ffmpeg is not installed or for faster processing
+# Recommended: true for production, false for testing
+enable_ffmpeg_validation: true
+
+# ==============================================================================
+# AUTOMATIC CLEANUP
+# ==============================================================================
+# Enable automatic cleanup of old videos
+# If false, cleanup must be triggered manually
+auto_cleanup_enabled: true
+
+# How often to run automatic cleanup (in seconds)
+# 3600 seconds = 1 hour
+# Cleanup runs in background based on this interval
+cleanup_interval_seconds: 3600
+
+# ==============================================================================
+# NOTES FOR CUSTOMIZATION
+# ==============================================================================
+#
+# For different SD card sizes:
+# - 32 GB card: min_free_space = 3 GB (3221225472 bytes)
+# - 64 GB card: min_free_space = 5 GB (5368709120 bytes) [default]
+# - 128 GB card: min_free_space = 10 GB (10737418240 bytes)
+#
+# For different recording durations:
+# - 10 min at 1080p ≈ 350-400 MB
+# - 15 min at 1080p ≈ 525-600 MB
+# - 20 min at 1080p ≈ 700-800 MB
+#
+# Adjust min_free_space_bytes to allow for:
+# - At least 2-3 recordings worth of space
+# - Buffer for system operations
+# - Failed upload retries
+#
+# For faster testing/development:
+# - Set uploaded_retention_days: 1
+# - Set cleanup_interval_seconds: 300 (5 minutes)
+# - Set max_uploaded_videos: 10
+#
+# For production stability:
+# - Keep uploaded_retention_days: 7 (1 week backup)
+# - Keep cleanup_interval_seconds: 3600 (hourly cleanup)
+# - Adjust max_uploaded_videos based on upload frequency
