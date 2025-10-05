@@ -30,7 +30,7 @@ class VideoCaptureInterface(ABC):
     def start_capture(
         self,
         output_file: Path,
-        duration: Optional[float] = None
+        duration: Optional[float] = None,
     ) -> bool:
         """
         Start capturing video to file.
@@ -51,7 +51,6 @@ class VideoCaptureInterface(ABC):
         Example:
             capture.start_capture(Path("video.mp4"), duration=600)
         """
-        pass
 
     @abstractmethod
     def stop_capture(self) -> bool:
@@ -67,7 +66,6 @@ class VideoCaptureInterface(ABC):
         Example:
             capture.stop_capture()  # Waits for file to be finalized
         """
-        pass
 
     @abstractmethod
     def is_capturing(self) -> bool:
@@ -81,7 +79,6 @@ class VideoCaptureInterface(ABC):
             if capture.is_capturing():
                 print("Recording in progress")
         """
-        pass
 
     @abstractmethod
     def get_capture_duration(self) -> float:
@@ -95,7 +92,6 @@ class VideoCaptureInterface(ABC):
             duration = capture.get_capture_duration()
             print(f"Recorded {duration:.1f} seconds")
         """
-        pass
 
     @abstractmethod
     def get_output_file(self) -> Optional[Path]:
@@ -109,7 +105,6 @@ class VideoCaptureInterface(ABC):
             if capture.is_capturing():
                 print(f"Recording to: {capture.get_output_file()}")
         """
-        pass
 
     @abstractmethod
     def check_health(self) -> dict:
@@ -134,7 +129,6 @@ class VideoCaptureInterface(ABC):
             if not health['is_healthy']:
                 print(f"Capture error: {health['error_message']}")
         """
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
@@ -153,7 +147,6 @@ class VideoCaptureInterface(ABC):
             if not capture.is_available():
                 print("ERROR: FFmpeg not installed")
         """
-        pass
 
     @abstractmethod
     def cleanup(self) -> None:
@@ -173,7 +166,6 @@ class VideoCaptureInterface(ABC):
             finally:
                 capture.cleanup()  # Always cleanup
         """
-        pass
 
 
 class CaptureError(Exception):
@@ -186,24 +178,19 @@ class CaptureError(Exception):
     - Disk full
     - Camera already in use
     """
-    pass
 
 
 class CameraNotFoundError(CaptureError):
     """Camera device not found or not accessible"""
-    pass
 
 
 class CameraBusyError(CaptureError):
     """Camera is already in use by another process"""
-    pass
 
 
 class StorageFullError(CaptureError):
     """Not enough disk space for recording"""
-    pass
 
 
 class CaptureProcessError(CaptureError):
     """Error in capture process (FFmpeg crashed, etc.)"""
-    pass

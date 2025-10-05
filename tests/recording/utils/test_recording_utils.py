@@ -12,27 +12,28 @@ To run:
     pytest tests/recording/utils/test_recording_utils.py -v
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from recording.utils.recording_utils import (
-    generate_filename,
     check_disk_space,
-    get_disk_space_info,
-    validate_output_path,
-    format_file_size,
     cleanup_old_recordings,
+    estimate_recording_size,
+    format_file_size,
+    generate_filename,
+    get_disk_space_info,
     get_recording_files,
     safe_filename,
-    estimate_recording_size,
+    validate_output_path,
 )
-
 
 # =============================================================================
 # FILENAME GENERATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_generate_filename(temp_recording_dir):
@@ -79,6 +80,7 @@ def test_generate_filename_unique():
 # DISK SPACE TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_check_disk_space(temp_recording_dir):
     """Test checking disk space."""
@@ -107,20 +109,21 @@ def test_get_disk_space_info(temp_recording_dir):
     info = get_disk_space_info(temp_recording_dir)
 
     # Should have all required fields
-    assert 'total_gb' in info
-    assert 'used_gb' in info
-    assert 'free_gb' in info
-    assert 'percent_used' in info
+    assert "total_gb" in info
+    assert "used_gb" in info
+    assert "free_gb" in info
+    assert "percent_used" in info
 
     # Values should be reasonable
-    assert info['total_gb'] > 0
-    assert info['free_gb'] >= 0
-    assert 0 <= info['percent_used'] <= 100
+    assert info["total_gb"] > 0
+    assert info["free_gb"] >= 0
+    assert 0 <= info["percent_used"] <= 100
 
 
 # =============================================================================
 # PATH VALIDATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_validate_output_path_valid(temp_recording_dir):
@@ -172,6 +175,7 @@ def test_validate_output_path_parent_is_file():
 # FILE SIZE FORMATTING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_format_file_size_bytes():
     """Test formatting bytes."""
@@ -213,6 +217,7 @@ def test_format_file_size_gigabytes():
 # =============================================================================
 # CLEANUP TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_cleanup_old_recordings_by_count(temp_recording_dir):
@@ -261,6 +266,7 @@ def test_cleanup_old_recordings_keep_all(temp_recording_dir):
 # =============================================================================
 # GET RECORDING FILES TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_get_recording_files(temp_recording_dir):
@@ -334,6 +340,7 @@ def test_get_recording_files_custom_pattern(temp_recording_dir):
 # SAFE FILENAME TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_safe_filename_removes_invalid_chars():
     """Test that invalid characters are removed."""
@@ -377,6 +384,7 @@ def test_safe_filename_strips_leading_trailing():
 # =============================================================================
 # ESTIMATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_estimate_recording_size():

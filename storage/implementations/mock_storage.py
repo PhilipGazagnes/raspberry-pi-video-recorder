@@ -25,8 +25,8 @@ class MockStorage(StorageInterface):
 
     def __init__(
         self,
-        simulated_space_bytes: int = 100 * 1024 ** 3,  # 100 GB default
-        min_space_bytes: int = 5 * 1024 ** 3  # 5 GB default
+        simulated_space_bytes: int = 100 * 1024**3,  # 100 GB default
+        min_space_bytes: int = 5 * 1024**3,  # 5 GB default
     ):
         """
         Initialize mock storage.
@@ -63,7 +63,7 @@ class MockStorage(StorageInterface):
     def save_video(
         self,
         source_path: Path,
-        duration_seconds: Optional[int] = None
+        duration_seconds: Optional[int] = None,
     ) -> VideoFile:
         """
         Save video (simulated - doesn't actually copy file).
@@ -120,7 +120,7 @@ class MockStorage(StorageInterface):
     def list_videos(
         self,
         status: Optional[UploadStatus] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[VideoFile]:
         """List videos with optional filtering"""
         videos = list(self._videos.values())
@@ -221,10 +221,7 @@ class MockStorage(StorageInterface):
 
     def get_retry_queue(self) -> List[VideoFile]:
         """Get failed videos that can be retried"""
-        return [
-            v for v in self._videos.values()
-            if v.is_failed and v.can_retry
-        ]
+        return [v for v in self._videos.values() if v.is_failed and v.can_retry]
 
     def is_available(self) -> bool:
         """Mock storage is always available"""
@@ -246,13 +243,13 @@ class MockStorage(StorageInterface):
     def simulate_low_space(self) -> None:
         """Simulate low space warning for testing"""
         # Set space just above minimum
-        self._used_space = self._total_space - (self._min_space + 1024 ** 3)
+        self._used_space = self._total_space - (self._min_space + 1024**3)
         self._log_operation("simulate_low_space")
 
     def add_fake_video(
         self,
         filename: str,
-        status: UploadStatus = UploadStatus.PENDING
+        status: UploadStatus = UploadStatus.PENDING,
     ) -> VideoFile:
         """Add a fake video for testing"""
         video = VideoFile(

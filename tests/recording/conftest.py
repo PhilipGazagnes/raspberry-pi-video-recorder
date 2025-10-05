@@ -4,19 +4,20 @@ Recording Test Configuration and Fixtures
 Shared fixtures for recording module tests.
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
 
-from recording.implementations.mock_capture import MockCapture
+import pytest
+
 from recording.controllers.camera_manager import CameraManager
 from recording.controllers.recording_session import RecordingSession
-
+from recording.implementations.mock_capture import MockCapture
 
 # =============================================================================
 # CAPTURE FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def mock_capture_fast():
@@ -50,6 +51,7 @@ def mock_capture_realistic():
 # CAMERA MANAGER FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def camera_manager(mock_capture_fast):
     """
@@ -80,6 +82,7 @@ def camera_manager_realistic(mock_capture_realistic):
 # RECORDING SESSION FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def recording_session(camera_manager):
     """
@@ -97,6 +100,7 @@ def recording_session(camera_manager):
 # =============================================================================
 # TEMPORARY FILE/DIRECTORY FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def temp_video_file():
@@ -146,6 +150,7 @@ def temp_recording_dir():
 # CALLBACK TRACKING FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def callback_tracker():
     """
@@ -157,13 +162,14 @@ def callback_tracker():
             # ... trigger warning ...
             assert callback_tracker.was_called()
     """
+
     class CallbackTracker:
         def __init__(self):
             self.calls = []
 
         def track(self, *args, **kwargs):
             """Record a callback invocation"""
-            self.calls.append({'args': args, 'kwargs': kwargs})
+            self.calls.append({"args": args, "kwargs": kwargs})
 
         def was_called(self) -> bool:
             """Check if callback was called"""
@@ -191,6 +197,7 @@ def callback_tracker():
 # =============================================================================
 # PYTEST CONFIGURATION
 # =============================================================================
+
 
 def pytest_configure(config):
     """

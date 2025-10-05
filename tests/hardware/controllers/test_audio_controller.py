@@ -18,10 +18,10 @@ import pytest
 from hardware.constants import AudioMessage
 from hardware.controllers.audio_controller import AudioController
 
-
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_controller_initialization(mock_tts_fast):
@@ -37,9 +37,9 @@ def test_audio_controller_initialization(mock_tts_fast):
 
     # Check status
     status = audio.get_status()
-    assert status['tts_available'] is True
-    assert status['message_library']['total'] > 0
-    assert status['queue']['worker_running'] is True
+    assert status["tts_available"] is True
+    assert status["message_library"]["total"] > 0
+    assert status["queue"]["worker_running"] is True
 
     audio.cleanup()
 
@@ -47,6 +47,7 @@ def test_audio_controller_initialization(mock_tts_fast):
 # =============================================================================
 # MESSAGE PLAYBACK TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_play_message(audio_controller, mock_tts_fast):
@@ -123,6 +124,7 @@ def test_audio_play_text_empty_ignored(audio_controller, mock_tts_fast):
 # =============================================================================
 # QUEUE CONTROL TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_stop_playback(mock_tts_fast):
@@ -214,6 +216,7 @@ def test_audio_is_busy(audio_controller, mock_tts_fast):
 # TTS CONFIGURATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_set_volume(audio_controller, mock_tts_fast):
     """
@@ -226,7 +229,7 @@ def test_audio_set_volume(audio_controller, mock_tts_fast):
 
     # Check TTS configuration
     config = mock_tts_fast.get_config()
-    assert config['volume'] == 0.5
+    assert config["volume"] == 0.5
 
 
 @pytest.mark.unit
@@ -239,12 +242,13 @@ def test_audio_set_speech_rate(audio_controller, mock_tts_fast):
 
     # Check TTS configuration
     config = mock_tts_fast.get_config()
-    assert config['rate'] == 200
+    assert config["rate"] == 200
 
 
 # =============================================================================
 # MESSAGE LIBRARY INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_add_custom_message(audio_controller, mock_tts_fast):
@@ -256,7 +260,7 @@ def test_audio_add_custom_message(audio_controller, mock_tts_fast):
     # Add custom message
     audio_controller.add_custom_message(
         AudioMessage.SYSTEM_READY,
-        "Custom ready message"
+        "Custom ready message",
     )
 
     # Play it
@@ -286,6 +290,7 @@ def test_audio_get_available_messages(audio_controller):
 # STATUS AND DIAGNOSTICS TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_get_status(audio_controller):
     """
@@ -294,14 +299,14 @@ def test_audio_get_status(audio_controller):
     status = audio_controller.get_status()
 
     # Should have all sections
-    assert 'tts_available' in status
-    assert 'message_library' in status
-    assert 'queue' in status
+    assert "tts_available" in status
+    assert "message_library" in status
+    assert "queue" in status
 
     # Message library should have counts
-    assert 'default' in status['message_library']
-    assert 'custom' in status['message_library']
-    assert 'total' in status['message_library']
+    assert "default" in status["message_library"]
+    assert "custom" in status["message_library"]
+    assert "total" in status["message_library"]
 
 
 @pytest.mark.unit
@@ -312,15 +317,16 @@ def test_audio_check_audio_system(audio_controller):
     info = audio_controller.check_audio_system()
 
     # Should have system info
-    assert 'tts_available' in info
-    assert 'message_count' in info
-    assert 'queue_size' in info
-    assert 'is_playing' in info
+    assert "tts_available" in info
+    assert "message_count" in info
+    assert "queue_size" in info
+    assert "is_playing" in info
 
 
 # =============================================================================
 # TESTING METHODS TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_test_audio(mock_tts_fast):
@@ -366,6 +372,7 @@ def test_audio_test_all_messages(mock_tts_fast):
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_cleanup(mock_tts_fast):
     """
@@ -385,12 +392,13 @@ def test_audio_cleanup(mock_tts_fast):
 
     # Queue should be stopped
     status = audio.get_status()
-    assert status['queue']['worker_running'] is False
+    assert status["queue"]["worker_running"] is False
 
 
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit_integration
 def test_audio_complete_workflow(mock_tts_fast):
@@ -513,8 +521,8 @@ def test_audio_configuration_persistence(mock_tts_fast):
 
     # Check config still applied
     config = mock_tts_fast.get_config()
-    assert config['volume'] == 0.7
-    assert config['rate'] == 180
+    assert config["volume"] == 0.7
+    assert config["rate"] == 180
 
     # Play more
     audio.play_text("Second message")
@@ -522,7 +530,7 @@ def test_audio_configuration_persistence(mock_tts_fast):
 
     # Still configured
     config2 = mock_tts_fast.get_config()
-    assert config2['volume'] == 0.7
-    assert config2['rate'] == 180
+    assert config2["volume"] == 0.7
+    assert config2["rate"] == 180
 
     audio.cleanup()

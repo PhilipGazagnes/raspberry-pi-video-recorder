@@ -15,7 +15,8 @@ import logging
 from typing import Callable, Optional
 
 try:
-    import RPi.GPIO as GPIO
+    from RPi import GPIO
+
     GPIO_AVAILABLE = True
 except ImportError:
     GPIO_AVAILABLE = False
@@ -24,7 +25,6 @@ from hardware.interfaces.gpio_interface import (
     EdgeDetection,
     GPIOError,
     GPIOInterface,
-    PinMode,
     PinState,
     PullMode,
 )
@@ -45,8 +45,7 @@ class RaspberryPiGPIO(GPIOInterface):
 
         if not GPIO_AVAILABLE:
             raise GPIOError(
-                "RPi.GPIO library not available. "
-                "Install with: pip install RPi.GPIO"
+                "RPi.GPIO library not available. Install with: pip install RPi.GPIO",
             )
 
         # Set GPIO mode to BCM (Broadcom chip numbering)
@@ -71,7 +70,7 @@ class RaspberryPiGPIO(GPIOInterface):
     def setup_input(
         self,
         pin: int,
-        pull_mode: PullMode = PullMode.UP
+        pull_mode: PullMode = PullMode.UP,
     ) -> None:
         """Configure pin as input (for button)"""
         try:
@@ -85,7 +84,9 @@ class RaspberryPiGPIO(GPIOInterface):
             gpio_pull = pull_mapping[pull_mode]
             GPIO.setup(pin, GPIO.IN, pull_up_down=gpio_pull)
             self._configured_pins.add(pin)
-            self.logger.debug(f"Pin {pin} configured as INPUT (pull: {pull_mode.value})")
+            self.logger.debug(
+                f"Pin {pin} configured as INPUT (pull: {pull_mode.value})",
+            )
         except Exception as e:
             raise GPIOError(f"Failed to setup pin {pin} as input: {e}") from e
 
@@ -112,7 +113,7 @@ class RaspberryPiGPIO(GPIOInterface):
         pin: int,
         edge: EdgeDetection,
         callback: Callable[[int], None],
-        debounce_ms: int = 0
+        debounce_ms: int = 0,
     ) -> None:
         """
         Register interrupt callback for pin state changes.
@@ -135,12 +136,12 @@ class RaspberryPiGPIO(GPIOInterface):
                 pin,
                 gpio_edge,
                 callback=callback,
-                bouncetime=debounce_ms
+                bouncetime=debounce_ms,
             )
 
             self.logger.debug(
                 f"Event callback added to pin {pin} "
-                f"(edge: {edge.value}, debounce: {debounce_ms}ms)"
+                f"(edge: {edge.value}, debounce: {debounce_ms}ms)",
             )
         except Exception as e:
             raise GPIOError(f"Failed to add event callback to pin {pin}: {e}") from e
@@ -165,7 +166,9 @@ class RaspberryPiGPIO(GPIOInterface):
                 # Clean up all pins we configured
                 if self._configured_pins:
                     GPIO.cleanup(list(self._configured_pins))
-                    self.logger.info(f"Cleaned up {len(self._configured_pins)} GPIO pins")
+                    self.logger.info(
+                        f"Cleaned up {len(self._configured_pins)} GPIO pins",
+                    )
                     self._configured_pins.clear()
             else:
                 # Clean up specific pins

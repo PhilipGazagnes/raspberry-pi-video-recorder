@@ -17,7 +17,7 @@ from recording.constants import FILENAME_FORMAT, MIN_FREE_SPACE_GB
 def generate_filename(
     base_path: Path,
     format_string: str = FILENAME_FORMAT,
-    extension: str = "mp4"
+    extension: str = "mp4",
 ) -> Path:
     """
     Generate timestamped filename for recording.
@@ -61,12 +61,12 @@ def check_disk_space(path: Path, required_gb: float = MIN_FREE_SPACE_GB) -> bool
         stat = shutil.disk_usage(path)
 
         # Convert bytes to GB
-        free_gb = stat.free / (1024 ** 3)
+        free_gb = stat.free / (1024**3)
 
         return free_gb >= required_gb
 
     except Exception as e:
-        logging.error(f"Error checking disk space: {e}")
+        logging.exception(f"Error checking disk space: {e}")
         return False
 
 
@@ -93,25 +93,25 @@ def get_disk_space_info(path: Path) -> dict:
     try:
         stat = shutil.disk_usage(path)
 
-        total_gb = stat.total / (1024 ** 3)
-        used_gb = stat.used / (1024 ** 3)
-        free_gb = stat.free / (1024 ** 3)
+        total_gb = stat.total / (1024**3)
+        used_gb = stat.used / (1024**3)
+        free_gb = stat.free / (1024**3)
         percent_used = (stat.used / stat.total) * 100
 
         return {
-            'total_gb': total_gb,
-            'used_gb': used_gb,
-            'free_gb': free_gb,
-            'percent_used': percent_used
+            "total_gb": total_gb,
+            "used_gb": used_gb,
+            "free_gb": free_gb,
+            "percent_used": percent_used,
         }
 
     except Exception as e:
-        logging.error(f"Error getting disk space info: {e}")
+        logging.exception(f"Error getting disk space info: {e}")
         return {
-            'total_gb': 0.0,
-            'used_gb': 0.0,
-            'free_gb': 0.0,
-            'percent_used': 0.0
+            "total_gb": 0.0,
+            "used_gb": 0.0,
+            "free_gb": 0.0,
+            "percent_used": 0.0,
         }
 
 
@@ -182,7 +182,7 @@ def format_file_size(size_bytes: int) -> str:
         return "0 B"
 
     # Units
-    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    units = ["B", "KB", "MB", "GB", "TB"]
     unit_index = 0
     size = float(size_bytes)
 
@@ -194,14 +194,13 @@ def format_file_size(size_bytes: int) -> str:
     # Format with appropriate precision
     if unit_index == 0:
         return f"{int(size)} {units[unit_index]}"
-    else:
-        return f"{size:.1f} {units[unit_index]}"
+    return f"{size:.1f} {units[unit_index]}"
 
 
 def cleanup_old_recordings(
     directory: Path,
     keep_count: int = 10,
-    max_age_days: Optional[int] = None
+    max_age_days: Optional[int] = None,
 ) -> int:
     """
     Clean up old recording files.
@@ -226,7 +225,7 @@ def cleanup_old_recordings(
 
     # Get all video files
     video_files = []
-    for ext in ['.mp4', '.avi', '.mkv']:
+    for ext in [".mp4", ".avi", ".mkv"]:
         video_files.extend(directory.glob(f"*{ext}"))
 
     # Sort by modification time (oldest first)
@@ -237,6 +236,7 @@ def cleanup_old_recordings(
     # Delete by age if specified
     if max_age_days:
         import time
+
         max_age_seconds = max_age_days * 24 * 60 * 60
         current_time = time.time()
 
@@ -249,7 +249,7 @@ def cleanup_old_recordings(
                     video_files.remove(file_path)
                     logging.info(f"Deleted old recording: {file_path.name}")
                 except Exception as e:
-                    logging.error(f"Failed to delete {file_path}: {e}")
+                    logging.exception(f"Failed to delete {file_path}: {e}")
 
     # Delete oldest files if too many
     if len(video_files) > keep_count:
@@ -261,7 +261,7 @@ def cleanup_old_recordings(
                 deleted_count += 1
                 logging.info(f"Deleted old recording: {file_path.name}")
             except Exception as e:
-                logging.error(f"Failed to delete {file_path}: {e}")
+                logging.exception(f"Failed to delete {file_path}: {e}")
 
     return deleted_count
 
@@ -314,15 +314,15 @@ def safe_filename(name: str, max_length: int = 255) -> str:
     # Replace invalid characters with underscore
     invalid_chars = '<>:"/\\|?*'
     for char in invalid_chars:
-        name = name.replace(char, '_')
+        name = name.replace(char, "_")
 
     # Remove leading/trailing dots and spaces
-    name = name.strip('. ')
+    name = name.strip(". ")
 
     # Truncate if too long
     if len(name) > max_length:
         # Try to preserve extension
-        parts = name.rsplit('.', 1)
+        parts = name.rsplit(".", 1)
         if len(parts) == 2:
             base, ext = parts
             max_base_len = max_length - len(ext) - 1

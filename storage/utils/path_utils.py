@@ -8,7 +8,6 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -91,11 +90,11 @@ def safe_filename(filename: str) -> str:
         # Returns: "video_with_bad_chars.mp4"
     """
     # Replace invalid characters with underscore
-    invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+    invalid_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*"]
     safe = filename
 
     for char in invalid_chars:
-        safe = safe.replace(char, '_')
+        safe = safe.replace(char, "_")
 
     return safe
 
@@ -114,7 +113,7 @@ def get_file_extension(path: Path) -> str:
         ext = get_file_extension(Path("video.MP4"))
         # Returns: "mp4"
     """
-    return path.suffix.lower().lstrip('.')
+    return path.suffix.lower().lstrip(".")
 
 
 def is_video_file(path: Path) -> bool:
@@ -127,7 +126,7 @@ def is_video_file(path: Path) -> bool:
     Returns:
         True if video file
     """
-    video_extensions = ['mp4', 'avi', 'mkv', 'mov', 'flv', 'wmv', 'webm']
+    video_extensions = ["mp4", "avi", "mkv", "mov", "flv", "wmv", "webm"]
     ext = get_file_extension(path)
     return ext in video_extensions
 
@@ -169,7 +168,7 @@ def format_size(bytes: int) -> str:
     Example:
         print(format_size(1_500_000_000))  # "1.40 GB"
     """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes < 1024.0:
             return f"{bytes:.2f} {unit}"
         bytes /= 1024.0
@@ -195,8 +194,7 @@ def format_duration(seconds: int) -> str:
 
     if hours > 0:
         return f"{hours}:{minutes:02d}:{secs:02d}"
-    else:
-        return f"{minutes}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
 
 
 def calculate_directory_size(directory: Path) -> int:

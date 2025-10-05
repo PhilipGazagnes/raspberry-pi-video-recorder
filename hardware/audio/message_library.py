@@ -10,7 +10,6 @@ SOLID Principles:
 """
 
 import logging
-from typing import Optional
 
 from hardware.constants import AUDIO_MESSAGE_TEXTS, AudioMessage
 
@@ -44,7 +43,7 @@ class MessageLibrary:
         self._messages = AUDIO_MESSAGE_TEXTS.copy()
 
         self.logger.info(
-            f"Message Library initialized with {len(self._messages)} messages"
+            f"Message Library initialized with {len(self._messages)} messages",
         )
 
     def get_message(self, message_key: AudioMessage) -> str:
@@ -67,7 +66,7 @@ class MessageLibrary:
         if message_key not in self._messages:
             raise KeyError(
                 f"Unknown message key: {message_key}. "
-                f"Available keys: {self.get_available_messages()}"
+                f"Available keys: {self.get_available_messages()}",
             )
 
         return self._messages[message_key]
@@ -75,7 +74,7 @@ class MessageLibrary:
     def get_message_safe(
         self,
         message_key: AudioMessage,
-        default: str = ""
+        default: str = "",
     ) -> str:
         """
         Get message text, returning default if key doesn't exist.
@@ -141,7 +140,7 @@ class MessageLibrary:
         if key in AUDIO_MESSAGE_TEXTS:
             raise ValueError(
                 f"Cannot remove default message '{key.value}'. "
-                f"Use add_custom_message() to override it instead."
+                f"Use add_custom_message() to override it instead.",
             )
 
         del self._messages[key]
@@ -172,16 +171,13 @@ class MessageLibrary:
             counts = lib.get_message_count()
             print(f"Default: {counts['default']}, Custom: {counts['custom']}")
         """
-        default_count = sum(
-            1 for key in self._messages
-            if key in AUDIO_MESSAGE_TEXTS
-        )
+        default_count = sum(1 for key in self._messages if key in AUDIO_MESSAGE_TEXTS)
         custom_count = len(self._messages) - default_count
 
         return {
-            'default': default_count,
-            'custom': custom_count,
-            'total': len(self._messages)
+            "default": default_count,
+            "custom": custom_count,
+            "total": len(self._messages),
         }
 
     def reset_to_defaults(self) -> None:

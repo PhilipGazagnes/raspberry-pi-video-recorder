@@ -13,16 +13,17 @@ To run:
 """
 
 import time
-import pytest
 from pathlib import Path
+
+import pytest
 
 from recording.implementations.mock_capture import MockCapture
 from recording.interfaces.video_capture_interface import CaptureError
 
-
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_mock_capture_initialization():
@@ -49,6 +50,7 @@ def test_mock_capture_initialization_with_timing():
 # =============================================================================
 # BASIC CAPTURE TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_mock_capture_start_stop(mock_capture_fast, temp_video_file):
@@ -105,6 +107,7 @@ def test_mock_capture_stop_when_not_capturing(mock_capture_fast):
 # DURATION TRACKING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_mock_capture_duration_tracking_fast(mock_capture_fast, temp_video_file):
     """Test duration with fast mode (no simulation)."""
@@ -118,7 +121,10 @@ def test_mock_capture_duration_tracking_fast(mock_capture_fast, temp_video_file)
 
 
 @pytest.mark.unit
-def test_mock_capture_duration_tracking_realistic(mock_capture_realistic, temp_video_file):
+def test_mock_capture_duration_tracking_realistic(
+    mock_capture_realistic,
+    temp_video_file,
+):
     """Test duration with realistic timing."""
     mock_capture_realistic.start_capture(temp_video_file, duration=10)
 
@@ -151,13 +157,14 @@ def test_mock_capture_auto_stop_after_duration(mock_capture_realistic, temp_vide
 # HEALTH CHECK TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_mock_capture_health_check_idle(mock_capture_fast):
     """Test health check when not capturing."""
     health = mock_capture_fast.check_health()
 
-    assert health['is_healthy'] is False  # Should be False when not capturing
-    assert "not running" in health['error_message'].lower()
+    assert health["is_healthy"] is False  # Should be False when not capturing
+    assert "not running" in health["error_message"].lower()
 
 
 @pytest.mark.unit
@@ -167,9 +174,9 @@ def test_mock_capture_health_check_running(mock_capture_fast, temp_video_file):
 
     health = mock_capture_fast.check_health()
 
-    assert health['is_healthy'] is True
-    assert health['error_message'] is None
-    assert health['fps'] == 30.0
+    assert health["is_healthy"] is True
+    assert health["error_message"] is None
+    assert health["fps"] == 30.0
 
     mock_capture_fast.stop_capture()
 
@@ -184,7 +191,7 @@ def test_mock_capture_health_simulated_frames(mock_capture_realistic, temp_video
     health = mock_capture_realistic.check_health()
 
     # Should have captured some frames
-    assert health['frames_captured'] > 0
+    assert health["frames_captured"] > 0
 
     mock_capture_realistic.stop_capture()
 
@@ -192,6 +199,7 @@ def test_mock_capture_health_simulated_frames(mock_capture_realistic, temp_video
 # =============================================================================
 # ERROR SIMULATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_mock_capture_simulate_start_failure(temp_video_file):
@@ -221,8 +229,8 @@ def test_mock_capture_simulate_crash_during(mock_capture_realistic, temp_video_f
 
     # Health should show error
     health = mock_capture_realistic.check_health()
-    assert health['is_healthy'] is False
-    assert "crash" in health['error_message'].lower()
+    assert health["is_healthy"] is False
+    assert "crash" in health["error_message"].lower()
 
 
 @pytest.mark.unit
@@ -250,6 +258,7 @@ def test_mock_capture_reset_test_config():
 # HELPER METHOD TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_mock_capture_get_simulated_frames(mock_capture_realistic, temp_video_file):
     """Test getting simulated frame count."""
@@ -269,6 +278,7 @@ def test_mock_capture_get_simulated_frames(mock_capture_realistic, temp_video_fi
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_mock_capture_cleanup_stops_capture(mock_capture_fast, temp_video_file):
     """Test that cleanup stops active capture."""
@@ -285,6 +295,7 @@ def test_mock_capture_cleanup_stops_capture(mock_capture_fast, temp_video_file):
 # INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit_integration
 def test_mock_capture_complete_workflow(mock_capture_realistic, temp_video_file):
     """Integration test: Complete capture workflow."""
@@ -296,8 +307,8 @@ def test_mock_capture_complete_workflow(mock_capture_realistic, temp_video_file)
     # Check health during
     time.sleep(0.3)
     health = mock_capture_realistic.check_health()
-    assert health['is_healthy'] is True
-    assert health['frames_captured'] > 0
+    assert health["is_healthy"] is True
+    assert health["frames_captured"] > 0
 
     # Stop
     mock_capture_realistic.stop_capture()

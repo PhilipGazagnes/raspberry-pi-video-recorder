@@ -17,9 +17,9 @@ from pathlib import Path
 DEFAULT_STORAGE_BASE = Path("/home/pi/videos")
 
 # Subdirectory names
-DIR_PENDING = "pending"      # New recordings awaiting upload
-DIR_UPLOADED = "uploaded"    # Successfully uploaded videos (kept for backup)
-DIR_FAILED = "failed"        # Failed uploads (retry queue)
+DIR_PENDING = "pending"  # New recordings awaiting upload
+DIR_UPLOADED = "uploaded"  # Successfully uploaded videos (kept for backup)
+DIR_FAILED = "failed"  # Failed uploads (retry queue)
 DIR_CORRUPTED = "corrupted"  # Videos that failed validation
 
 # =============================================================================
@@ -28,7 +28,9 @@ DIR_CORRUPTED = "corrupted"  # Videos that failed validation
 # Video filename pattern: recording_YYYY-MM-DD_HHMMSS.mp4
 VIDEO_FILENAME_PREFIX = "recording"
 VIDEO_FILENAME_EXTENSION = ".mp4"
-VIDEO_FILENAME_PATTERN = f"{VIDEO_FILENAME_PREFIX}_%Y-%m-%d_%H%M%S{VIDEO_FILENAME_EXTENSION}"
+VIDEO_FILENAME_PATTERN = (
+    f"{VIDEO_FILENAME_PREFIX}_%Y-%m-%d_%H%M%S{VIDEO_FILENAME_EXTENSION}"
+)
 
 # Metadata database filename
 METADATA_DB_NAME = "video_metadata.db"
@@ -84,28 +86,32 @@ CLEANUP_BATCH_SIZE = 10
 # ENUMS
 # =============================================================================
 
+
 class UploadStatus(Enum):
     """Video upload status states"""
-    PENDING = "pending"          # Waiting for upload
+
+    PENDING = "pending"  # Waiting for upload
     IN_PROGRESS = "in_progress"  # Currently uploading
-    COMPLETED = "completed"      # Successfully uploaded
-    FAILED = "failed"           # Upload failed (in retry queue)
-    CORRUPTED = "corrupted"     # File validation failed
+    COMPLETED = "completed"  # Successfully uploaded
+    FAILED = "failed"  # Upload failed (in retry queue)
+    CORRUPTED = "corrupted"  # File validation failed
 
 
 class StorageState(Enum):
     """Overall storage system states"""
-    READY = "ready"              # Normal operation
-    LOW_SPACE = "low_space"      # Space below warning threshold
-    DISK_FULL = "disk_full"      # Space below minimum threshold
-    ERROR = "error"              # Storage system error
+
+    READY = "ready"  # Normal operation
+    LOW_SPACE = "low_space"  # Space below warning threshold
+    DISK_FULL = "disk_full"  # Space below minimum threshold
+    ERROR = "error"  # Storage system error
 
 
 class VideoQuality(Enum):
     """Video quality validation results"""
-    VALID = "valid"              # File is good
-    CORRUPTED = "corrupted"      # File is corrupted/unreadable
-    TOO_SMALL = "too_small"      # File size too small
+
+    VALID = "valid"  # File is good
+    CORRUPTED = "corrupted"  # File is corrupted/unreadable
+    TOO_SMALL = "too_small"  # File size too small
     INVALID_FORMAT = "invalid_format"  # Not a valid video format
 
 

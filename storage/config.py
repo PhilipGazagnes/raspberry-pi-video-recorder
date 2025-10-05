@@ -59,25 +59,21 @@ class StorageConfig:
         """Get default configuration values from constants"""
         return {
             # Paths
-            'storage_base_path': str(DEFAULT_STORAGE_BASE),
-
+            "storage_base_path": str(DEFAULT_STORAGE_BASE),
             # Storage limits
-            'max_uploaded_videos': MAX_UPLOADED_VIDEOS,
-            'uploaded_retention_days': UPLOADED_RETENTION_DAYS,
-            'min_free_space_bytes': MIN_FREE_SPACE_BYTES,
-            'low_space_warning_bytes': LOW_SPACE_WARNING_BYTES,
-
+            "max_uploaded_videos": MAX_UPLOADED_VIDEOS,
+            "uploaded_retention_days": UPLOADED_RETENTION_DAYS,
+            "min_free_space_bytes": MIN_FREE_SPACE_BYTES,
+            "low_space_warning_bytes": LOW_SPACE_WARNING_BYTES,
             # Upload retry
-            'max_upload_retries': MAX_UPLOAD_RETRIES,
-            'retry_delay_seconds': RETRY_DELAY_SECONDS,
-
+            "max_upload_retries": MAX_UPLOAD_RETRIES,
+            "retry_delay_seconds": RETRY_DELAY_SECONDS,
             # Validation
-            'min_video_size_bytes': MIN_VIDEO_SIZE_BYTES,
-            'enable_ffmpeg_validation': True,
-
+            "min_video_size_bytes": MIN_VIDEO_SIZE_BYTES,
+            "enable_ffmpeg_validation": True,
             # Cleanup
-            'cleanup_interval_seconds': CLEANUP_INTERVAL_SECONDS,
-            'auto_cleanup_enabled': True,
+            "cleanup_interval_seconds": CLEANUP_INTERVAL_SECONDS,
+            "auto_cleanup_enabled": True,
         }
 
     def _load_config(self) -> Dict[str, Any]:
@@ -88,7 +84,7 @@ class StorageConfig:
         # Try to load from file
         if self.config_path.exists():
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path) as f:
                     file_config = yaml.safe_load(f) or {}
 
                 # Merge file config with defaults (file overrides defaults)
@@ -99,12 +95,12 @@ class StorageConfig:
             except Exception as e:
                 self.logger.warning(
                     f"Failed to load config from {self.config_path}: {e}. "
-                    f"Using defaults."
+                    f"Using defaults.",
                 )
         else:
             self.logger.info(
                 f"Config file not found at {self.config_path}. "
-                f"Using defaults. Creating default config file..."
+                f"Using defaults. Creating default config file...",
             )
             # Create default config file
             self._save_config(config)
@@ -117,27 +113,27 @@ class StorageConfig:
     def _validate_config(self, config: Dict[str, Any]) -> None:
         """Validate configuration values"""
         # Validate paths
-        storage_path = Path(config['storage_base_path'])
+        storage_path = Path(config["storage_base_path"])
         if not storage_path.is_absolute():
             raise ValueError(
-                f"storage_base_path must be absolute path: {storage_path}"
+                f"storage_base_path must be absolute path: {storage_path}",
             )
 
         # Validate numeric values
-        if config['min_free_space_bytes'] < 0:
+        if config["min_free_space_bytes"] < 0:
             raise ValueError("min_free_space_bytes cannot be negative")
 
-        if config['max_upload_retries'] < 0:
+        if config["max_upload_retries"] < 0:
             raise ValueError("max_upload_retries cannot be negative")
 
-        if config['uploaded_retention_days'] < 0:
+        if config["uploaded_retention_days"] < 0:
             raise ValueError("uploaded_retention_days cannot be negative")
 
         # Warning thresholds should be higher than minimums
-        if config['low_space_warning_bytes'] < config['min_free_space_bytes']:
+        if config["low_space_warning_bytes"] < config["min_free_space_bytes"]:
             self.logger.warning(
                 "low_space_warning_bytes is less than min_free_space_bytes. "
-                "This may cause unexpected behavior."
+                "This may cause unexpected behavior.",
             )
 
     def _save_config(self, config: Dict[str, Any] = None) -> None:
@@ -150,13 +146,13 @@ class StorageConfig:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write YAML file with nice formatting
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 yaml.dump(
                     config,
                     f,
                     default_flow_style=False,
                     sort_keys=False,
-                    indent=2
+                    indent=2,
                 )
 
             self.logger.info(f"Config saved to {self.config_path}")
@@ -172,57 +168,57 @@ class StorageConfig:
     @property
     def storage_base_path(self) -> Path:
         """Get storage base directory as Path object"""
-        return Path(self._config['storage_base_path'])
+        return Path(self._config["storage_base_path"])
 
     @property
     def max_uploaded_videos(self) -> int:
         """Maximum number of videos to keep in uploaded directory"""
-        return self._config['max_uploaded_videos']
+        return self._config["max_uploaded_videos"]
 
     @property
     def uploaded_retention_days(self) -> int:
         """How many days to keep uploaded videos"""
-        return self._config['uploaded_retention_days']
+        return self._config["uploaded_retention_days"]
 
     @property
     def min_free_space_bytes(self) -> int:
         """Minimum free space required to start recording"""
-        return self._config['min_free_space_bytes']
+        return self._config["min_free_space_bytes"]
 
     @property
     def low_space_warning_bytes(self) -> int:
         """Threshold for low space warning"""
-        return self._config['low_space_warning_bytes']
+        return self._config["low_space_warning_bytes"]
 
     @property
     def max_upload_retries(self) -> int:
         """Maximum number of upload retry attempts"""
-        return self._config['max_upload_retries']
+        return self._config["max_upload_retries"]
 
     @property
     def retry_delay_seconds(self) -> int:
         """Delay between retry attempts"""
-        return self._config['retry_delay_seconds']
+        return self._config["retry_delay_seconds"]
 
     @property
     def min_video_size_bytes(self) -> int:
         """Minimum valid video file size"""
-        return self._config['min_video_size_bytes']
+        return self._config["min_video_size_bytes"]
 
     @property
     def enable_ffmpeg_validation(self) -> bool:
         """Whether to use ffmpeg for video validation"""
-        return self._config['enable_ffmpeg_validation']
+        return self._config["enable_ffmpeg_validation"]
 
     @property
     def cleanup_interval_seconds(self) -> int:
         """How often to run cleanup task"""
-        return self._config['cleanup_interval_seconds']
+        return self._config["cleanup_interval_seconds"]
 
     @property
     def auto_cleanup_enabled(self) -> bool:
         """Whether automatic cleanup is enabled"""
-        return self._config['auto_cleanup_enabled']
+        return self._config["auto_cleanup_enabled"]
 
     # =========================================================================
     # UTILITY METHODS

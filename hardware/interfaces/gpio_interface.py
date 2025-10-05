@@ -21,27 +21,31 @@ from typing import Callable, Optional
 
 class PinMode(Enum):
     """How a GPIO pin is configured"""
-    INPUT = "input"   # Read signals (button)
+
+    INPUT = "input"  # Read signals (button)
     OUTPUT = "output"  # Send signals (LED)
 
 
 class PullMode(Enum):
     """Pull resistor configuration for input pins"""
-    UP = "up"      # Pull to HIGH (3.3V) - button press reads LOW
+
+    UP = "up"  # Pull to HIGH (3.3V) - button press reads LOW
     DOWN = "down"  # Pull to LOW (0V) - button press reads HIGH
     NONE = "none"  # No pull resistor (external resistor required)
 
 
 class EdgeDetection(Enum):
     """When to trigger interrupt callbacks"""
-    RISING = "rising"    # LOW -> HIGH transition
+
+    RISING = "rising"  # LOW -> HIGH transition
     FALLING = "falling"  # HIGH -> LOW transition
-    BOTH = "both"        # Any transition
+    BOTH = "both"  # Any transition
 
 
 class PinState(Enum):
     """Digital pin states"""
-    LOW = 0   # 0V / False
+
+    LOW = 0  # 0V / False
     HIGH = 1  # 3.3V / True
 
 
@@ -66,13 +70,12 @@ class GPIOInterface(ABC):
         Raises:
             GPIOError: If pin setup fails
         """
-        pass
 
     @abstractmethod
     def setup_input(
         self,
         pin: int,
-        pull_mode: PullMode = PullMode.UP
+        pull_mode: PullMode = PullMode.UP,
     ) -> None:
         """
         Configure a pin as an input (for reading button).
@@ -84,7 +87,6 @@ class GPIOInterface(ABC):
         Raises:
             GPIOError: If pin setup fails
         """
-        pass
 
     @abstractmethod
     def write(self, pin: int, state: PinState) -> None:
@@ -98,7 +100,6 @@ class GPIOInterface(ABC):
         Raises:
             GPIOError: If pin isn't configured as output
         """
-        pass
 
     @abstractmethod
     def read(self, pin: int) -> PinState:
@@ -114,7 +115,6 @@ class GPIOInterface(ABC):
         Raises:
             GPIOError: If pin isn't configured as input
         """
-        pass
 
     @abstractmethod
     def add_event_callback(
@@ -122,7 +122,7 @@ class GPIOInterface(ABC):
         pin: int,
         edge: EdgeDetection,
         callback: Callable[[int], None],
-        debounce_ms: int = 0
+        debounce_ms: int = 0,
     ) -> None:
         """
         Register a callback function to be called when pin changes state.
@@ -137,7 +137,6 @@ class GPIOInterface(ABC):
         Raises:
             GPIOError: If pin isn't configured as input
         """
-        pass
 
     @abstractmethod
     def remove_event_callback(self, pin: int) -> None:
@@ -147,7 +146,6 @@ class GPIOInterface(ABC):
         Args:
             pin: GPIO pin number
         """
-        pass
 
     @abstractmethod
     def cleanup(self, pins: Optional[list[int]] = None) -> None:
@@ -158,7 +156,6 @@ class GPIOInterface(ABC):
         Args:
             pins: Specific pins to cleanup, or None for all pins
         """
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
@@ -168,7 +165,6 @@ class GPIOInterface(ABC):
         Returns:
             True if running on real hardware, False if simulated
         """
-        pass
 
 
 class GPIOError(Exception):
@@ -180,4 +176,3 @@ class GPIOError(Exception):
     - Can catch specifically: except GPIOError
     - Can add custom error information
     """
-    pass

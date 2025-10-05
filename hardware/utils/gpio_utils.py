@@ -17,7 +17,7 @@ from hardware.interfaces.gpio_interface import GPIOInterface, PinState
 def safe_gpio_cleanup(
     gpio: Optional[GPIOInterface],
     pins: Optional[list[int]] = None,
-    logger: Optional[logging.Logger] = None
+    logger: Optional[logging.Logger] = None,
 ) -> None:
     """
     Safely clean up GPIO pins with error handling.
@@ -47,7 +47,7 @@ def safe_gpio_cleanup(
 def toggle_pin(
     gpio: GPIOInterface,
     pin: int,
-    current_state: PinState
+    current_state: PinState,
 ) -> PinState:
     """
     Toggle a pin's state (HIGH -> LOW or LOW -> HIGH).
@@ -73,7 +73,7 @@ def toggle_pin(
 def set_pin_state(
     gpio: GPIOInterface,
     pin: int,
-    state: bool
+    state: bool,
 ) -> None:
     """
     Set pin state using boolean (True=HIGH, False=LOW).
@@ -94,7 +94,7 @@ def set_pin_state(
 
 def read_pin_as_bool(
     gpio: GPIOInterface,
-    pin: int
+    pin: int,
 ) -> bool:
     """
     Read pin state as boolean (HIGH=True, LOW=False).
@@ -119,7 +119,7 @@ def read_pin_as_bool(
 def setup_led_pins(
     gpio: GPIOInterface,
     pins: list[int],
-    initial_state: PinState = PinState.LOW
+    initial_state: PinState = PinState.LOW,
 ) -> None:
     """
     Set up multiple LED pins at once.
@@ -141,7 +141,7 @@ def setup_led_pins(
 
 def check_gpio_available(
     gpio: GPIOInterface,
-    logger: Optional[logging.Logger] = None
+    logger: Optional[logging.Logger] = None,
 ) -> bool:
     """
     Check if GPIO hardware is available and log appropriate message.
@@ -187,6 +187,5 @@ def validate_pin_number(pin: int, min_pin: int = 0, max_pin: int = 27) -> None:
 
     if pin < min_pin or pin > max_pin:
         raise ValueError(
-            f"Invalid pin number: {pin}. "
-            f"Must be between {min_pin} and {max_pin}"
+            f"Invalid pin number: {pin}. Must be between {min_pin} and {max_pin}",
         )

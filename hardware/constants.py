@@ -82,6 +82,7 @@ TTS_FRENCH_VOICE_PATTERN = "roa/fr"
 # All voice messages used in the system
 # Centralized here so you can easily translate or modify all messages
 
+
 class AudioMessage(Enum):
     """
     Enum for audio messages - this prevents typos and provides IDE autocomplete.
@@ -129,24 +130,19 @@ AUDIO_MESSAGE_TEXTS = {
     AudioMessage.SYSTEM_READY: "System ready",
     AudioMessage.SYSTEM_ERROR: "System error",
     AudioMessage.SYSTEM_SHUTDOWN: "System shutting down",
-
     AudioMessage.RECORDING_START: "Recording started",
     AudioMessage.RECORDING_STOP: "Recording complete, uploading",
     AudioMessage.RECORDING_EXTENDED: "5 minutes added, recording continues",
-
     AudioMessage.ONE_MINUTE_WARNING: "One minute remaining, press button twice to extend",
     AudioMessage.EXTENSION_AVAILABLE: "Press button twice to extend recording",
-
     AudioMessage.READY_FOR_NEXT: "Ready for next recording",
     AudioMessage.UPLOAD_COMPLETE: "Upload successful",
     AudioMessage.UPLOAD_FAILED: "Upload failed, will retry",
-
     AudioMessage.MEMORY_FULL: "Memory full",
     AudioMessage.NETWORK_DISCONNECTED: "Network disconnected",
     AudioMessage.CAMERA_ERROR: "Camera error",
     AudioMessage.STORAGE_ERROR: "Storage error",
     AudioMessage.UPLOAD_ERROR: "Upload error",
-
     AudioMessage.ERROR_RECOVERED: "Error resolved, system ready",
     AudioMessage.NETWORK_RESTORED: "Network connection restored",
 }
@@ -157,8 +153,10 @@ AUDIO_MESSAGE_TEXTS = {
 # =============================================================================
 # Defines which LEDs should be on/off for each system state
 
+
 class LEDColor(Enum):
     """Individual LED colors available"""
+
     GREEN = "green"
     ORANGE = "orange"
     RED = "red"
@@ -169,6 +167,7 @@ class LEDPattern(Enum):
     System states mapped to LED patterns.
     Each pattern defines: (green, orange, red, should_blink, blink_color)
     """
+
     # All off during boot
     OFF = "off"
 

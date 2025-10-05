@@ -14,14 +14,14 @@ from pathlib import Path
 
 import pytest
 
-from storage import StorageController, StorageConfig, UploadStatus
+from storage import StorageConfig, StorageController, UploadStatus
 from storage.implementations.local_storage import LocalStorage
 from storage.implementations.mock_storage import MockStorage
-
 
 # =============================================================================
 # STORAGE FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def mock_storage():
@@ -88,9 +88,9 @@ def local_storage_config(temp_storage_dir):
             storage = LocalStorage(local_storage_config)
     """
     config = StorageConfig()
-    config.set('storage_base_path', str(temp_storage_dir), save=False)
-    config.set('min_free_space_bytes', 1024 * 1024, save=False)  # 1 MB for testing
-    config.set('uploaded_retention_days', 1, save=False)  # Short retention for tests
+    config.set("storage_base_path", str(temp_storage_dir), save=False)
+    config.set("min_free_space_bytes", 1024 * 1024, save=False)  # 1 MB for testing
+    config.set("uploaded_retention_days", 1, save=False)  # Short retention for tests
     return config
 
 
@@ -112,6 +112,7 @@ def local_storage(local_storage_config):
 # =============================================================================
 # CONTROLLER FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def storage_controller(mock_storage):
@@ -146,6 +147,7 @@ def storage_controller_with_videos(mock_storage_with_videos):
 # HELPER FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def event_tracker():
     """
@@ -159,6 +161,7 @@ def event_tracker():
             # ... trigger event ...
             assert event_tracker.was_called()
     """
+
     class EventTracker:
         def __init__(self):
             self.calls = []
@@ -166,7 +169,7 @@ def event_tracker():
 
         def track(self, *args, **kwargs):
             """Record an event invocation"""
-            self.calls.append({'args': args, 'kwargs': kwargs})
+            self.calls.append({"args": args, "kwargs": kwargs})
             if args:
                 self.call_args.append(args[0])
 
@@ -217,6 +220,7 @@ def sample_video_file(temp_storage_dir):
 # =============================================================================
 # PYTEST CONFIGURATION
 # =============================================================================
+
 
 def pytest_configure(config):
     """

@@ -14,8 +14,9 @@ To run:
 """
 
 import time
-import pytest
 from pathlib import Path
+
+import pytest
 
 from recording.constants import (
     DEFAULT_RECORDING_DURATION,
@@ -26,10 +27,10 @@ from recording.constants import (
 )
 from recording.controllers.recording_session import RecordingSession
 
-
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_recording_session_initialization(camera_manager):
@@ -45,6 +46,7 @@ def test_recording_session_initialization(camera_manager):
 # =============================================================================
 # START/STOP TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_recording_session_start(recording_session, temp_video_file):
@@ -91,6 +93,7 @@ def test_recording_session_cannot_stop_when_idle(recording_session):
 # DURATION VALIDATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_recording_session_invalid_duration_zero(recording_session, temp_video_file):
     """Test that zero duration is rejected."""
@@ -100,7 +103,10 @@ def test_recording_session_invalid_duration_zero(recording_session, temp_video_f
 
 
 @pytest.mark.unit
-def test_recording_session_invalid_duration_negative(recording_session, temp_video_file):
+def test_recording_session_invalid_duration_negative(
+    recording_session,
+    temp_video_file,
+):
     """Test that negative duration is rejected."""
     success = recording_session.start(temp_video_file, duration=-10)
 
@@ -108,9 +114,15 @@ def test_recording_session_invalid_duration_negative(recording_session, temp_vid
 
 
 @pytest.mark.unit
-def test_recording_session_invalid_duration_too_long(recording_session, temp_video_file):
+def test_recording_session_invalid_duration_too_long(
+    recording_session,
+    temp_video_file,
+):
     """Test that duration exceeding max is rejected."""
-    success = recording_session.start(temp_video_file, duration=MAX_RECORDING_DURATION + 1)
+    success = recording_session.start(
+        temp_video_file,
+        duration=MAX_RECORDING_DURATION + 1,
+    )
 
     assert success is False
 
@@ -129,11 +141,12 @@ def test_recording_session_valid_duration_max(recording_session, temp_video_file
 # TIME TRACKING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_recording_session_elapsed_time(temp_video_file):
     """Test elapsed time tracking."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -155,8 +168,8 @@ def test_recording_session_elapsed_time(temp_video_file):
 @pytest.mark.unit
 def test_recording_session_remaining_time(temp_video_file):
     """Test remaining time calculation."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -194,6 +207,7 @@ def test_recording_session_remaining_zero_when_idle(recording_session):
 # =============================================================================
 # EXTENSION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_recording_session_extend(recording_session, temp_video_file):
@@ -262,8 +276,13 @@ def test_recording_session_cannot_extend_at_max(recording_session, temp_video_fi
 # CALLBACK TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
-def test_recording_session_on_start_callback(camera_manager, temp_video_file, callback_tracker):
+def test_recording_session_on_start_callback(
+    camera_manager,
+    temp_video_file,
+    callback_tracker,
+):
     """Test on_start callback is triggered."""
     session = RecordingSession(camera_manager)
     session.on_start = callback_tracker.track
@@ -277,7 +296,11 @@ def test_recording_session_on_start_callback(camera_manager, temp_video_file, ca
 
 
 @pytest.mark.unit
-def test_recording_session_on_complete_callback(camera_manager, temp_video_file, callback_tracker):
+def test_recording_session_on_complete_callback(
+    camera_manager,
+    temp_video_file,
+    callback_tracker,
+):
     """Test on_complete callback is triggered."""
     session = RecordingSession(camera_manager)
     session.on_complete = callback_tracker.track
@@ -289,7 +312,11 @@ def test_recording_session_on_complete_callback(camera_manager, temp_video_file,
 
 
 @pytest.mark.unit
-def test_recording_session_on_extension_callback(camera_manager, temp_video_file, callback_tracker):
+def test_recording_session_on_extension_callback(
+    camera_manager,
+    temp_video_file,
+    callback_tracker,
+):
     """Test on_extension callback is triggered."""
     session = RecordingSession(camera_manager)
     session.on_extension = callback_tracker.track
@@ -301,7 +328,7 @@ def test_recording_session_on_extension_callback(camera_manager, temp_video_file
 
     # Should receive extension count
     last_call = callback_tracker.get_last_call()
-    assert last_call['args'][0] == 1  # First extension
+    assert last_call["args"][0] == 1  # First extension
 
     session.stop()
 
@@ -309,8 +336,8 @@ def test_recording_session_on_extension_callback(camera_manager, temp_video_file
 @pytest.mark.unit
 def test_recording_session_on_warning_callback(callback_tracker):
     """Test on_warning callback is triggered."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -334,7 +361,11 @@ def test_recording_session_on_warning_callback(callback_tracker):
 
 
 @pytest.mark.unit
-def test_recording_session_on_error_callback(camera_manager, temp_video_file, callback_tracker):
+def test_recording_session_on_error_callback(
+    camera_manager,
+    temp_video_file,
+    callback_tracker,
+):
     """Test on_error callback is triggered."""
     session = RecordingSession(camera_manager)
     session.on_error = callback_tracker.track
@@ -350,18 +381,19 @@ def test_recording_session_on_error_callback(camera_manager, temp_video_file, ca
 
     # Should receive error message
     last_call = callback_tracker.get_last_call()
-    assert len(last_call['args']) > 0
+    assert len(last_call["args"]) > 0
 
 
 # =============================================================================
 # AUTO-STOP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_recording_session_auto_stop_at_duration():
     """Test session auto-stops when duration limit reached."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -387,15 +419,16 @@ def test_recording_session_auto_stop_at_duration():
 # STATUS TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_recording_session_get_status_idle(recording_session):
     """Test get_status() when idle."""
     status = recording_session.get_status()
 
-    assert status['state'] == RecordingState.IDLE.value
-    assert status['output_file'] is None
-    assert status['elapsed_time'] == 0.0
-    assert status['remaining_time'] == 0.0
+    assert status["state"] == RecordingState.IDLE.value
+    assert status["output_file"] is None
+    assert status["elapsed_time"] == 0.0
+    assert status["remaining_time"] == 0.0
 
 
 @pytest.mark.unit
@@ -405,26 +438,29 @@ def test_recording_session_get_status_recording(recording_session, temp_video_fi
 
     status = recording_session.get_status()
 
-    assert status['state'] == RecordingState.RECORDING.value
-    assert status['output_file'] == str(temp_video_file)
-    assert status['duration_limit'] == 600
-    assert status['initial_duration'] == 600
-    assert status['extension_count'] == 0
-    assert status['can_extend'] is True
+    assert status["state"] == RecordingState.RECORDING.value
+    assert status["output_file"] == str(temp_video_file)
+    assert status["duration_limit"] == 600
+    assert status["initial_duration"] == 600
+    assert status["extension_count"] == 0
+    assert status["can_extend"] is True
 
     recording_session.stop()
 
 
 @pytest.mark.unit
-def test_recording_session_get_status_after_extension(recording_session, temp_video_file):
+def test_recording_session_get_status_after_extension(
+    recording_session,
+    temp_video_file,
+):
     """Test get_status() after extension."""
     recording_session.start(temp_video_file, duration=DEFAULT_RECORDING_DURATION)
     recording_session.extend()
 
     status = recording_session.get_status()
 
-    assert status['extension_count'] == 1
-    assert status['duration_limit'] == DEFAULT_RECORDING_DURATION + EXTENSION_DURATION
+    assert status["extension_count"] == 1
+    assert status["duration_limit"] == DEFAULT_RECORDING_DURATION + EXTENSION_DURATION
 
     recording_session.stop()
 
@@ -456,6 +492,7 @@ def test_recording_session_get_session_info_idle(recording_session):
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_recording_session_cleanup_stops_recording(camera_manager, temp_video_file):
     """Test cleanup stops active recording."""
@@ -473,11 +510,12 @@ def test_recording_session_cleanup_stops_recording(camera_manager, temp_video_fi
 # INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit_integration
 def test_recording_session_complete_workflow():
     """Integration test: Complete recording workflow with extensions."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -487,23 +525,23 @@ def test_recording_session_complete_workflow():
 
     # Track callbacks
     callbacks = {
-        'start': False,
-        'warning': False,
-        'extension': 0,
-        'complete': False
+        "start": False,
+        "warning": False,
+        "extension": 0,
+        "complete": False,
     }
 
     def on_start():
-        callbacks['start'] = True
+        callbacks["start"] = True
 
     def on_warning():
-        callbacks['warning'] = True
+        callbacks["warning"] = True
 
     def on_extension(count):
-        callbacks['extension'] = count
+        callbacks["extension"] = count
 
     def on_complete():
-        callbacks['complete'] = True
+        callbacks["complete"] = True
 
     session.on_start = on_start
     session.on_warning = on_warning
@@ -513,7 +551,7 @@ def test_recording_session_complete_workflow():
     # Start recording
     success = session.start(temp_file, duration=1.5)
     assert success is True
-    assert callbacks['start'] is True
+    assert callbacks["start"] is True
 
     # Wait a bit
     time.sleep(0.5)
@@ -521,13 +559,13 @@ def test_recording_session_complete_workflow():
     # Extend
     success = session.extend()
     assert success is True
-    assert callbacks['extension'] == 1
+    assert callbacks["extension"] == 1
 
     # Stop
     time.sleep(0.3)
     success = session.stop()
     assert success is True
-    assert callbacks['complete'] is True
+    assert callbacks["complete"] is True
 
     camera.cleanup()
 
@@ -535,8 +573,8 @@ def test_recording_session_complete_workflow():
 @pytest.mark.unit_integration
 def test_recording_session_health_monitoring():
     """Integration test: Health monitoring during session."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=True)
     camera = CameraManager(capture=mock)
@@ -550,11 +588,11 @@ def test_recording_session_health_monitoring():
     # Check health periodically
     time.sleep(0.2)
     health1 = camera.check_health()
-    assert health1['is_healthy'] is True
+    assert health1["is_healthy"] is True
 
     time.sleep(0.2)
     health2 = camera.check_health()
-    assert health2['is_healthy'] is True
+    assert health2["is_healthy"] is True
 
     # Stop
     session.stop()
@@ -565,8 +603,8 @@ def test_recording_session_health_monitoring():
 @pytest.mark.unit_integration
 def test_recording_session_multiple_extensions():
     """Test multiple extensions up to maximum."""
-    from recording.implementations.mock_capture import MockCapture
     from recording.controllers.camera_manager import CameraManager
+    from recording.implementations.mock_capture import MockCapture
 
     mock = MockCapture(simulate_timing=False)
     camera = CameraManager(capture=mock)
@@ -587,8 +625,8 @@ def test_recording_session_multiple_extensions():
     assert session.extend() is False
 
     status = session.get_status()
-    assert status['extension_count'] == 3
-    assert status['duration_limit'] == MAX_RECORDING_DURATION
+    assert status["extension_count"] == 3
+    assert status["duration_limit"] == MAX_RECORDING_DURATION
 
     session.stop()
     camera.cleanup()

@@ -20,10 +20,10 @@ import pytest
 from hardware.implementations.mock_gpio import MockGPIO
 from hardware.implementations.mock_tts import MockTTS
 
-
 # =============================================================================
 # GPIO FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def mock_gpio():
@@ -69,6 +69,7 @@ def configured_gpio(mock_gpio):
 # TTS FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def mock_tts_fast():
     """
@@ -104,6 +105,7 @@ def mock_tts_realistic():
 # =============================================================================
 # CONTROLLER FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def led_controller(mock_gpio):
@@ -160,6 +162,7 @@ def audio_controller(mock_tts_fast):
 # HELPER FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def callback_tracker():
     """
@@ -174,13 +177,14 @@ def callback_tracker():
             assert callback_tracker.was_called()
             assert callback_tracker.get_call_count() == 1
     """
+
     class CallbackTracker:
         def __init__(self):
             self.calls = []
 
         def track(self, *args, **kwargs):
             """Record a callback invocation"""
-            self.calls.append({'args': args, 'kwargs': kwargs})
+            self.calls.append({"args": args, "kwargs": kwargs})
 
         def was_called(self) -> bool:
             """Check if callback was called"""
@@ -204,6 +208,7 @@ def callback_tracker():
 # =============================================================================
 # PYTEST CONFIGURATION
 # =============================================================================
+
 
 def pytest_configure(config):
     """

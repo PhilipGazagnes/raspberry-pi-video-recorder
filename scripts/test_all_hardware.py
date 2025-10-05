@@ -72,12 +72,12 @@ class HardwareTestSuite:
         print(f"  GPIO: {'Available' if hw_status['gpio'] else 'Mock mode'}")
         print(f"  TTS:  {'Available' if hw_status['tts'] else 'Mock mode'}")
 
-        if not hw_status['gpio']:
+        if not hw_status["gpio"]:
             print()
             print("  WARNING: Running without real GPIO hardware")
             print("  LED and Button tests will use simulation mode")
 
-        if not hw_status['tts']:
+        if not hw_status["tts"]:
             print()
             print("  WARNING: Running without real TTS")
             print("  Audio test will use simulation mode")
@@ -119,8 +119,10 @@ class HardwareTestSuite:
 
         status = led.get_status()
         print(f"  GPIO Available: {status['gpio_available']}")
-        print(f"  Pins: G={status['pins']['green']}, "
-              f"O={status['pins']['orange']}, R={status['pins']['red']}")
+        print(
+            f"  Pins: G={status['pins']['green']}, "
+            f"O={status['pins']['orange']}, R={status['pins']['red']}",
+        )
         print()
 
         # Test all patterns
@@ -165,7 +167,7 @@ class HardwareTestSuite:
         print("  Press button to test (single and double presses)")
 
         # Check if we're on real hardware
-        if status['gpio_available']:
+        if status["gpio_available"]:
             print("  Waiting for button presses...")
         else:
             print("  Mock mode: press 's' for single, 'd' for double")
@@ -191,7 +193,9 @@ class HardwareTestSuite:
         print("=" * 70)
         print()
 
-        print(f"Tests Passed: {len(self.passed_tests)}/{len(self.passed_tests) + len(self.failed_tests)}")
+        print(
+            f"Tests Passed: {len(self.passed_tests)}/{len(self.passed_tests) + len(self.failed_tests)}",
+        )
         print()
 
         if self.passed_tests:
@@ -229,6 +233,7 @@ def main():
     except Exception as e:
         print(f"\n\nERROR: Test suite crashed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

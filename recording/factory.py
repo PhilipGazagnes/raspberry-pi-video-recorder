@@ -39,7 +39,7 @@ class RecordingFactory:
     def create_capture(
         cls,
         mode: CaptureMode = "auto",
-        simulate_timing: bool = True
+        simulate_timing: bool = True,
     ) -> VideoCaptureInterface:
         """
         Create a video capture instance.
@@ -66,7 +66,9 @@ class RecordingFactory:
             )
         """
         if mode == "mock":
-            cls._logger.info(f"Creating Mock Capture (simulate_timing: {simulate_timing})")
+            cls._logger.info(
+                f"Creating Mock Capture (simulate_timing: {simulate_timing})",
+            )
             return MockCapture(simulate_timing=simulate_timing)
 
         if mode == "real":
@@ -78,7 +80,7 @@ class RecordingFactory:
                 return capture
             except Exception as e:
                 raise RuntimeError(
-                    f"Real capture requested but not available: {e}"
+                    f"Real capture requested but not available: {e}",
                 ) from e
 
         # mode == "auto" - try real first, fall back to mock
@@ -87,14 +89,13 @@ class RecordingFactory:
             if capture.is_available():
                 cls._logger.info("Creating FFmpeg Capture (auto-detected)")
                 return capture
-            else:
-                cls._logger.warning(
-                    "FFmpeg or camera not available, using Mock Capture"
-                )
-                return MockCapture(simulate_timing=simulate_timing)
+            cls._logger.warning(
+                "FFmpeg or camera not available, using Mock Capture",
+            )
+            return MockCapture(simulate_timing=simulate_timing)
         except Exception as e:
             cls._logger.warning(
-                f"Real capture not available ({e}), using Mock Capture"
+                f"Real capture not available ({e}), using Mock Capture",
             )
             return MockCapture(simulate_timing=simulate_timing)
 
@@ -118,14 +119,14 @@ class RecordingFactory:
                 print("Warning: FFmpeg not installed")
         """
         status = {
-            'ffmpeg': False,
-            'camera': False,
+            "ffmpeg": False,
+            "camera": False,
         }
 
         try:
             capture = FFmpegCapture()
-            status['ffmpeg'] = True
-            status['camera'] = capture.is_available()
+            status["ffmpeg"] = True
+            status["camera"] = capture.is_available()
             capture.cleanup()
         except Exception:
             pass
@@ -135,7 +136,11 @@ class RecordingFactory:
 
 # Convenience functions for quick creation
 
-def create_capture(force_mock: bool = False, fast_mode: bool = False) -> VideoCaptureInterface:
+
+def create_capture(
+    force_mock: bool = False,
+    fast_mode: bool = False,
+) -> VideoCaptureInterface:
     """
     Quick capture creation with simple options.
 

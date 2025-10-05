@@ -22,8 +22,8 @@ from recording.constants import (
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
     MAX_RECORDING_DURATION,
-    RecordingState,
     WARNING_TIME,
+    RecordingState,
     format_duration,
 )
 from recording.controllers.camera_manager import CameraManager
@@ -101,7 +101,7 @@ class RecordingSession:
     def start(
         self,
         output_file: Path,
-        duration: float = DEFAULT_RECORDING_DURATION
+        duration: float = DEFAULT_RECORDING_DURATION,
     ) -> bool:
         """
         Start recording session.
@@ -125,11 +125,13 @@ class RecordingSession:
         if duration <= 0 or duration > MAX_RECORDING_DURATION:
             self.logger.error(
                 f"Invalid duration: {duration}s "
-                f"(must be 1-{MAX_RECORDING_DURATION})"
+                f"(must be 1-{MAX_RECORDING_DURATION})",
             )
             return False
 
-        self.logger.info(f"Starting recording session: {output_file.name} ({format_duration(duration)})")
+        self.logger.info(
+            f"Starting recording session: {output_file.name} ({format_duration(duration)})",
+        )
 
         # Update state
         self.state = RecordingState.STARTING
@@ -142,7 +144,10 @@ class RecordingSession:
 
         try:
             # Start camera recording
-            success = self.camera.start_recording(output_file, duration=None)  # We manage duration
+            success = self.camera.start_recording(
+                output_file,
+                duration=None,
+            )  # We manage duration
 
             if not success:
                 self.logger.error("Failed to start camera recording")
@@ -182,7 +187,9 @@ class RecordingSession:
             session.stop()
         """
         if self.state not in [RecordingState.RECORDING, RecordingState.STARTING]:
-            self.logger.warning(f"Cannot stop - not recording (state: {self.state.value})")
+            self.logger.warning(
+                f"Cannot stop - not recording (state: {self.state.value})",
+            )
             return False
 
         self.logger.info("Stopping recording session...")
@@ -207,10 +214,9 @@ class RecordingSession:
                     self._trigger_complete_callback()
 
                 return True
-            else:
-                self.logger.warning("Camera stop returned failure")
-                self.state = RecordingState.IDLE
-                return False
+            self.logger.warning("Camera stop returned failure")
+            self.state = RecordingState.IDLE
+            return False
 
         except Exception as e:
             self.logger.error(f"Error stopping session: {e}")
@@ -234,7 +240,9 @@ class RecordingSession:
                 print("Cannot extend - at maximum")
         """
         if self.state != RecordingState.RECORDING:
-            self.logger.warning(f"Cannot extend - not recording (state: {self.state.value})")
+            self.logger.warning(
+                f"Cannot extend - not recording (state: {self.state.value})",
+            )
             return False
 
         # Check if already at maximum
@@ -242,7 +250,7 @@ class RecordingSession:
         if new_limit > MAX_RECORDING_DURATION:
             self.logger.warning(
                 f"Cannot extend - would exceed maximum "
-                f"({new_limit}s > {MAX_RECORDING_DURATION}s)"
+                f"({new_limit}s > {MAX_RECORDING_DURATION}s)",
             )
             return False
 
@@ -255,7 +263,7 @@ class RecordingSession:
 
         self.logger.info(
             f"Recording extended to {format_duration(new_limit)} "
-            f"(extension #{self._extension_count})"
+            f"(extension #{self._extension_count})",
         )
 
         # Trigger callback
@@ -323,7 +331,7 @@ class RecordingSession:
         self._monitor_thread = threading.Thread(
             target=self._monitor_worker,
             daemon=True,
-            name="RecordingMonitor"
+            name="RecordingMonitor",
         )
         self._monitor_thread.start()
         self.logger.debug("Monitoring thread started")
@@ -356,9 +364,13 @@ class RecordingSession:
                 remaining = self.get_remaining_time()
 
                 # Check for warning time
-                if not self._warning_issued and remaining <= WARNING_TIME and remaining > 0:
+                if (
+                    not self._warning_issued
+                    and remaining <= WARNING_TIME
+                    and remaining > 0
+                ):
                     self.logger.info(
-                        f"Warning: {format_duration(remaining)} remaining"
+                        f"Warning: {format_duration(remaining)} remaining",
                     )
                     self._warning_issued = True
                     self._trigger_warning_callback()
@@ -393,14 +405,14 @@ class RecordingSession:
                 # Check every 5 seconds (50 * 0.1s)
                 if int(elapsed * 10) % 50 == 0 and elapsed > 0:
                     health = self.camera.check_health()
-                    if not health['is_healthy']:
+                    if not health["is_healthy"]:
                         self.logger.error(
-                            f"Camera health check failed: {health['error_message']}"
+                            f"Camera health check failed: {health['error_message']}",
                         )
-                        if health.get('critical', False):
+                        if health.get("critical", False):
                             self.logger.error("Critical camera error, stopping")
                             self.state = RecordingState.ERROR
-                            self._trigger_error_callback(health['error_message'])
+                            self._trigger_error_callback(health["error_message"])
                             self.stop()
                             break
 
@@ -463,15 +475,15 @@ class RecordingSession:
             Dictionary with status information
         """
         return {
-            'state': self.state.value,
-            'output_file': str(self._output_file) if self._output_file else None,
-            'elapsed_time': self.get_elapsed_time(),
-            'remaining_time': self.get_remaining_time(),
-            'duration_limit': self._current_duration_limit,
-            'initial_duration': self._initial_duration,
-            'extension_count': self._extension_count,
-            'can_extend': self.can_extend(),
-            'warning_issued': self._warning_issued,
+            "state": self.state.value,
+            "output_file": str(self._output_file) if self._output_file else None,
+            "elapsed_time": self.get_elapsed_time(),
+            "remaining_time": self.get_remaining_time(),
+            "duration_limit": self._current_duration_limit,
+            "initial_duration": self._initial_duration,
+            "extension_count": self._extension_count,
+            "can_extend": self.can_extend(),
+            "warning_issued": self._warning_issued,
         }
 
     def get_session_info(self) -> str:
@@ -494,7 +506,7 @@ class RecordingSession:
             f"Extensions: {status['extension_count']}",
         ]
 
-        if status['can_extend']:
+        if status["can_extend"]:
             info.append("Can extend: Yes")
         else:
             info.append("Can extend: No (at maximum)")

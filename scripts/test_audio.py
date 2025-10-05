@@ -44,7 +44,7 @@ def test_audio_system():
     print(f"  Message Count: {status['message_count']}")
     print()
 
-    if not status['tts_available']:
+    if not status["tts_available"]:
         print("ERROR: TTS not available")
         audio.cleanup()
         return False
@@ -146,5 +146,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nERROR: Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

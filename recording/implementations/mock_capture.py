@@ -66,13 +66,13 @@ class MockCapture(VideoCaptureInterface):
         self._crash_after_seconds: Optional[float] = None
 
         self.logger.info(
-            f"Mock Capture initialized (simulate_timing: {simulate_timing})"
+            f"Mock Capture initialized (simulate_timing: {simulate_timing})",
         )
 
     def start_capture(
         self,
         output_file: Path,
-        duration: Optional[float] = None
+        duration: Optional[float] = None,
     ) -> bool:
         """
         Simulate starting video capture.
@@ -108,7 +108,7 @@ class MockCapture(VideoCaptureInterface):
 
         self.logger.info(
             f"[MOCK] Capture started: {output_file} "
-            f"(duration: {duration or 'unlimited'}s)"
+            f"(duration: {duration or 'unlimited'}s)",
         )
 
         # If simulating timing, start background thread
@@ -118,7 +118,7 @@ class MockCapture(VideoCaptureInterface):
                 target=self._capture_worker,
                 args=(duration,),
                 daemon=True,
-                name="MockCapture-Worker"
+                name="MockCapture-Worker",
             )
             self._capture_thread.start()
 
@@ -166,9 +166,9 @@ class MockCapture(VideoCaptureInterface):
             duration = time.time() - self._start_time if self._start_time else 0
             fake_size = int(duration * 4 * 1024 * 1024)  # 4 MB/sec
 
-            with open(self._output_file, 'wb') as f:
-                f.write(b'\x00\x00\x00\x20ftypmp42')  # MP4 header
-                f.write(b'\x00' * min(fake_size, 10_000_000))  # Cap at 10 MB
+            with open(self._output_file, "wb") as f:
+                f.write(b"\x00\x00\x00\x20ftypmp42")  # MP4 header
+                f.write(b"\x00" * min(fake_size, 10_000_000))  # Cap at 10 MB
 
             file_size_mb = self._output_file.stat().st_size / (1024 * 1024)
             self.logger.info(f"[MOCK] Recording saved: {file_size_mb:.1f} MB")
@@ -225,9 +225,8 @@ class MockCapture(VideoCaptureInterface):
         if self.simulate_timing:
             # Real-time duration
             return time.time() - self._start_time
-        else:
-            # Instant duration (for fast tests)
-            return self._target_duration or 0.0
+        # Instant duration (for fast tests)
+        return self._target_duration or 0.0
 
     def get_output_file(self) -> Optional[Path]:
         """Get current output file"""
@@ -241,23 +240,23 @@ class MockCapture(VideoCaptureInterface):
         """
         # Default health values
         health = {
-            'is_healthy': self._is_healthy and self._is_capturing,
-            'error_message': self._error_message,
-            'frames_captured': self._simulated_frames,
-            'fps': 30.0,
-            'file_size_mb': 0.0,
+            "is_healthy": self._is_healthy and self._is_capturing,
+            "error_message": self._error_message,
+            "frames_captured": self._simulated_frames,
+            "fps": 30.0,
+            "file_size_mb": 0.0,
         }
 
         # If not capturing, mark as unhealthy
         if not self._is_capturing:
-            health['is_healthy'] = False
-            if not health['error_message']:
-                health['error_message'] = "Capture not running"
+            health["is_healthy"] = False
+            if not health["error_message"]:
+                health["error_message"] = "Capture not running"
 
         # Calculate simulated file size if capturing
         if self._is_capturing and self._output_file and self._output_file.exists():
             duration = self.get_capture_duration()
-            health['file_size_mb'] = duration * 4.0  # 4 MB per second
+            health["file_size_mb"] = duration * 4.0  # 4 MB per second
 
         return health
 

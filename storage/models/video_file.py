@@ -22,23 +22,23 @@ class VideoFile:
     """
 
     # File identification
-    filename: str                           # Just the filename: recording_2025-10-04_143025.mp4
-    filepath: Path                          # Full path to file
+    filename: str  # Just the filename: recording_2025-10-04_143025.mp4
+    filepath: Path  # Full path to file
 
     # Timestamps
-    created_at: datetime                    # When recording was created
+    created_at: datetime  # When recording was created
     updated_at: datetime = field(default_factory=datetime.now)  # Last status change
 
     # Video information
     duration_seconds: Optional[int] = None  # Video length in seconds
-    file_size_bytes: Optional[int] = None   # File size in bytes
+    file_size_bytes: Optional[int] = None  # File size in bytes
 
     # Upload tracking
     status: UploadStatus = UploadStatus.PENDING
-    upload_attempts: int = 0                # Number of upload attempts
+    upload_attempts: int = 0  # Number of upload attempts
     last_upload_attempt: Optional[datetime] = None
-    upload_error: Optional[str] = None      # Last error message
-    youtube_url: Optional[str] = None       # URL after successful upload
+    upload_error: Optional[str] = None  # Last error message
+    youtube_url: Optional[str] = None  # URL after successful upload
 
     # Validation
     quality: VideoQuality = VideoQuality.VALID
@@ -81,6 +81,7 @@ class VideoFile:
     def can_retry(self) -> bool:
         """Check if video can be retried (failed but under retry limit)"""
         from storage.constants import MAX_UPLOAD_RETRIES
+
         return self.is_failed and self.upload_attempts < MAX_UPLOAD_RETRIES
 
     @property
@@ -118,39 +119,47 @@ class VideoFile:
     def to_dict(self) -> dict:
         """Convert to dictionary for database storage"""
         return {
-            'filename': self.filename,
-            'filepath': str(self.filepath),
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
-            'duration_seconds': self.duration_seconds,
-            'file_size_bytes': self.file_size_bytes,
-            'status': self.status.value,
-            'upload_attempts': self.upload_attempts,
-            'last_upload_attempt': self.last_upload_attempt.isoformat() if self.last_upload_attempt else None,
-            'upload_error': self.upload_error,
-            'youtube_url': self.youtube_url,
-            'quality': self.quality.value,
-            'validation_error': self.validation_error,
+            "filename": self.filename,
+            "filepath": str(self.filepath),
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "duration_seconds": self.duration_seconds,
+            "file_size_bytes": self.file_size_bytes,
+            "status": self.status.value,
+            "upload_attempts": self.upload_attempts,
+            "last_upload_attempt": (
+                self.last_upload_attempt.isoformat()
+                if self.last_upload_attempt
+                else None
+            ),
+            "upload_error": self.upload_error,
+            "youtube_url": self.youtube_url,
+            "quality": self.quality.value,
+            "validation_error": self.validation_error,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'VideoFile':
+    def from_dict(cls, data: dict) -> "VideoFile":
         """Create VideoFile from dictionary (database row)"""
         return cls(
-            id=data.get('id'),
-            filename=data['filename'],
-            filepath=Path(data['filepath']),
-            created_at=datetime.fromisoformat(data['created_at']),
-            updated_at=datetime.fromisoformat(data['updated_at']),
-            duration_seconds=data.get('duration_seconds'),
-            file_size_bytes=data.get('file_size_bytes'),
-            status=UploadStatus(data['status']),
-            upload_attempts=data.get('upload_attempts', 0),
-            last_upload_attempt=datetime.fromisoformat(data['last_upload_attempt']) if data.get('last_upload_attempt') else None,
-            upload_error=data.get('upload_error'),
-            youtube_url=data.get('youtube_url'),
-            quality=VideoQuality(data.get('quality', 'valid')),
-            validation_error=data.get('validation_error'),
+            id=data.get("id"),
+            filename=data["filename"],
+            filepath=Path(data["filepath"]),
+            created_at=datetime.fromisoformat(data["created_at"]),
+            updated_at=datetime.fromisoformat(data["updated_at"]),
+            duration_seconds=data.get("duration_seconds"),
+            file_size_bytes=data.get("file_size_bytes"),
+            status=UploadStatus(data["status"]),
+            upload_attempts=data.get("upload_attempts", 0),
+            last_upload_attempt=(
+                datetime.fromisoformat(data["last_upload_attempt"])
+                if data.get("last_upload_attempt")
+                else None
+            ),
+            upload_error=data.get("upload_error"),
+            youtube_url=data.get("youtube_url"),
+            quality=VideoQuality(data.get("quality", "valid")),
+            validation_error=data.get("validation_error"),
         )
 
     def __repr__(self) -> str:
@@ -189,17 +198,17 @@ class StorageStats:
     @property
     def free_space_gb(self) -> float:
         """Free space in gigabytes"""
-        return self.free_space_bytes / (1024 ** 3)
+        return self.free_space_bytes / (1024**3)
 
     @property
     def used_space_gb(self) -> float:
         """Used space in gigabytes"""
-        return self.used_space_bytes / (1024 ** 3)
+        return self.used_space_bytes / (1024**3)
 
     @property
     def total_space_gb(self) -> float:
         """Total space in gigabytes"""
-        return self.total_space_bytes / (1024 ** 3)
+        return self.total_space_bytes / (1024**3)
 
     @property
     def space_usage_percent(self) -> float:
@@ -212,29 +221,31 @@ class StorageStats:
     def is_low_space(self) -> bool:
         """Check if space is below warning threshold"""
         from storage.constants import LOW_SPACE_WARNING_BYTES
+
         return self.free_space_bytes < LOW_SPACE_WARNING_BYTES
 
     @property
     def is_disk_full(self) -> bool:
         """Check if space is below minimum threshold"""
         from storage.constants import MIN_FREE_SPACE_BYTES
+
         return self.free_space_bytes < MIN_FREE_SPACE_BYTES
 
     def to_dict(self) -> dict:
         """Convert to dictionary for logging/display"""
         return {
-            'free_space_gb': round(self.free_space_gb, 2),
-            'used_space_gb': round(self.used_space_gb, 2),
-            'total_space_gb': round(self.total_space_gb, 2),
-            'space_usage_percent': round(self.space_usage_percent, 2),
-            'pending_count': self.pending_count,
-            'in_progress_count': self.in_progress_count,
-            'completed_count': self.completed_count,
-            'failed_count': self.failed_count,
-            'corrupted_count': self.corrupted_count,
-            'total_videos': self.total_videos,
-            'is_low_space': self.is_low_space,
-            'is_disk_full': self.is_disk_full,
+            "free_space_gb": round(self.free_space_gb, 2),
+            "used_space_gb": round(self.used_space_gb, 2),
+            "total_space_gb": round(self.total_space_gb, 2),
+            "space_usage_percent": round(self.space_usage_percent, 2),
+            "pending_count": self.pending_count,
+            "in_progress_count": self.in_progress_count,
+            "completed_count": self.completed_count,
+            "failed_count": self.failed_count,
+            "corrupted_count": self.corrupted_count,
+            "total_videos": self.total_videos,
+            "is_low_space": self.is_low_space,
+            "is_disk_full": self.is_disk_full,
         }
 
     def __repr__(self) -> str:

@@ -1,7 +1,7 @@
 import logging
 import time
 from enum import Enum
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict
 
 
 class SystemState(Enum):
@@ -31,11 +31,11 @@ class StateMachine:
 
         # Callbacks for hardware/software components
         self.callbacks = {
-            'on_state_change': None,  # Called when state changes
-            'on_start_recording': None,  # Called to start recording
-            'on_stop_recording': None,  # Called to stop recording
-            'on_extend_recording': None,  # Called to extend recording
-            'on_error': None,  # Called on error conditions
+            "on_state_change": None,  # Called when state changes
+            "on_start_recording": None,  # Called to start recording
+            "on_stop_recording": None,  # Called to stop recording
+            "on_extend_recording": None,  # Called to extend recording
+            "on_error": None,  # Called on error conditions
         }
 
         # State handlers mapping
@@ -84,9 +84,9 @@ class StateMachine:
         self.logger.info(log_msg)
 
         # Notify components of state change
-        if self.callbacks['on_state_change']:
+        if self.callbacks["on_state_change"]:
             try:
-                self.callbacks['on_state_change'](old_state, new_state)
+                self.callbacks["on_state_change"](old_state, new_state)
             except Exception as e:
                 self.logger.error(f"Error in state change callback: {e}")
 
@@ -95,13 +95,14 @@ class StateMachine:
         Handle button press events based on current state
         Returns True if the button press was handled, False otherwise
         """
-        self.logger.debug(f"Button press {press_type.value} in state {self.current_state.value}")
+        self.logger.debug(
+            f"Button press {press_type.value} in state {self.current_state.value}",
+        )
 
         if self.current_state in self.state_handlers:
             return self.state_handlers[self.current_state](press_type)
-        else:
-            self.logger.warning(f"No handler for state {self.current_state.value}")
-            return False
+        self.logger.warning(f"No handler for state {self.current_state.value}")
+        return False
 
     def handle_system_ready(self):
         """Called when system has finished booting"""
@@ -121,9 +122,9 @@ class StateMachine:
     def handle_error(self, error_msg: str = ""):
         """Called when an error occurs that requires error state"""
         self.transition_to(SystemState.ERROR, f"error occurred: {error_msg}")
-        if self.callbacks['on_error']:
+        if self.callbacks["on_error"]:
             try:
-                self.callbacks['on_error'](error_msg)
+                self.callbacks["on_error"](error_msg)
             except Exception as e:
                 self.logger.error(f"Error in error callback: {e}")
 
@@ -146,16 +147,16 @@ class StateMachine:
             self.logger.info("Starting recording session")
             self.transition_to(SystemState.RECORDING, "button press to start")
 
-            if self.callbacks['on_start_recording']:
+            if self.callbacks["on_start_recording"]:
                 try:
-                    self.callbacks['on_start_recording']()
+                    self.callbacks["on_start_recording"]()
                 except Exception as e:
                     self.logger.error(f"Error starting recording: {e}")
                     self.handle_error("failed to start recording")
                     return False
             return True
 
-        elif press_type == ButtonPress.DOUBLE:
+        if press_type == ButtonPress.DOUBLE:
             # Double press in ready state - could be used for system status
             self.logger.debug("Double press in ready state - no action")
             return False
@@ -169,24 +170,26 @@ class StateMachine:
             self.logger.info("Stopping recording session")
             self.transition_to(SystemState.PROCESSING, "button press to stop")
 
-            if self.callbacks['on_stop_recording']:
+            if self.callbacks["on_stop_recording"]:
                 try:
-                    self.callbacks['on_stop_recording']()
+                    self.callbacks["on_stop_recording"]()
                 except Exception as e:
                     self.logger.error(f"Error stopping recording: {e}")
                     self.handle_error("failed to stop recording")
                     return False
             return True
 
-        elif press_type == ButtonPress.DOUBLE:
+        if press_type == ButtonPress.DOUBLE:
             # Extend recording by 5 minutes
             self.logger.info("Extending recording session")
 
-            if self.callbacks['on_extend_recording']:
+            if self.callbacks["on_extend_recording"]:
                 try:
-                    success = self.callbacks['on_extend_recording']()
+                    success = self.callbacks["on_extend_recording"]()
                     if not success:
-                        self.logger.warning("Recording extension failed (max duration reached?)")
+                        self.logger.warning(
+                            "Recording extension failed (max duration reached?)",
+                        )
                         return False
                 except Exception as e:
                     self.logger.error(f"Error extending recording: {e}")
@@ -208,7 +211,7 @@ class StateMachine:
             self.handle_error_recovery()
             return True
 
-        elif press_type == ButtonPress.DOUBLE:
+        if press_type == ButtonPress.DOUBLE:
             # Double press could trigger system reset or diagnostics
             self.logger.debug("Double press in error state - no action")
             return False
@@ -218,9 +221,12 @@ class StateMachine:
     def get_status_info(self) -> Dict:
         """Get detailed status information for debugging/monitoring"""
         return {
-            'current_state': self.current_state.value,
-            'previous_state': self.previous_state.value if self.previous_state else None,
-            'state_duration': self.get_state_duration(),
-            'callbacks_registered': {name: callback is not None
-                                   for name, callback in self.callbacks.items()}
+            "current_state": self.current_state.value,
+            "previous_state": (
+                self.previous_state.value if self.previous_state else None
+            ),
+            "state_duration": self.get_state_duration(),
+            "callbacks_registered": {
+                name: callback is not None for name, callback in self.callbacks.items()
+            },
         }

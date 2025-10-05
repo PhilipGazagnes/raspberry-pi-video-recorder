@@ -17,10 +17,10 @@ import pytest
 
 from hardware.audio.audio_queue import AudioQueue
 
-
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_queue_initialization(mock_tts_fast):
@@ -36,9 +36,9 @@ def test_audio_queue_initialization(mock_tts_fast):
 
     # Check status
     status = queue.get_status()
-    assert status['worker_running'] is True
-    assert status['queue_size'] == 0
-    assert status['is_playing'] is False
+    assert status["worker_running"] is True
+    assert status["queue_size"] == 0
+    assert status["is_playing"] is False
 
     queue.stop()
 
@@ -46,6 +46,7 @@ def test_audio_queue_initialization(mock_tts_fast):
 # =============================================================================
 # BASIC PLAYBACK TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_queue_play_single_message(mock_tts_fast):
@@ -124,6 +125,7 @@ def test_audio_queue_empty_text_ignored(mock_tts_fast):
 # QUEUE MANAGEMENT TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_queue_get_queue_size(mock_tts_fast):
     """
@@ -193,6 +195,7 @@ def test_audio_queue_clear_queue(mock_tts_fast):
 # =============================================================================
 # STATUS TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_queue_is_playing(mock_tts_fast):
@@ -293,11 +296,11 @@ def test_audio_queue_get_status(mock_tts_fast):
     status = queue.get_status()
 
     # Should have all required fields
-    assert 'is_playing' in status
-    assert 'current_message' in status
-    assert 'queue_size' in status
-    assert 'is_busy' in status
-    assert 'worker_running' in status
+    assert "is_playing" in status
+    assert "current_message" in status
+    assert "queue_size" in status
+    assert "is_busy" in status
+    assert "worker_running" in status
 
     queue.stop()
 
@@ -305,6 +308,7 @@ def test_audio_queue_get_status(mock_tts_fast):
 # =============================================================================
 # WAIT OPERATIONS TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_audio_queue_wait_until_idle(mock_tts_fast):
@@ -364,6 +368,7 @@ def test_audio_queue_wait_until_idle_timeout(mock_tts_fast):
 # ERROR HANDLING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_queue_tts_error_handling(mock_tts_fast, caplog):
     """
@@ -400,6 +405,7 @@ def test_audio_queue_tts_error_handling(mock_tts_fast, caplog):
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_audio_queue_stop():
     """
@@ -424,12 +430,13 @@ def test_audio_queue_stop():
 
     # Worker should be stopped
     status = queue.get_status()
-    assert status['worker_running'] is False
+    assert status["worker_running"] is False
 
 
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit_integration
 def test_audio_queue_realistic_workflow(mock_tts_fast):

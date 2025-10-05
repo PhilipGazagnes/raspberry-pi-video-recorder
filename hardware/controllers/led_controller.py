@@ -95,7 +95,7 @@ class LEDController:
             f"LED Controller initialized "
             f"(pins: G={self.pins[LEDColor.GREEN]}, "
             f"O={self.pins[LEDColor.ORANGE]}, "
-            f"R={self.pins[LEDColor.RED]})"
+            f"R={self.pins[LEDColor.RED]})",
         )
 
     def _setup_leds(self) -> None:
@@ -141,7 +141,7 @@ class LEDController:
             self._set_all_leds(False, False, False)  # Start with all off
             self._start_blinking(
                 blink_color,
-                LED_BLINK_INTERVAL_NORMAL
+                LED_BLINK_INTERVAL_NORMAL,
             )
         else:
             # Static pattern - just set the LEDs
@@ -151,7 +151,7 @@ class LEDController:
         self,
         green: bool,
         orange: bool,
-        red: bool
+        red: bool,
     ) -> None:
         """
         Set all LEDs to specific states.
@@ -176,9 +176,12 @@ class LEDController:
 
         # Log for debugging (only when LEDs actually change)
         on_leds = []
-        if green: on_leds.append("GREEN")
-        if orange: on_leds.append("ORANGE")
-        if red: on_leds.append("RED")
+        if green:
+            on_leds.append("GREEN")
+        if orange:
+            on_leds.append("ORANGE")
+        if red:
+            on_leds.append("RED")
 
         if on_leds:
             self.logger.debug(f"LEDs ON: {', '.join(on_leds)}")
@@ -188,7 +191,7 @@ class LEDController:
     def _start_blinking(
         self,
         color: LEDColor,
-        interval: float
+        interval: float,
     ) -> None:
         """
         Start blinking a specific LED.
@@ -208,13 +211,12 @@ class LEDController:
             target=self._blink_worker,
             args=(color, interval),
             daemon=True,
-            name=f"LED-Blink-{color.value}"
+            name=f"LED-Blink-{color.value}",
         )
         self._blink_thread.start()
 
         self.logger.debug(
-            f"Started blinking {color.value} LED "
-            f"at {1/interval:.1f}Hz"
+            f"Started blinking {color.value} LED at {1/interval:.1f}Hz",
         )
 
     def _stop_blinking(self) -> None:
@@ -271,7 +273,7 @@ class LEDController:
         # Timer creates its own thread - non-blocking
         timer = threading.Timer(
             duration,
-            lambda: self._restore_pattern(original_pattern)
+            lambda: self._restore_pattern(original_pattern),
         )
         timer.start()
 
@@ -337,14 +339,15 @@ class LEDController:
             print(f"Current pattern: {status['current_pattern']}")
         """
         return {
-            'current_pattern': self.current_pattern.value,
-            'is_blinking': self._blink_thread is not None and self._blink_thread.is_alive(),
-            'gpio_available': self.gpio.is_available(),
-            'pins': {
-                'green': self.pins[LEDColor.GREEN],
-                'orange': self.pins[LEDColor.ORANGE],
-                'red': self.pins[LEDColor.RED],
-            }
+            "current_pattern": self.current_pattern.value,
+            "is_blinking": self._blink_thread is not None
+            and self._blink_thread.is_alive(),
+            "gpio_available": self.gpio.is_available(),
+            "pins": {
+                "green": self.pins[LEDColor.GREEN],
+                "orange": self.pins[LEDColor.ORANGE],
+                "red": self.pins[LEDColor.RED],
+            },
         }
 
     def cleanup(self) -> None:

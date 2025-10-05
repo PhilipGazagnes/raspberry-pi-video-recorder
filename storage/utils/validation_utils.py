@@ -17,14 +17,13 @@ from storage.constants import (
     VideoQuality,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
 def validate_video_file(
     file_path: Path,
     enable_ffmpeg: bool = True,
-    min_size: int = MIN_VIDEO_SIZE_BYTES
+    min_size: int = MIN_VIDEO_SIZE_BYTES,
 ) -> Tuple[VideoQuality, Optional[str]]:
     """
     Validate video file integrity.
@@ -60,11 +59,11 @@ def validate_video_file(
         return VideoQuality.CORRUPTED, f"Cannot read file: {e}"
 
     if file_size < min_size:
-        size_mb = file_size / (1024 ** 2)
-        min_mb = min_size / (1024 ** 2)
+        size_mb = file_size / (1024**2)
+        min_mb = min_size / (1024**2)
         return (
             VideoQuality.TOO_SMALL,
-            f"File too small: {size_mb:.2f} MB (minimum: {min_mb:.2f} MB)"
+            f"File too small: {size_mb:.2f} MB (minimum: {min_mb:.2f} MB)",
         )
 
     # FFmpeg validation (if enabled)
@@ -93,10 +92,10 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
     try:
         # Check if ffprobe is available
         result = subprocess.run(
-            ['ffprobe', '-version'],
+            ["ffprobe", "-version"],
             capture_output=True,
             timeout=5,
-            check=False
+            check=False,
         )
 
         if result.returncode != 0:
@@ -114,17 +113,19 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
     try:
         result = subprocess.run(
             [
-                'ffprobe',
-                '-v', 'error',
-                '-show_format',
-                '-show_streams',
-                '-print_format', 'json',
-                str(file_path)
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_format",
+                "-show_streams",
+                "-print_format",
+                "json",
+                str(file_path),
             ],
             capture_output=True,
             timeout=VALIDATION_TIMEOUT_SECONDS,
             text=True,
-            check=False
+            check=False,
         )
 
         # Check for errors in stderr
@@ -140,12 +141,12 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
             return VideoQuality.INVALID_FORMAT, f"Invalid ffprobe output: {e}"
 
         # Check for format information
-        if 'format' not in data:
+        if "format" not in data:
             return VideoQuality.INVALID_FORMAT, "No format information found"
 
         # Check for video streams
-        streams = data.get('streams', [])
-        has_video = any(s.get('codec_type') == 'video' for s in streams)
+        streams = data.get("streams", [])
+        has_video = any(s.get("codec_type") == "video" for s in streams)
 
         if not has_video:
             return VideoQuality.INVALID_FORMAT, "No video stream found"
@@ -157,7 +158,7 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
     except subprocess.TimeoutExpired:
         return (
             VideoQuality.CORRUPTED,
-            f"Validation timeout after {VALIDATION_TIMEOUT_SECONDS}s"
+            f"Validation timeout after {VALIDATION_TIMEOUT_SECONDS}s",
         )
     except Exception as e:
         logger.error(f"Error during ffmpeg validation: {e}")
@@ -182,16 +183,19 @@ def get_video_duration(file_path: Path) -> Optional[int]:
     try:
         result = subprocess.run(
             [
-                'ffprobe',
-                '-v', 'error',
-                '-show_entries', 'format=duration',
-                '-of', 'json',
-                str(file_path)
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "json",
+                str(file_path),
             ],
             capture_output=True,
             timeout=VALIDATION_TIMEOUT_SECONDS,
             text=True,
-            check=False
+            check=False,
         )
 
         if result.returncode != 0:
@@ -199,14 +203,19 @@ def get_video_duration(file_path: Path) -> Optional[int]:
             return None
 
         data = json.loads(result.stdout)
-        duration_str = data.get('format', {}).get('duration')
+        duration_str = data.get("format", {}).get("duration")
 
         if duration_str:
             return int(float(duration_str))
 
         return None
 
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, ValueError, Exception) as e:
+    except (
+        subprocess.TimeoutExpired,
+        json.JSONDecodeError,
+        ValueError,
+        Exception,
+    ) as e:
         logger.warning(f"Error getting video duration: {e}")
         return None
 
@@ -229,17 +238,19 @@ def get_video_info(file_path: Path) -> dict:
     try:
         result = subprocess.run(
             [
-                'ffprobe',
-                '-v', 'error',
-                '-show_format',
-                '-show_streams',
-                '-of', 'json',
-                str(file_path)
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_format",
+                "-show_streams",
+                "-of",
+                "json",
+                str(file_path),
             ],
             capture_output=True,
             timeout=VALIDATION_TIMEOUT_SECONDS,
             text=True,
-            check=False
+            check=False,
         )
 
         if result.returncode != 0:
@@ -248,29 +259,31 @@ def get_video_info(file_path: Path) -> dict:
         data = json.loads(result.stdout)
 
         # Extract useful information
-        format_info = data.get('format', {})
-        streams = data.get('streams', [])
+        format_info = data.get("format", {})
+        streams = data.get("streams", [])
 
         # Find video stream
         video_stream = next(
-            (s for s in streams if s.get('codec_type') == 'video'),
-            None
+            (s for s in streams if s.get("codec_type") == "video"),
+            None,
         )
 
         info = {
-            'duration': float(format_info.get('duration', 0)),
-            'size': int(format_info.get('size', 0)),
-            'bit_rate': int(format_info.get('bit_rate', 0)),
-            'format_name': format_info.get('format_name', ''),
+            "duration": float(format_info.get("duration", 0)),
+            "size": int(format_info.get("size", 0)),
+            "bit_rate": int(format_info.get("bit_rate", 0)),
+            "format_name": format_info.get("format_name", ""),
         }
 
         if video_stream:
-            info.update({
-                'codec_name': video_stream.get('codec_name', ''),
-                'width': video_stream.get('width', 0),
-                'height': video_stream.get('height', 0),
-                'fps': eval_fps(video_stream.get('r_frame_rate', '0/0')),
-            })
+            info.update(
+                {
+                    "codec_name": video_stream.get("codec_name", ""),
+                    "width": video_stream.get("width", 0),
+                    "height": video_stream.get("height", 0),
+                    "fps": eval_fps(video_stream.get("r_frame_rate", "0/0")),
+                },
+            )
 
         return info
 
@@ -293,8 +306,8 @@ def eval_fps(fps_str: str) -> float:
         fps = eval_fps("30000/1001")  # Returns 29.97
     """
     try:
-        if '/' in fps_str:
-            num, denom = fps_str.split('/')
+        if "/" in fps_str:
+            num, denom = fps_str.split("/")
             return float(num) / float(denom)
         return float(fps_str)
     except (ValueError, ZeroDivisionError):

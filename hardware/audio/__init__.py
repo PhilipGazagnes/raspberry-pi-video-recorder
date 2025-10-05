@@ -9,6 +9,6 @@ from hardware.audio.message_library import MessageLibrary
 
 # Public API
 __all__ = [
-    "MessageLibrary",
     "AudioQueue",
+    "MessageLibrary",
 ]

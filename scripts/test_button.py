@@ -25,7 +25,7 @@ def test_button_system():
 
     # Check if running on real hardware
     hw_status = HardwareFactory.is_real_hardware_available()
-    if not hw_status['gpio']:
+    if not hw_status["gpio"]:
         print("WARNING: Not running on Raspberry Pi or GPIO not available")
         print("This test requires real GPIO hardware")
         print()
@@ -51,18 +51,22 @@ def test_button_system():
     print()
 
     # Track button presses
-    press_count = {'single': 0, 'double': 0}
+    press_count = {"single": 0, "double": 0}
 
     def on_button_press(press_type):
         """Callback for button presses"""
         timestamp = time.strftime("%H:%M:%S")
 
         if press_type == ButtonPress.SINGLE:
-            press_count['single'] += 1
-            print(f"  [{timestamp}] SINGLE press detected (total: {press_count['single']})")
+            press_count["single"] += 1
+            print(
+                f"  [{timestamp}] SINGLE press detected (total: {press_count['single']})",
+            )
         elif press_type == ButtonPress.DOUBLE:
-            press_count['double'] += 1
-            print(f"  [{timestamp}] DOUBLE press detected (total: {press_count['double']})")
+            press_count["double"] += 1
+            print(
+                f"  [{timestamp}] DOUBLE press detected (total: {press_count['double']})",
+            )
 
     # Register callback
     button.register_callback(on_button_press)
@@ -94,12 +98,12 @@ def test_button_system():
         print("\n  Test interrupted")
 
     print()
-    print(f"Test 1 Results:")
+    print("Test 1 Results:")
     print(f"  Single presses: {press_count['single']}")
     print(f"  Double presses: {press_count['double']}")
     print()
 
-    if press_count['single'] > 0 or press_count['double'] > 0:
+    if press_count["single"] > 0 or press_count["double"] > 0:
         print("  [OK] Button is responding")
     else:
         print("  [WARNING] No button presses detected")
@@ -120,7 +124,7 @@ def test_button_system():
     print("  Testing for 10 seconds...")
     print()
 
-    press_count = {'single': 0, 'double': 0}
+    press_count = {"single": 0, "double": 0}
     start_time = time.time()
     test_duration = 10
 
@@ -131,7 +135,7 @@ def test_button_system():
         print("\n  Test interrupted")
 
     print()
-    print(f"Test 2 Results:")
+    print("Test 2 Results:")
     print(f"  Single presses: {press_count['single']}")
     print(f"  Double presses: {press_count['double']}")
     print("  [OK]")
@@ -168,5 +172,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nERROR: Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

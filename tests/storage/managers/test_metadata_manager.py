@@ -20,10 +20,10 @@ from storage.constants import UploadStatus
 from storage.managers.metadata_manager import MetadataManager
 from storage.models.video_file import VideoFile
 
-
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_metadata_manager_initialization(temp_storage_dir):
@@ -48,6 +48,7 @@ def test_metadata_manager_initialization(temp_storage_dir):
 # INSERT TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_insert_video(temp_storage_dir):
     """
@@ -67,7 +68,7 @@ def test_insert_video(temp_storage_dir):
         created_at=datetime.now(),
         duration_seconds=600,
         file_size_bytes=100_000_000,
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
 
     # Insert
@@ -96,7 +97,7 @@ def test_insert_video_duplicate_filename(temp_storage_dir):
         filename="duplicate.mp4",
         filepath=Path("/fake/duplicate.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
 
     # Insert first time
@@ -107,7 +108,7 @@ def test_insert_video_duplicate_filename(temp_storage_dir):
         filename="duplicate.mp4",  # Same filename
         filepath=Path("/fake/duplicate.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
 
     with pytest.raises(StorageError):
@@ -119,6 +120,7 @@ def test_insert_video_duplicate_filename(temp_storage_dir):
 # =============================================================================
 # UPDATE TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_update_video(temp_storage_dir):
@@ -134,7 +136,7 @@ def test_update_video(temp_storage_dir):
         filename="test_video.mp4",
         filepath=Path("/fake/test_video.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     video = manager.insert_video(video)
 
@@ -158,6 +160,7 @@ def test_update_video(temp_storage_dir):
 # RETRIEVAL TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_get_video_by_id(temp_storage_dir):
     """
@@ -170,7 +173,7 @@ def test_get_video_by_id(temp_storage_dir):
         filename="test_video.mp4",
         filepath=Path("/fake/test_video.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     video = manager.insert_video(video)
 
@@ -211,7 +214,7 @@ def test_get_video_by_filename(temp_storage_dir):
         filename="unique_video.mp4",
         filepath=Path("/fake/unique_video.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     manager.insert_video(video)
 
@@ -228,6 +231,7 @@ def test_get_video_by_filename(temp_storage_dir):
 # LIST/QUERY TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_list_all_videos(temp_storage_dir):
     """
@@ -241,7 +245,7 @@ def test_list_all_videos(temp_storage_dir):
             filename=f"video_{i}.mp4",
             filepath=Path(f"/fake/video_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.PENDING
+            status=UploadStatus.PENDING,
         )
         manager.insert_video(video)
 
@@ -266,7 +270,7 @@ def test_list_videos_by_status(temp_storage_dir):
             filename=f"pending_{i}.mp4",
             filepath=Path(f"/fake/pending_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.PENDING
+            status=UploadStatus.PENDING,
         )
         manager.insert_video(video)
 
@@ -275,7 +279,7 @@ def test_list_videos_by_status(temp_storage_dir):
             filename=f"completed_{i}.mp4",
             filepath=Path(f"/fake/completed_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.COMPLETED
+            status=UploadStatus.COMPLETED,
         )
         manager.insert_video(video)
 
@@ -303,7 +307,7 @@ def test_list_videos_with_limit(temp_storage_dir):
             filename=f"video_{i}.mp4",
             filepath=Path(f"/fake/video_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.PENDING
+            status=UploadStatus.PENDING,
         )
         manager.insert_video(video)
 
@@ -319,6 +323,7 @@ def test_list_videos_with_limit(temp_storage_dir):
 # DELETE TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_delete_video(temp_storage_dir):
     """
@@ -331,7 +336,7 @@ def test_delete_video(temp_storage_dir):
         filename="to_delete.mp4",
         filepath=Path("/fake/to_delete.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     video = manager.insert_video(video)
 
@@ -348,6 +353,7 @@ def test_delete_video(temp_storage_dir):
 # =============================================================================
 # RETRY QUEUE TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_get_retry_queue(temp_storage_dir):
@@ -366,7 +372,7 @@ def test_get_retry_queue(temp_storage_dir):
         filepath=Path("/fake/retry_eligible.mp4"),
         created_at=datetime.now(),
         status=UploadStatus.FAILED,
-        upload_attempts=1
+        upload_attempts=1,
     )
     manager.insert_video(video1)
 
@@ -376,7 +382,7 @@ def test_get_retry_queue(temp_storage_dir):
         filepath=Path("/fake/retry_exceeded.mp4"),
         created_at=datetime.now(),
         status=UploadStatus.FAILED,
-        upload_attempts=MAX_UPLOAD_RETRIES + 1
+        upload_attempts=MAX_UPLOAD_RETRIES + 1,
     )
     manager.insert_video(video2)
 
@@ -394,6 +400,7 @@ def test_get_retry_queue(temp_storage_dir):
 # STATUS COUNT TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_get_count_by_status(temp_storage_dir):
     """
@@ -407,7 +414,7 @@ def test_get_count_by_status(temp_storage_dir):
             filename=f"pending_{i}.mp4",
             filepath=Path(f"/fake/pending_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.PENDING
+            status=UploadStatus.PENDING,
         )
         manager.insert_video(video)
 
@@ -416,7 +423,7 @@ def test_get_count_by_status(temp_storage_dir):
             filename=f"completed_{i}.mp4",
             filepath=Path(f"/fake/completed_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.COMPLETED
+            status=UploadStatus.COMPLETED,
         )
         manager.insert_video(video)
 
@@ -442,7 +449,7 @@ def test_get_total_count(temp_storage_dir):
             filename=f"video_{i}.mp4",
             filepath=Path(f"/fake/video_{i}.mp4"),
             created_at=datetime.now(),
-            status=UploadStatus.PENDING
+            status=UploadStatus.PENDING,
         )
         manager.insert_video(video)
 
@@ -458,6 +465,7 @@ def test_get_total_count(temp_storage_dir):
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_cleanup(temp_storage_dir):
     """
@@ -470,7 +478,7 @@ def test_cleanup(temp_storage_dir):
         filename="test.mp4",
         filepath=Path("/fake/test.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     manager.insert_video(video)
 
@@ -489,6 +497,7 @@ def test_cleanup(temp_storage_dir):
 # INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit_integration
 def test_complete_video_lifecycle(temp_storage_dir):
     """
@@ -501,7 +510,7 @@ def test_complete_video_lifecycle(temp_storage_dir):
         filename="lifecycle.mp4",
         filepath=Path("/fake/pending/lifecycle.mp4"),
         created_at=datetime.now(),
-        status=UploadStatus.PENDING
+        status=UploadStatus.PENDING,
     )
     video = manager.insert_video(video)
     assert video.id is not None

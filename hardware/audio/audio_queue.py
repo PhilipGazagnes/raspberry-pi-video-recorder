@@ -89,7 +89,7 @@ class AudioQueue:
         self._worker_thread = threading.Thread(
             target=self._worker_loop,
             daemon=True,  # Dies when main program exits
-            name="AudioQueue-Worker"
+            name="AudioQueue-Worker",
         )
         self._worker_thread.start()
 
@@ -177,7 +177,7 @@ class AudioQueue:
 
         self.logger.debug(
             f"Queued message: '{text[:30]}...' "
-            f"(queue size: {self.get_queue_size()})"
+            f"(queue size: {self.get_queue_size()})",
         )
 
     def clear_queue(self) -> int:
@@ -290,17 +290,18 @@ class AudioQueue:
                 self._message_queue.join()
                 # Additional check for is_playing
                 import time
+
                 start = time.time()
                 while self._is_playing and (time.time() - start) < timeout:
                     time.sleep(0.1)
                 return not self._is_playing
-            else:
-                self._message_queue.join()
-                # Wait for current message to finish
-                import time
-                while self._is_playing:
-                    time.sleep(0.1)
-                return True
+            self._message_queue.join()
+            # Wait for current message to finish
+            import time
+
+            while self._is_playing:
+                time.sleep(0.1)
+            return True
         except Exception as e:
             self.logger.error(f"Error waiting for idle: {e}")
             return False
@@ -318,11 +319,11 @@ class AudioQueue:
             print(f"Is playing: {status['is_playing']}")
         """
         return {
-            'is_playing': self._is_playing,
-            'current_message': self._current_message,
-            'queue_size': self.get_queue_size(),
-            'is_busy': self.is_busy(),
-            'worker_running': self._worker_running,
+            "is_playing": self._is_playing,
+            "current_message": self._current_message,
+            "queue_size": self.get_queue_size(),
+            "is_busy": self.is_busy(),
+            "worker_running": self._worker_running,
         }
 
     def stop(self) -> None:

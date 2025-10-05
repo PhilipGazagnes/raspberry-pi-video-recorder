@@ -30,13 +30,12 @@ class StorageInterface(ABC):
         Raises:
             StorageError: If initialization fails
         """
-        pass
 
     @abstractmethod
     def save_video(
         self,
         source_path: Path,
-        duration_seconds: Optional[int] = None
+        duration_seconds: Optional[int] = None,
     ) -> VideoFile:
         """
         Save a new video file to storage.
@@ -51,7 +50,6 @@ class StorageInterface(ABC):
         Raises:
             StorageError: If save operation fails
         """
-        pass
 
     @abstractmethod
     def get_video(self, video_id: int) -> Optional[VideoFile]:
@@ -64,7 +62,6 @@ class StorageInterface(ABC):
         Returns:
             VideoFile object or None if not found
         """
-        pass
 
     @abstractmethod
     def get_video_by_filename(self, filename: str) -> Optional[VideoFile]:
@@ -77,13 +74,12 @@ class StorageInterface(ABC):
         Returns:
             VideoFile object or None if not found
         """
-        pass
 
     @abstractmethod
     def list_videos(
         self,
-        status: Optional['UploadStatus'] = None,
-        limit: Optional[int] = None
+        status: Optional["UploadStatus"] = None,
+        limit: Optional[int] = None,
     ) -> List[VideoFile]:
         """
         List videos, optionally filtered by status.
@@ -95,7 +91,6 @@ class StorageInterface(ABC):
         Returns:
             List of VideoFile objects
         """
-        pass
 
     @abstractmethod
     def update_video(self, video: VideoFile) -> None:
@@ -108,7 +103,6 @@ class StorageInterface(ABC):
         Raises:
             StorageError: If update fails
         """
-        pass
 
     @abstractmethod
     def delete_video(self, video: VideoFile, remove_file: bool = True) -> None:
@@ -122,7 +116,6 @@ class StorageInterface(ABC):
         Raises:
             StorageError: If deletion fails
         """
-        pass
 
     @abstractmethod
     def move_video(self, video: VideoFile, destination_dir: str) -> VideoFile:
@@ -139,7 +132,6 @@ class StorageInterface(ABC):
         Raises:
             StorageError: If move fails
         """
-        pass
 
     @abstractmethod
     def validate_video(self, video: VideoFile) -> bool:
@@ -154,7 +146,6 @@ class StorageInterface(ABC):
         Returns:
             True if valid, False if corrupted
         """
-        pass
 
     @abstractmethod
     def get_stats(self) -> StorageStats:
@@ -164,7 +155,6 @@ class StorageInterface(ABC):
         Returns:
             StorageStats object with disk space and video counts
         """
-        pass
 
     @abstractmethod
     def check_space_available(self) -> bool:
@@ -174,7 +164,6 @@ class StorageInterface(ABC):
         Returns:
             True if space >= MIN_FREE_SPACE_BYTES, False otherwise
         """
-        pass
 
     @abstractmethod
     def cleanup_old_videos(self, dry_run: bool = False) -> int:
@@ -187,7 +176,6 @@ class StorageInterface(ABC):
         Returns:
             Number of videos cleaned up (or would be cleaned up if dry_run)
         """
-        pass
 
     @abstractmethod
     def get_retry_queue(self) -> List[VideoFile]:
@@ -197,7 +185,6 @@ class StorageInterface(ABC):
         Returns:
             List of failed videos that haven't exceeded retry limit
         """
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
@@ -207,14 +194,12 @@ class StorageInterface(ABC):
         Returns:
             True if storage is ready, False otherwise
         """
-        pass
 
     @abstractmethod
     def cleanup(self) -> None:
         """
         Clean up storage resources (close database connections, etc.).
         """
-        pass
 
 
 class StorageError(Exception):
@@ -225,4 +210,3 @@ class StorageError(Exception):
         except StorageError as e:
             logger.error(f"Storage failed: {e}")
     """
-    pass

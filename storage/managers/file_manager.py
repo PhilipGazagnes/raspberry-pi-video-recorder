@@ -99,7 +99,7 @@ class FileManager:
         self,
         source_path: Path,
         destination_dir: str = DIR_PENDING,
-        custom_filename: Optional[str] = None
+        custom_filename: Optional[str] = None,
     ) -> Path:
         """
         Save file to storage.
@@ -144,7 +144,7 @@ class FileManager:
     def move_file(
         self,
         source_path: Path,
-        destination_dir: str
+        destination_dir: str,
     ) -> Path:
         """
         Move file to different directory.
@@ -183,7 +183,7 @@ class FileManager:
             shutil.move(str(source_path), str(dest_path))
 
             self.logger.info(
-                f"Moved file: {source_path.name} -> {destination_dir}/"
+                f"Moved file: {source_path.name} -> {destination_dir}/",
             )
             return dest_path
 
@@ -334,11 +334,11 @@ class FileManager:
             Dictionary with directory paths and status
         """
         return {
-            'storage_base': str(self.storage_base),
-            'pending_dir': str(self.pending_dir),
-            'uploaded_dir': str(self.uploaded_dir),
-            'failed_dir': str(self.failed_dir),
-            'corrupted_dir': str(self.corrupted_dir),
-            'writable': self.validate_storage_writable(),
-            'exists': self.storage_base.exists(),
+            "storage_base": str(self.storage_base),
+            "pending_dir": str(self.pending_dir),
+            "uploaded_dir": str(self.uploaded_dir),
+            "failed_dir": str(self.failed_dir),
+            "corrupted_dir": str(self.corrupted_dir),
+            "writable": self.validate_storage_writable(),
+            "exists": self.storage_base.exists(),
         }

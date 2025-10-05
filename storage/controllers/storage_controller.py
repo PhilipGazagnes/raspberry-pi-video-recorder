@@ -38,7 +38,7 @@ class StorageController:
     def __init__(
         self,
         storage_impl: Optional[StorageInterface] = None,
-        config: Optional[StorageConfig] = None
+        config: Optional[StorageConfig] = None,
     ):
         """
         Initialize storage controller.
@@ -59,9 +59,13 @@ class StorageController:
         # Event callbacks (like hardware controllers)
         self.on_disk_full: Optional[Callable[[], None]] = None
         self.on_low_space: Optional[Callable[[int], None]] = None  # passes free bytes
-        self.on_corruption_detected: Optional[Callable[[str], None]] = None  # passes filename
+        self.on_corruption_detected: Optional[Callable[[str], None]] = (
+            None  # passes filename
+        )
         self.on_cleanup_complete: Optional[Callable[[int], None]] = None  # passes count
-        self.on_storage_error: Optional[Callable[[str], None]] = None  # passes error message
+        self.on_storage_error: Optional[Callable[[str], None]] = (
+            None  # passes error message
+        )
 
         self.logger.info("Storage controller initialized")
 
@@ -72,7 +76,7 @@ class StorageController:
     def save_recording(
         self,
         video_path: Path,
-        duration_seconds: Optional[int] = None
+        duration_seconds: Optional[int] = None,
     ) -> Optional[VideoFile]:
         """
         Save a new recording to storage.
@@ -100,7 +104,7 @@ class StorageController:
 
             self.logger.info(
                 f"Recording saved: {video.filename} "
-                f"({video.file_size_bytes / (1024**2):.2f} MB)"
+                f"({video.file_size_bytes / (1024**2):.2f} MB)",
             )
 
             # Check space after save
@@ -154,7 +158,7 @@ class StorageController:
             video = self.storage.move_video(video, DIR_UPLOADED)
 
             self.logger.info(
-                f"Upload successful: {video.filename} -> {youtube_url}"
+                f"Upload successful: {video.filename} -> {youtube_url}",
             )
             return True
 
@@ -183,14 +187,14 @@ class StorageController:
 
             self.logger.warning(
                 f"Upload failed: {video.filename} "
-                f"(attempt {video.upload_attempts}): {error}"
+                f"(attempt {video.upload_attempts}): {error}",
             )
 
             # Check if exceeded retry limit
             if not video.can_retry:
                 self.logger.error(
                     f"Video exceeded retry limit: {video.filename} "
-                    f"({video.upload_attempts} attempts)"
+                    f"({video.upload_attempts} attempts)",
                 )
 
             return True
@@ -296,6 +300,7 @@ class StorageController:
 
             # Use cleanup manager through storage
             from storage.managers.cleanup_manager import CleanupManager
+
             cleanup_mgr = CleanupManager(self.config)
 
             return cleanup_mgr.get_cleanup_summary(uploaded)
@@ -318,17 +323,17 @@ class StorageController:
         stats = self.get_stats()
 
         return {
-            'available': self.storage.is_available(),
-            'storage_stats': stats.to_dict(),
-            'pending_uploads': len(self.get_pending_uploads()),
-            'retry_queue_size': len(self.get_retry_queue()),
-            'can_record': self.check_space(),
-            'config': {
-                'base_path': str(self.config.storage_base_path),
-                'min_free_space_gb': self.config.min_free_space_bytes / (1024**3),
-                'retention_days': self.config.uploaded_retention_days,
-                'max_uploaded_videos': self.config.max_uploaded_videos,
-            }
+            "available": self.storage.is_available(),
+            "storage_stats": stats.to_dict(),
+            "pending_uploads": len(self.get_pending_uploads()),
+            "retry_queue_size": len(self.get_retry_queue()),
+            "can_record": self.check_space(),
+            "config": {
+                "base_path": str(self.config.storage_base_path),
+                "min_free_space_gb": self.config.min_free_space_bytes / (1024**3),
+                "retention_days": self.config.uploaded_retention_days,
+                "max_uploaded_videos": self.config.max_uploaded_videos,
+            },
         }
 
     def log_status(self) -> None:
@@ -341,7 +346,7 @@ class StorageController:
             f"Videos={stats.total_videos} "
             f"(pending={stats.pending_count}, "
             f"completed={stats.completed_count}, "
-            f"failed={stats.failed_count})"
+            f"failed={stats.failed_count})",
         )
 
     # =========================================================================

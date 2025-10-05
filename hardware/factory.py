@@ -15,7 +15,7 @@ an interface for creating objects without specifying their concrete classes.
 """
 
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
 from hardware.implementations.mock_gpio import MockGPIO
 from hardware.implementations.mock_tts import MockTTS
@@ -49,7 +49,7 @@ class HardwareFactory:
     @classmethod
     def create_gpio(
         cls,
-        mode: HardwareMode = "auto"
+        mode: HardwareMode = "auto",
     ) -> GPIOInterface:
         """
         Create a GPIO interface instance.
@@ -82,7 +82,7 @@ class HardwareFactory:
                 return gpio
             except Exception as e:
                 raise RuntimeError(
-                    f"Real GPIO requested but not available: {e}"
+                    f"Real GPIO requested but not available: {e}",
                 ) from e
 
         # mode == "auto" - try real first, fall back to mock
@@ -92,7 +92,7 @@ class HardwareFactory:
             return gpio
         except Exception as e:
             cls._logger.warning(
-                f"Real GPIO not available ({e}), using Mock GPIO"
+                f"Real GPIO not available ({e}), using Mock GPIO",
             )
             return MockGPIO()
 
@@ -100,7 +100,7 @@ class HardwareFactory:
     def create_tts(
         cls,
         mode: HardwareMode = "auto",
-        simulate_timing: bool = True
+        simulate_timing: bool = True,
     ) -> TTSInterface:
         """
         Create a TTS interface instance.
@@ -127,7 +127,7 @@ class HardwareFactory:
         """
         if mode == "mock":
             cls._logger.info(
-                f"Creating Mock TTS (forced, timing: {simulate_timing})"
+                f"Creating Mock TTS (forced, timing: {simulate_timing})",
             )
             return MockTTS(simulate_timing=simulate_timing)
 
@@ -138,7 +138,7 @@ class HardwareFactory:
                 return tts
             except Exception as e:
                 raise RuntimeError(
-                    f"Real TTS requested but not available: {e}"
+                    f"Real TTS requested but not available: {e}",
                 ) from e
 
         # mode == "auto" - try real first, fall back to mock
@@ -148,7 +148,7 @@ class HardwareFactory:
             return tts
         except Exception as e:
             cls._logger.warning(
-                f"Real TTS not available ({e}), using Mock TTS"
+                f"Real TTS not available ({e}), using Mock TTS",
             )
             return MockTTS(simulate_timing=simulate_timing)
 
@@ -172,14 +172,14 @@ class HardwareFactory:
                 print("Warning: Running in GPIO simulation mode")
         """
         status = {
-            'gpio': False,
-            'tts': False,
+            "gpio": False,
+            "tts": False,
         }
 
         # Check GPIO
         try:
             gpio = RaspberryPiGPIO()
-            status['gpio'] = gpio.is_available()
+            status["gpio"] = gpio.is_available()
             gpio.cleanup()
         except Exception:
             pass
@@ -187,7 +187,7 @@ class HardwareFactory:
         # Check TTS
         try:
             tts = PyTTSx3Engine()
-            status['tts'] = tts.is_available()
+            status["tts"] = tts.is_available()
             tts.cleanup()
         except Exception:
             pass
@@ -197,6 +197,7 @@ class HardwareFactory:
 
 # Convenience functions for quick creation
 # These are shortcuts for the most common usage patterns
+
 
 def create_gpio(force_mock: bool = False) -> GPIOInterface:
     """

@@ -34,7 +34,6 @@ class TTSInterface(ABC):
         Raises:
             TTSError: If speech synthesis fails
         """
-        pass
 
     @abstractmethod
     def set_rate(self, rate: int) -> None:
@@ -47,7 +46,6 @@ class TTSInterface(ABC):
         Raises:
             TTSError: If rate is invalid or cannot be set
         """
-        pass
 
     @abstractmethod
     def set_volume(self, volume: float) -> None:
@@ -60,7 +58,6 @@ class TTSInterface(ABC):
         Raises:
             TTSError: If volume is invalid or cannot be set
         """
-        pass
 
     @abstractmethod
     def set_voice(self, voice_id: Optional[str] = None) -> None:
@@ -73,7 +70,6 @@ class TTSInterface(ABC):
         Raises:
             TTSError: If voice is not found
         """
-        pass
 
     @abstractmethod
     def get_available_voices(self) -> list[str]:
@@ -83,7 +79,6 @@ class TTSInterface(ABC):
         Returns:
             List of voice IDs that can be passed to set_voice()
         """
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
@@ -93,7 +88,6 @@ class TTSInterface(ABC):
         Returns:
             True if TTS hardware/software is working, False otherwise
         """
-        pass
 
     @abstractmethod
     def cleanup(self) -> None:
@@ -101,7 +95,6 @@ class TTSInterface(ABC):
         Clean up TTS resources.
         Called when shutting down.
         """
-        pass
 
 
 class TTSError(Exception):
@@ -113,4 +106,3 @@ class TTSError(Exception):
     - Audio device not available
     - Invalid voice/rate/volume parameters
     """
-    pass

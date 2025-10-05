@@ -12,15 +12,16 @@ To run:
 """
 
 import time
-import pytest
 from pathlib import Path
 
-from recording.controllers.camera_manager import CameraManager
+import pytest
 
+from recording.controllers.camera_manager import CameraManager
 
 # =============================================================================
 # INITIALIZATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_camera_manager_initialization(mock_capture_fast):
@@ -36,6 +37,7 @@ def test_camera_manager_initialization(mock_capture_fast):
 # =============================================================================
 # READINESS TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_camera_manager_is_ready(camera_manager):
@@ -58,6 +60,7 @@ def test_camera_manager_not_ready_when_recording(camera_manager, temp_video_file
 # =============================================================================
 # RECORDING TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_camera_manager_start_recording(camera_manager, temp_video_file):
@@ -106,8 +109,12 @@ def test_camera_manager_stop_when_not_recording(camera_manager):
 # DURATION TRACKING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
-def test_camera_manager_get_recording_duration(camera_manager_realistic, temp_video_file):
+def test_camera_manager_get_recording_duration(
+    camera_manager_realistic,
+    temp_video_file,
+):
     """Test getting recording duration."""
     camera_manager_realistic.start_recording(temp_video_file)
 
@@ -133,13 +140,14 @@ def test_camera_manager_duration_zero_when_not_recording(camera_manager):
 # HEALTH MONITORING TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_camera_manager_check_health_not_recording(camera_manager):
     """Test health check when not recording."""
     health = camera_manager.check_health()
 
-    assert health['is_healthy'] is False
-    assert "not running" in health['error_message'].lower()
+    assert health["is_healthy"] is False
+    assert "not running" in health["error_message"].lower()
 
 
 @pytest.mark.unit
@@ -149,8 +157,8 @@ def test_camera_manager_check_health_recording(camera_manager, temp_video_file):
 
     health = camera_manager.check_health()
 
-    assert health['is_healthy'] is True
-    assert health['error_message'] is None
+    assert health["is_healthy"] is True
+    assert health["error_message"] is None
 
     camera_manager.stop_recording()
 
@@ -170,14 +178,14 @@ def test_camera_manager_health_consecutive_failures(mock_capture_realistic):
 
     # Multiple health checks should track failures
     health1 = manager.check_health(force=True)
-    assert health1['consecutive_failures'] == 1
+    assert health1["consecutive_failures"] == 1
 
     health2 = manager.check_health(force=True)
-    assert health2['consecutive_failures'] == 2
+    assert health2["consecutive_failures"] == 2
 
     health3 = manager.check_health(force=True)
-    assert health3['consecutive_failures'] == 3
-    assert health3['critical'] is True
+    assert health3["consecutive_failures"] == 3
+    assert health3["critical"] is True
 
     manager.cleanup()
 
@@ -186,6 +194,7 @@ def test_camera_manager_health_consecutive_failures(mock_capture_realistic):
 # STATUS TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_camera_manager_get_status(camera_manager, temp_video_file):
     """Test get_status() returns complete information."""
@@ -193,15 +202,15 @@ def test_camera_manager_get_status(camera_manager, temp_video_file):
 
     status = camera_manager.get_status()
 
-    assert 'is_available' in status
-    assert 'is_ready' in status
-    assert 'is_recording' in status
-    assert 'recording_duration' in status
-    assert 'output_file' in status
-    assert 'health' in status
+    assert "is_available" in status
+    assert "is_ready" in status
+    assert "is_recording" in status
+    assert "recording_duration" in status
+    assert "output_file" in status
+    assert "health" in status
 
-    assert status['is_recording'] is True
-    assert status['output_file'] == str(temp_video_file)
+    assert status["is_recording"] is True
+    assert status["output_file"] == str(temp_video_file)
 
     camera_manager.stop_recording()
 
@@ -209,6 +218,7 @@ def test_camera_manager_get_status(camera_manager, temp_video_file):
 # =============================================================================
 # ERROR HANDLING TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_camera_manager_handles_capture_error(temp_video_file):
@@ -231,6 +241,7 @@ def test_camera_manager_handles_capture_error(temp_video_file):
 # CLEANUP TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_camera_manager_cleanup_stops_recording(camera_manager, temp_video_file):
     """Test cleanup stops active recording."""
@@ -247,6 +258,7 @@ def test_camera_manager_cleanup_stops_recording(camera_manager, temp_video_file)
 # INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit_integration
 def test_camera_manager_complete_workflow(camera_manager_realistic, temp_video_file):
     """Integration test: Complete recording workflow."""
@@ -260,12 +272,12 @@ def test_camera_manager_complete_workflow(camera_manager_realistic, temp_video_f
     # Check health during recording
     time.sleep(0.3)
     health = camera_manager_realistic.check_health()
-    assert health['is_healthy'] is True
+    assert health["is_healthy"] is True
 
     # Get status
     status = camera_manager_realistic.get_status()
-    assert status['is_recording'] is True
-    assert status['recording_duration'] > 0
+    assert status["is_recording"] is True
+    assert status["recording_duration"] > 0
 
     # Stop
     success = camera_manager_realistic.stop_recording()

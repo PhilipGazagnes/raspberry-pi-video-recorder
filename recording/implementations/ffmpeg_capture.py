@@ -52,7 +52,7 @@ class FFmpegCapture(VideoCaptureInterface):
         camera_device: str = DEFAULT_CAMERA_DEVICE,
         width: int = VIDEO_WIDTH,
         height: int = VIDEO_HEIGHT,
-        fps: int = VIDEO_FPS
+        fps: int = VIDEO_FPS,
     ):
         """
         Initialize FFmpeg capture.
@@ -79,13 +79,13 @@ class FFmpegCapture(VideoCaptureInterface):
 
         self.logger.info(
             f"FFmpeg Capture initialized "
-            f"(camera: {camera_device}, resolution: {width}x{height}, fps: {fps})"
+            f"(camera: {camera_device}, resolution: {width}x{height}, fps: {fps})",
         )
 
     def start_capture(
         self,
         output_file: Path,
-        duration: Optional[float] = None
+        duration: Optional[float] = None,
     ) -> bool:
         """
         Start capturing video with FFmpeg.
@@ -101,7 +101,7 @@ class FFmpegCapture(VideoCaptureInterface):
         # Validate camera is available
         if not validate_camera_device(self.camera_device):
             raise CameraNotFoundError(
-                f"Camera device not found: {self.camera_device}"
+                f"Camera device not found: {self.camera_device}",
             )
 
         # Ensure output directory exists
@@ -113,7 +113,7 @@ class FFmpegCapture(VideoCaptureInterface):
             output_file=str(output_file),
             width=self.width,
             height=self.height,
-            fps=self.fps
+            fps=self.fps,
         )
 
         # Add duration limit if specified
@@ -131,7 +131,7 @@ class FFmpegCapture(VideoCaptureInterface):
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                stdin=subprocess.DEVNULL  # Don't wait for stdin
+                stdin=subprocess.DEVNULL,  # Don't wait for stdin
             )
 
             # Give FFmpeg time to initialize
@@ -141,16 +141,15 @@ class FFmpegCapture(VideoCaptureInterface):
             if self._process.poll() is not None:
                 # Process exited already - something went wrong
                 stdout, stderr = self._process.communicate()
-                error_msg = stderr.decode('utf-8', errors='ignore')
+                error_msg = stderr.decode("utf-8", errors="ignore")
 
                 if "Device or resource busy" in error_msg:
                     raise CameraBusyError(
-                        f"Camera is busy: {self.camera_device}"
+                        f"Camera is busy: {self.camera_device}",
                     )
-                else:
-                    raise CaptureProcessError(
-                        f"FFmpeg failed to start: {error_msg}"
-                    )
+                raise CaptureProcessError(
+                    f"FFmpeg failed to start: {error_msg}",
+                )
 
             # Success - track state
             self._output_file = output_file
@@ -159,13 +158,13 @@ class FFmpegCapture(VideoCaptureInterface):
 
             self.logger.info(
                 f"Capture started successfully "
-                f"(PID: {self._process.pid}, duration: {duration or 'unlimited'}s)"
+                f"(PID: {self._process.pid}, duration: {duration or 'unlimited'}s)",
             )
             return True
 
         except FileNotFoundError:
             raise CaptureError(
-                "FFmpeg not found. Install with: sudo apt-get install ffmpeg"
+                "FFmpeg not found. Install with: sudo apt-get install ffmpeg",
             )
         except Exception as e:
             self.logger.error(f"Failed to start capture: {e}")
@@ -196,8 +195,10 @@ class FFmpegCapture(VideoCaptureInterface):
 
                 # Check exit code
                 if self._process.returncode != 0:
-                    error_msg = stderr.decode('utf-8', errors='ignore')
-                    self.logger.warning(f"FFmpeg exited with code {self._process.returncode}: {error_msg}")
+                    error_msg = stderr.decode("utf-8", errors="ignore")
+                    self.logger.warning(
+                        f"FFmpeg exited with code {self._process.returncode}: {error_msg}",
+                    )
                 else:
                     self.logger.info("Capture stopped successfully")
 
@@ -211,7 +212,7 @@ class FFmpegCapture(VideoCaptureInterface):
             if self._output_file and self._output_file.exists():
                 file_size_mb = self._output_file.stat().st_size / (1024 * 1024)
                 self.logger.info(
-                    f"Recording saved: {self._output_file} ({file_size_mb:.1f} MB)"
+                    f"Recording saved: {self._output_file} ({file_size_mb:.1f} MB)",
                 )
             else:
                 self.logger.error("Output file was not created!")
@@ -262,40 +263,40 @@ class FFmpegCapture(VideoCaptureInterface):
         file size, and any errors.
         """
         health = {
-            'is_healthy': True,
-            'error_message': None,
-            'frames_captured': 0,  # FFmpeg doesn't easily expose this
-            'fps': self.fps,
-            'file_size_mb': 0.0,
+            "is_healthy": True,
+            "error_message": None,
+            "frames_captured": 0,  # FFmpeg doesn't easily expose this
+            "fps": self.fps,
+            "file_size_mb": 0.0,
         }
 
         # Check if process is running
         if not self.is_capturing():
-            health['is_healthy'] = False
-            health['error_message'] = "Capture not running"
+            health["is_healthy"] = False
+            health["error_message"] = "Capture not running"
             return health
 
         # Check if process crashed
         if self._process.poll() is not None:
             # Process exited unexpectedly
-            health['is_healthy'] = False
+            health["is_healthy"] = False
             try:
                 stdout, stderr = self._process.communicate(timeout=1.0)
-                error_msg = stderr.decode('utf-8', errors='ignore')
-                health['error_message'] = f"FFmpeg crashed: {error_msg}"
+                error_msg = stderr.decode("utf-8", errors="ignore")
+                health["error_message"] = f"FFmpeg crashed: {error_msg}"
             except:
-                health['error_message'] = "FFmpeg crashed (unknown error)"
+                health["error_message"] = "FFmpeg crashed (unknown error)"
             return health
 
         # Check file size (indicates frames are being written)
         if self._output_file and self._output_file.exists():
             file_size_bytes = self._output_file.stat().st_size
-            health['file_size_mb'] = file_size_bytes / (1024 * 1024)
+            health["file_size_mb"] = file_size_bytes / (1024 * 1024)
 
             # If file size is 0 after warmup, something's wrong
-            if health['file_size_mb'] == 0.0 and self.get_capture_duration() > 2.0:
-                health['is_healthy'] = False
-                health['error_message'] = "No data being written to file"
+            if health["file_size_mb"] == 0.0 and self.get_capture_duration() > 2.0:
+                health["is_healthy"] = False
+                health["error_message"] = "No data being written to file"
 
         return health
 
@@ -351,10 +352,10 @@ class FFmpegCapture(VideoCaptureInterface):
             Dictionary with camera information
         """
         info = {
-            'device': self.camera_device,
-            'exists': validate_camera_device(self.camera_device),
-            'configured_resolution': f"{self.width}x{self.height}",
-            'configured_fps': self.fps,
+            "device": self.camera_device,
+            "exists": validate_camera_device(self.camera_device),
+            "configured_resolution": f"{self.width}x{self.height}",
+            "configured_fps": self.fps,
         }
 
         # Try to get actual camera capabilities using v4l2-ctl
@@ -363,12 +364,13 @@ class FFmpegCapture(VideoCaptureInterface):
             if shutil.which("v4l2-ctl"):
                 result = subprocess.run(
                     ["v4l2-ctl", "-d", self.camera_device, "--list-formats-ext"],
+                    check=False,
                     capture_output=True,
                     text=True,
-                    timeout=2.0
+                    timeout=2.0,
                 )
                 if result.returncode == 0:
-                    info['capabilities'] = result.stdout
+                    info["capabilities"] = result.stdout
         except:
             pass  # Optional info, don't fail if we can't get it
 

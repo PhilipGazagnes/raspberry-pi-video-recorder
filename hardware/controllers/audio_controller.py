@@ -24,7 +24,7 @@ from typing import Optional
 
 from hardware.audio.audio_queue import AudioQueue
 from hardware.audio.message_library import MessageLibrary
-from hardware.constants import AudioMessage, TTS_SPEECH_RATE, TTS_VOLUME
+from hardware.constants import TTS_SPEECH_RATE, TTS_VOLUME, AudioMessage
 from hardware.factory import create_tts
 from hardware.interfaces.tts_interface import TTSInterface
 
@@ -77,7 +77,7 @@ class AudioController:
 
         self.logger.info(
             f"Audio Controller initialized "
-            f"(TTS available: {self.tts_engine.is_available()})"
+            f"(TTS available: {self.tts_engine.is_available()})",
         )
 
     def _configure_tts(self) -> None:
@@ -90,8 +90,7 @@ class AudioController:
             self.tts_engine.set_rate(TTS_SPEECH_RATE)
             self.tts_engine.set_volume(TTS_VOLUME)
             self.logger.debug(
-                f"TTS configured: rate={TTS_SPEECH_RATE} WPM, "
-                f"volume={TTS_VOLUME}"
+                f"TTS configured: rate={TTS_SPEECH_RATE} WPM, volume={TTS_VOLUME}",
             )
         except Exception as e:
             self.logger.warning(f"Could not configure TTS: {e}")
@@ -290,7 +289,7 @@ class AudioController:
             "Audio system test",
             "Recording started",
             "One minute remaining",
-            "Recording complete"
+            "Recording complete",
         ]
 
         for message in test_messages:
@@ -335,18 +334,18 @@ class AudioController:
             print(f"TTS available: {status['tts_available']}")
         """
         status = {
-            'tts_available': self.tts_engine.is_available(),
-            'message_count': len(self.message_library),
-            'queue_size': self.audio_queue.get_queue_size(),
-            'is_playing': self.is_playing(),
+            "tts_available": self.tts_engine.is_available(),
+            "message_count": len(self.message_library),
+            "queue_size": self.audio_queue.get_queue_size(),
+            "is_playing": self.is_playing(),
         }
 
         # Try to get available voices
         try:
             voices = self.tts_engine.get_available_voices()
-            status['available_voices'] = len(voices)
+            status["available_voices"] = len(voices)
         except Exception:
-            status['available_voices'] = 0
+            status["available_voices"] = 0
 
         return status
 
@@ -362,9 +361,9 @@ class AudioController:
             print(f"Queue size: {status['queue']['queue_size']}")
         """
         return {
-            'tts_available': self.tts_engine.is_available(),
-            'message_library': self.message_library.get_message_count(),
-            'queue': self.audio_queue.get_status(),
+            "tts_available": self.tts_engine.is_available(),
+            "message_library": self.message_library.get_message_count(),
+            "queue": self.audio_queue.get_status(),
         }
 
     # =========================================================================

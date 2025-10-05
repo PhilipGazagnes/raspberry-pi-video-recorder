@@ -35,7 +35,7 @@ class StorageFactory:
     def create_storage(
         cls,
         mode: StorageMode = "auto",
-        config: Optional[StorageConfig] = None
+        config: Optional[StorageConfig] = None,
     ) -> StorageInterface:
         """
         Create a storage interface instance.
@@ -87,9 +87,10 @@ class StorageFactory:
 
 # Convenience functions for quick creation
 
+
 def create_storage(
     force_mock: bool = False,
-    config: Optional[StorageConfig] = None
+    config: Optional[StorageConfig] = None,
 ) -> StorageInterface:
     """
     Quick storage creation with simple mock override.

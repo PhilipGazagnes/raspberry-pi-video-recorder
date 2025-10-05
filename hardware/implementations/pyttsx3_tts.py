@@ -17,6 +17,7 @@ from typing import Optional
 
 try:
     import pyttsx3
+
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
@@ -41,15 +42,15 @@ class PyTTSx3Engine(TTSInterface):
 
         if not TTS_AVAILABLE:
             raise TTSError(
-                "pyttsx3 not available. Install with: pip install pyttsx3"
+                "pyttsx3 not available. Install with: pip install pyttsx3",
             )
 
         # Store configuration instead of keeping an engine instance
         # This prevents thread safety issues and audio cutoff
         self._config = {
-            'rate': 125,
-            'volume': 0.8,
-            'voice_id': None,
+            "rate": 125,
+            "volume": 0.8,
+            "voice_id": None,
         }
 
         # Initialize voice configuration
@@ -66,18 +67,18 @@ class PyTTSx3Engine(TTSInterface):
         """
         try:
             temp_engine = pyttsx3.init()
-            voices = temp_engine.getProperty('voices')
+            voices = temp_engine.getProperty("voices")
 
             if voices:
                 # Try to find a French voice (for your project)
                 for voice in voices:
-                    if 'roa/fr' in voice.id or 'french' in voice.name.lower():
-                        self._config['voice_id'] = voice.id
+                    if "roa/fr" in voice.id or "french" in voice.name.lower():
+                        self._config["voice_id"] = voice.id
                         self.logger.info(f"Found French voice: {voice.name}")
                         break
                 else:
                     # No French voice found, use first available
-                    self._config['voice_id'] = voices[0].id
+                    self._config["voice_id"] = voices[0].id
                     self.logger.info(f"Using default voice: {voices[0].name}")
 
             # Clean up temporary engine
@@ -102,10 +103,10 @@ class PyTTSx3Engine(TTSInterface):
             engine = pyttsx3.init()
 
             # Apply configuration
-            if self._config['voice_id']:
-                engine.setProperty('voice', self._config['voice_id'])
-            engine.setProperty('rate', self._config['rate'])
-            engine.setProperty('volume', self._config['volume'])
+            if self._config["voice_id"]:
+                engine.setProperty("voice", self._config["voice_id"])
+            engine.setProperty("rate", self._config["rate"])
+            engine.setProperty("volume", self._config["volume"])
 
             # Small delay helps prevent cutoff at start of speech
             # This is a known pyttsx3 quirk
@@ -172,11 +173,10 @@ class PyTTSx3Engine(TTSInterface):
         """
         if not (50 <= rate <= 400):
             raise TTSError(
-                f"Invalid speech rate: {rate}. "
-                f"Expected range: 50-400 WPM"
+                f"Invalid speech rate: {rate}. Expected range: 50-400 WPM",
             )
 
-        self._config['rate'] = rate
+        self._config["rate"] = rate
         self.logger.info(f"Speech rate set to {rate} WPM")
 
     def set_volume(self, volume: float) -> None:
@@ -189,11 +189,10 @@ class PyTTSx3Engine(TTSInterface):
         """
         if not (0.0 <= volume <= 1.0):
             raise TTSError(
-                f"Invalid volume: {volume}. "
-                f"Expected range: 0.0-1.0"
+                f"Invalid volume: {volume}. Expected range: 0.0-1.0",
             )
 
-        self._config['volume'] = volume
+        self._config["volume"] = volume
         self.logger.info(f"Volume set to {volume}")
 
     def set_voice(self, voice_id: Optional[str] = None) -> None:
@@ -210,10 +209,10 @@ class PyTTSx3Engine(TTSInterface):
             if voice_id not in available:
                 raise TTSError(
                     f"Voice '{voice_id}' not found. "
-                    f"Available voices: {len(available)}"
+                    f"Available voices: {len(available)}",
                 )
 
-        self._config['voice_id'] = voice_id
+        self._config["voice_id"] = voice_id
         voice_name = voice_id if voice_id else "default"
         self.logger.info(f"Voice set to: {voice_name}")
 
@@ -226,13 +225,12 @@ class PyTTSx3Engine(TTSInterface):
         """
         try:
             temp_engine = pyttsx3.init()
-            voices = temp_engine.getProperty('voices')
+            voices = temp_engine.getProperty("voices")
             del temp_engine
 
             if voices:
                 return [voice.id for voice in voices]
-            else:
-                return []
+            return []
 
         except Exception as e:
             self.logger.error(f"Failed to get voices: {e}")

@@ -49,7 +49,8 @@ class MetadataManager:
             cursor = conn.cursor()
 
             # Create videos table
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS videos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     filename TEXT UNIQUE NOT NULL,
@@ -66,18 +67,23 @@ class MetadataManager:
                     quality TEXT DEFAULT 'valid',
                     validation_error TEXT
                 )
-            ''')
+            """,
+            )
 
             # Create indexes for common queries
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_status
                 ON videos(status)
-            ''')
+            """,
+            )
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_created_at
                 ON videos(created_at)
-            ''')
+            """,
+            )
 
             conn.commit()
             self.logger.debug("Database schema initialized")
@@ -91,7 +97,7 @@ class MetadataManager:
             try:
                 self._connection = sqlite3.connect(
                     str(self.db_path),
-                    check_same_thread=False  # Allow multi-threaded access
+                    check_same_thread=False,  # Allow multi-threaded access
                 )
                 # Return rows as dictionaries
                 self._connection.row_factory = sqlite3.Row
@@ -119,28 +125,31 @@ class MetadataManager:
 
             data = video.to_dict()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO videos (
                     filename, filepath, created_at, updated_at,
                     duration_seconds, file_size_bytes, status,
                     upload_attempts, last_upload_attempt, upload_error,
                     youtube_url, quality, validation_error
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                data['filename'],
-                data['filepath'],
-                data['created_at'],
-                data['updated_at'],
-                data['duration_seconds'],
-                data['file_size_bytes'],
-                data['status'],
-                data['upload_attempts'],
-                data['last_upload_attempt'],
-                data['upload_error'],
-                data['youtube_url'],
-                data['quality'],
-                data['validation_error'],
-            ))
+            """,
+                (
+                    data["filename"],
+                    data["filepath"],
+                    data["created_at"],
+                    data["updated_at"],
+                    data["duration_seconds"],
+                    data["file_size_bytes"],
+                    data["status"],
+                    data["upload_attempts"],
+                    data["last_upload_attempt"],
+                    data["upload_error"],
+                    data["youtube_url"],
+                    data["quality"],
+                    data["validation_error"],
+                ),
+            )
 
             conn.commit()
 
@@ -176,7 +185,8 @@ class MetadataManager:
             video.updated_at = datetime.now()
             data = video.to_dict()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 UPDATE videos SET
                     filename = ?,
                     filepath = ?,
@@ -191,21 +201,23 @@ class MetadataManager:
                     quality = ?,
                     validation_error = ?
                 WHERE id = ?
-            ''', (
-                data['filename'],
-                data['filepath'],
-                data['updated_at'],
-                data['duration_seconds'],
-                data['file_size_bytes'],
-                data['status'],
-                data['upload_attempts'],
-                data['last_upload_attempt'],
-                data['upload_error'],
-                data['youtube_url'],
-                data['quality'],
-                data['validation_error'],
-                video.id,
-            ))
+            """,
+                (
+                    data["filename"],
+                    data["filepath"],
+                    data["updated_at"],
+                    data["duration_seconds"],
+                    data["file_size_bytes"],
+                    data["status"],
+                    data["upload_attempts"],
+                    data["last_upload_attempt"],
+                    data["upload_error"],
+                    data["youtube_url"],
+                    data["quality"],
+                    data["validation_error"],
+                    video.id,
+                ),
+            )
 
             conn.commit()
 
@@ -231,7 +243,7 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute('SELECT * FROM videos WHERE id = ?', (video_id,))
+            cursor.execute("SELECT * FROM videos WHERE id = ?", (video_id,))
             row = cursor.fetchone()
 
             if row:
@@ -255,7 +267,7 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute('SELECT * FROM videos WHERE filename = ?', (filename,))
+            cursor.execute("SELECT * FROM videos WHERE filename = ?", (filename,))
             row = cursor.fetchone()
 
             if row:
@@ -269,7 +281,7 @@ class MetadataManager:
         self,
         status: Optional[UploadStatus] = None,
         limit: Optional[int] = None,
-        order_by: str = 'created_at DESC'
+        order_by: str = "created_at DESC",
     ) -> List[VideoFile]:
         """
         List videos with optional filtering.
@@ -286,17 +298,17 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            query = 'SELECT * FROM videos'
+            query = "SELECT * FROM videos"
             params = []
 
             if status:
-                query += ' WHERE status = ?'
+                query += " WHERE status = ?"
                 params.append(status.value)
 
-            query += f' ORDER BY {order_by}'
+            query += f" ORDER BY {order_by}"
 
             if limit:
-                query += ' LIMIT ?'
+                query += " LIMIT ?"
                 params.append(limit)
 
             cursor.execute(query, params)
@@ -321,7 +333,7 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute('DELETE FROM videos WHERE id = ?', (video_id,))
+            cursor.execute("DELETE FROM videos WHERE id = ?", (video_id,))
             conn.commit()
 
             if cursor.rowcount == 0:
@@ -358,11 +370,14 @@ class MetadataManager:
             # Get failed videos that haven't exceeded retry limit
             from storage.constants import MAX_UPLOAD_RETRIES
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT * FROM videos
                 WHERE status = ? AND upload_attempts < ?
                 ORDER BY last_upload_attempt ASC
-            ''', (UploadStatus.FAILED.value, MAX_UPLOAD_RETRIES))
+            """,
+                (UploadStatus.FAILED.value, MAX_UPLOAD_RETRIES),
+            )
 
             rows = cursor.fetchall()
             return [VideoFile.from_dict(dict(row)) for row in rows]
@@ -386,14 +401,18 @@ class MetadataManager:
 
             # Calculate cutoff date
             from datetime import timedelta
+
             cutoff = datetime.now() - timedelta(days=days)
             cutoff_str = cutoff.isoformat()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT * FROM videos
                 WHERE status = ? AND created_at < ?
                 ORDER BY created_at ASC
-            ''', (UploadStatus.COMPLETED.value, cutoff_str))
+            """,
+                (UploadStatus.COMPLETED.value, cutoff_str),
+            )
 
             rows = cursor.fetchall()
             return [VideoFile.from_dict(dict(row)) for row in rows]
@@ -412,14 +431,16 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT status, COUNT(*) as count
                 FROM videos
                 GROUP BY status
-            ''')
+            """,
+            )
 
             rows = cursor.fetchall()
-            return {row['status']: row['count'] for row in rows}
+            return {row["status"]: row["count"] for row in rows}
 
         except sqlite3.Error as e:
             raise StorageError(f"Failed to get status counts: {e}") from e
@@ -430,10 +451,10 @@ class MetadataManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute('SELECT COUNT(*) as count FROM videos')
+            cursor.execute("SELECT COUNT(*) as count FROM videos")
             row = cursor.fetchone()
 
-            return row['count'] if row else 0
+            return row["count"] if row else 0
 
         except sqlite3.Error as e:
             raise StorageError(f"Failed to get total count: {e}") from e

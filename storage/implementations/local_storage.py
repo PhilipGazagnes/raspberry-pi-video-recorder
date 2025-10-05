@@ -11,7 +11,13 @@ from pathlib import Path
 from typing import List, Optional
 
 from storage.config import StorageConfig
-from storage.constants import DIR_CORRUPTED, DIR_FAILED, DIR_PENDING, DIR_UPLOADED, UploadStatus
+from storage.constants import (
+    DIR_CORRUPTED,
+    DIR_FAILED,
+    DIR_PENDING,
+    DIR_UPLOADED,
+    UploadStatus,
+)
 from storage.interfaces.storage_interface import StorageError, StorageInterface
 from storage.managers.cleanup_manager import CleanupManager
 from storage.managers.file_manager import FileManager
@@ -49,7 +55,7 @@ class LocalStorage(StorageInterface):
         self.metadata_manager = MetadataManager(self.config.storage_base_path)
         self.space_manager = SpaceManager(
             self.config.storage_base_path,
-            self.config
+            self.config,
         )
         self.cleanup_manager = CleanupManager(self.config)
 
@@ -57,8 +63,7 @@ class LocalStorage(StorageInterface):
         self._last_cleanup = datetime.now()
 
         self.logger.info(
-            f"Local storage initialized "
-            f"(base: {self.config.storage_base_path})"
+            f"Local storage initialized (base: {self.config.storage_base_path})",
         )
 
     def initialize(self) -> None:
@@ -72,7 +77,7 @@ class LocalStorage(StorageInterface):
     def save_video(
         self,
         source_path: Path,
-        duration_seconds: Optional[int] = None
+        duration_seconds: Optional[int] = None,
     ) -> VideoFile:
         """
         Save a new video file to storage.
@@ -102,7 +107,7 @@ class LocalStorage(StorageInterface):
             # Save file to pending directory
             dest_path = self.file_manager.save_file(
                 source_path,
-                destination_dir=DIR_PENDING
+                destination_dir=DIR_PENDING,
             )
 
             self.logger.info(f"Saved video file: {dest_path.name}")
@@ -129,14 +134,16 @@ class LocalStorage(StorageInterface):
                 is_valid = self.validate_video(video)
                 if not is_valid:
                     # Video was marked corrupted and moved
-                    raise StorageError(f"Video validation failed: {video.validation_error}")
+                    raise StorageError(
+                        f"Video validation failed: {video.validation_error}",
+                    )
 
             # Save metadata to database
             video = self.metadata_manager.insert_video(video)
 
             self.logger.info(
                 f"Video saved successfully: {video.filename} "
-                f"(id={video.id}, size={file_size/(1024**2):.2f}MB)"
+                f"(id={video.id}, size={file_size/(1024**2):.2f}MB)",
             )
 
             return video
@@ -161,7 +168,7 @@ class LocalStorage(StorageInterface):
     def list_videos(
         self,
         status: Optional[UploadStatus] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[VideoFile]:
         """List videos with optional filtering"""
         return self.metadata_manager.list_videos(status=status, limit=limit)
@@ -208,7 +215,7 @@ class LocalStorage(StorageInterface):
             # Move physical file
             new_path = self.file_manager.move_file(
                 video.filepath,
-                destination_dir
+                destination_dir,
             )
 
             # Update video object
@@ -228,7 +235,7 @@ class LocalStorage(StorageInterface):
             self.update_video(video)
 
             self.logger.info(
-                f"Moved video: {video.filename} -> {destination_dir}/"
+                f"Moved video: {video.filename} -> {destination_dir}/",
             )
 
             return video
@@ -251,7 +258,7 @@ class LocalStorage(StorageInterface):
         quality, error = validate_video_file(
             video.filepath,
             enable_ffmpeg=self.config.enable_ffmpeg_validation,
-            min_size=self.config.min_video_size_bytes
+            min_size=self.config.min_video_size_bytes,
         )
 
         if quality != VideoQuality.VALID:
@@ -265,7 +272,7 @@ class LocalStorage(StorageInterface):
                 self.logger.error(f"Failed to move corrupted video: {e}")
 
             self.logger.error(
-                f"Video validation failed: {video.filename} - {error}"
+                f"Video validation failed: {video.filename} - {error}",
             )
             return False
 
@@ -324,7 +331,7 @@ class LocalStorage(StorageInterface):
 
             # Plan cleanup
             to_cleanup, plan_stats = self.cleanup_manager.plan_cleanup(
-                uploaded_videos
+                uploaded_videos,
             )
 
             if not to_cleanup:
@@ -335,14 +342,14 @@ class LocalStorage(StorageInterface):
             cleanup_stats = self.cleanup_manager.cleanup_videos(
                 to_cleanup,
                 delete_func=lambda v: self.delete_video(v, remove_file=True),
-                dry_run=dry_run
+                dry_run=dry_run,
             )
 
             # Update last cleanup time
             if not dry_run:
                 self._last_cleanup = datetime.now()
 
-            return cleanup_stats['deleted']
+            return cleanup_stats["deleted"]
 
         except Exception as e:
             raise StorageError(f"Cleanup failed: {e}") from e
@@ -355,8 +362,8 @@ class LocalStorage(StorageInterface):
         """Check if storage system is available"""
         try:
             return (
-                self.config.storage_base_path.exists() and
-                self.file_manager.validate_storage_writable()
+                self.config.storage_base_path.exists()
+                and self.file_manager.validate_storage_writable()
             )
         except Exception:
             return False

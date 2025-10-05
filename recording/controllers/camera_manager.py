@@ -44,7 +44,7 @@ class CameraManager:
     def __init__(
         self,
         capture: Optional[VideoCaptureInterface] = None,
-        camera_device: str = DEFAULT_CAMERA_DEVICE
+        camera_device: str = DEFAULT_CAMERA_DEVICE,
     ):
         """
         Initialize camera manager.
@@ -75,7 +75,7 @@ class CameraManager:
         self.logger.info(
             f"Camera Manager initialized "
             f"(device: {camera_device}, "
-            f"capture available: {self.capture.is_available()})"
+            f"capture available: {self.capture.is_available()})",
         )
 
     def is_ready(self) -> bool:
@@ -108,7 +108,7 @@ class CameraManager:
     def start_recording(
         self,
         output_file: Path,
-        duration: Optional[float] = None
+        duration: Optional[float] = None,
     ) -> bool:
         """
         Start recording video.
@@ -141,7 +141,7 @@ class CameraManager:
             if success:
                 self.logger.info(
                     f"Recording started: {output_file.name} "
-                    f"(duration: {duration or 'unlimited'}s)"
+                    f"(duration: {duration or 'unlimited'}s)",
                 )
                 # Reset health monitoring
                 self._consecutive_health_failures = 0
@@ -256,17 +256,17 @@ class CameraManager:
 
         # Check if capture crashed (for mock capture testing)
         crashed = False
-        if hasattr(self.capture, '_crashed'):
+        if hasattr(self.capture, "_crashed"):
             crashed = self.capture._crashed
 
         # Track consecutive failures
-        if not health['is_healthy'] or crashed:
+        if not health["is_healthy"] or crashed:
             self._consecutive_health_failures += 1
-            error_msg = health.get('error_message', 'Unknown error')
+            error_msg = health.get("error_message", "Unknown error")
             self.logger.warning(
                 f"Camera health check failed "
                 f"(failures: {self._consecutive_health_failures}): "
-                f"{error_msg}"
+                f"{error_msg}",
             )
         else:
             # Reset counter on success
@@ -275,8 +275,10 @@ class CameraManager:
             self._consecutive_health_failures = 0
 
         # Add failure tracking to health info
-        health['consecutive_failures'] = self._consecutive_health_failures
-        health['critical'] = self._consecutive_health_failures >= self._max_health_failures
+        health["consecutive_failures"] = self._consecutive_health_failures
+        health["critical"] = (
+            self._consecutive_health_failures >= self._max_health_failures
+        )
 
         # Cache result
         self._last_health_check = health
@@ -304,12 +306,14 @@ class CameraManager:
             print(f"Duration: {status['recording_duration']:.1f}s")
         """
         return {
-            'is_available': self.capture.is_available(),
-            'is_ready': self.is_ready(),
-            'is_recording': self.is_recording(),
-            'recording_duration': self.get_recording_duration(),
-            'output_file': str(self.get_output_file()) if self.get_output_file() else None,
-            'health': self.check_health(),
+            "is_available": self.capture.is_available(),
+            "is_ready": self.is_ready(),
+            "is_recording": self.is_recording(),
+            "recording_duration": self.get_recording_duration(),
+            "output_file": (
+                str(self.get_output_file()) if self.get_output_file() else None
+            ),
+            "health": self.check_health(),
         }
 
     def get_camera_info(self) -> dict:
@@ -323,13 +327,13 @@ class CameraManager:
             Dictionary with camera information
         """
         # Try to get camera info if available
-        if hasattr(self.capture, 'get_camera_info'):
+        if hasattr(self.capture, "get_camera_info"):
             return self.capture.get_camera_info()
 
         # Fallback for other capture types
         return {
-            'device': self.camera_device,
-            'available': self.capture.is_available(),
+            "device": self.camera_device,
+            "available": self.capture.is_available(),
         }
 
     def cleanup(self) -> None:

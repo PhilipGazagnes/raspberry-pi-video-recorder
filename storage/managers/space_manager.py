@@ -11,12 +11,9 @@ from pathlib import Path
 from typing import Optional
 
 from storage.constants import (
-    LOW_SPACE_WARNING_BYTES,
-    MIN_FREE_SPACE_BYTES,
     StorageState,
 )
 from storage.interfaces.storage_interface import StorageError
-from storage.models.video_file import StorageStats
 
 
 class SpaceManager:
@@ -78,7 +75,7 @@ class SpaceManager:
         Returns:
             Free space in GB
         """
-        return self.get_free_space() / (1024 ** 3)
+        return self.get_free_space() / (1024**3)
 
     def check_space_available(self, required_bytes: Optional[int] = None) -> bool:
         """
@@ -100,7 +97,7 @@ class SpaceManager:
         if not is_available:
             self.logger.warning(
                 f"Insufficient disk space: {free_space / (1024**3):.2f} GB free, "
-                f"need {required_bytes / (1024**3):.2f} GB"
+                f"need {required_bytes / (1024**3):.2f} GB",
             )
 
         return is_available
@@ -117,10 +114,9 @@ class SpaceManager:
 
             if free_space < self.config.min_free_space_bytes:
                 return StorageState.DISK_FULL
-            elif free_space < self.config.low_space_warning_bytes:
+            if free_space < self.config.low_space_warning_bytes:
                 return StorageState.LOW_SPACE
-            else:
-                return StorageState.READY
+            return StorageState.READY
 
         except StorageError:
             return StorageState.ERROR
@@ -164,7 +160,11 @@ class SpaceManager:
             self.logger.warning(f"Error calculating directory size: {e}")
             return 0
 
-    def estimate_recording_space(self, duration_seconds: int, bitrate_mbps: float = 5.0) -> int:
+    def estimate_recording_space(
+        self,
+        duration_seconds: int,
+        bitrate_mbps: float = 5.0,
+    ) -> int:
         """
         Estimate disk space needed for recording.
 
@@ -194,7 +194,10 @@ class SpaceManager:
 
         return int(total_bytes)
 
-    def can_record(self, estimated_size_bytes: Optional[int] = None) -> tuple[bool, str]:
+    def can_record(
+        self,
+        estimated_size_bytes: Optional[int] = None,
+    ) -> tuple[bool, str]:
         """
         Check if recording can proceed.
 
@@ -216,16 +219,19 @@ class SpaceManager:
 
         if state == StorageState.DISK_FULL:
             free_gb = self.get_free_space_gb()
-            min_gb = self.config.min_free_space_bytes / (1024 ** 3)
+            min_gb = self.config.min_free_space_bytes / (1024**3)
             return False, f"Disk full: {free_gb:.2f} GB free (need {min_gb:.1f} GB)"
 
         # If estimated size provided, check against that too
         if estimated_size_bytes:
             free_space = self.get_free_space()
             if free_space < estimated_size_bytes:
-                needed_gb = estimated_size_bytes / (1024 ** 3)
-                free_gb = free_space / (1024 ** 3)
-                return False, f"Insufficient space for recording: {free_gb:.2f} GB free, need {needed_gb:.2f} GB"
+                needed_gb = estimated_size_bytes / (1024**3)
+                free_gb = free_space / (1024**3)
+                return (
+                    False,
+                    f"Insufficient space for recording: {free_gb:.2f} GB free, need {needed_gb:.2f} GB",
+                )
 
         # Space is available
         if state == StorageState.LOW_SPACE:
@@ -243,34 +249,34 @@ class SpaceManager:
         total, used, free = self.get_disk_usage()
 
         return {
-            'total_bytes': total,
-            'used_bytes': used,
-            'free_bytes': free,
-            'total_gb': total / (1024 ** 3),
-            'used_gb': used / (1024 ** 3),
-            'free_gb': free / (1024 ** 3),
-            'usage_percent': (used / total * 100) if total > 0 else 0,
-            'state': self.get_storage_state().value,
-            'min_required_gb': self.config.min_free_space_bytes / (1024 ** 3),
-            'warning_threshold_gb': self.config.low_space_warning_bytes / (1024 ** 3),
+            "total_bytes": total,
+            "used_bytes": used,
+            "free_bytes": free,
+            "total_gb": total / (1024**3),
+            "used_gb": used / (1024**3),
+            "free_gb": free / (1024**3),
+            "usage_percent": (used / total * 100) if total > 0 else 0,
+            "state": self.get_storage_state().value,
+            "min_required_gb": self.config.min_free_space_bytes / (1024**3),
+            "warning_threshold_gb": self.config.low_space_warning_bytes / (1024**3),
         }
 
     def log_space_status(self) -> None:
         """Log current disk space status"""
         stats = self.get_space_stats()
-        state = stats['state']
-        free_gb = stats['free_gb']
-        usage_pct = stats['usage_percent']
+        state = stats["state"]
+        free_gb = stats["free_gb"]
+        usage_pct = stats["usage_percent"]
 
-        if state == 'disk_full':
+        if state == "disk_full":
             self.logger.error(
-                f"DISK FULL: {free_gb:.2f} GB free ({usage_pct:.1f}% used)"
+                f"DISK FULL: {free_gb:.2f} GB free ({usage_pct:.1f}% used)",
             )
-        elif state == 'low_space':
+        elif state == "low_space":
             self.logger.warning(
-                f"LOW SPACE: {free_gb:.2f} GB free ({usage_pct:.1f}% used)"
+                f"LOW SPACE: {free_gb:.2f} GB free ({usage_pct:.1f}% used)",
             )
         else:
             self.logger.info(
-                f"Space OK: {free_gb:.2f} GB free ({usage_pct:.1f}% used)"
+                f"Space OK: {free_gb:.2f} GB free ({usage_pct:.1f}% used)",
             )

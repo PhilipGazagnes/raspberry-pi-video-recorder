@@ -44,6 +44,7 @@ class ButtonPress:
     Using a class with constants instead of Enum for simpler usage.
     Controllers can check: if press_type == ButtonPress.SINGLE
     """
+
     SINGLE = "single"
     DOUBLE = "double"
 
@@ -73,7 +74,7 @@ class ButtonController:
         self,
         gpio: Optional[GPIOInterface] = None,
         pin: Optional[int] = None,
-        pull_up: bool = True
+        pull_up: bool = True,
     ):
         """
         Initialize button controller.
@@ -120,8 +121,7 @@ class ButtonController:
         self._setup_button()
 
         self.logger.info(
-            f"Button Controller initialized "
-            f"(pin: {self.pin}, pull_up: {pull_up})"
+            f"Button Controller initialized (pin: {self.pin}, pull_up: {pull_up})",
         )
 
     def _setup_button(self) -> None:
@@ -152,12 +152,12 @@ class ButtonController:
             self.pin,
             edge,
             self._on_button_interrupt,
-            debounce_ms
+            debounce_ms,
         )
 
         self.logger.debug(
             f"Button setup complete "
-            f"(edge: {edge.value}, debounce: {debounce_ms}ms)"
+            f"(edge: {edge.value}, debounce: {debounce_ms}ms)",
         )
 
     def _on_button_interrupt(self, channel: int) -> None:
@@ -212,10 +212,8 @@ class ButtonController:
                 self.pending_single_press = False
                 self._trigger_callback(ButtonPress.DOUBLE)
                 return
-            else:
-                # Too slow - treat as separate single presses
-                # The pending one will fire via timer
-                pass
+            # Too slow - treat as separate single presses
+            # The pending one will fire via timer
 
         # This is potentially a single press
         # Start timer - if no second press comes, it's confirmed single
@@ -228,7 +226,7 @@ class ButtonController:
         # Start new timer to confirm single press
         self._single_press_timer = threading.Timer(
             self.double_tap_window,
-            self._confirm_single_press
+            self._confirm_single_press,
         )
         self._single_press_timer.start()
 
@@ -274,7 +272,7 @@ class ButtonController:
                 self.logger.error(f"Error in button callback: {e}", exc_info=True)
         else:
             self.logger.warning(
-                f"Button {press_type} press detected but no callback registered"
+                f"Button {press_type} press detected but no callback registered",
             )
 
     def register_callback(self, callback_func: Callable[[str], None]) -> None:
@@ -302,7 +300,7 @@ class ButtonController:
     def set_timing(
         self,
         debounce_time: Optional[float] = None,
-        double_tap_window: Optional[float] = None
+        double_tap_window: Optional[float] = None,
     ) -> None:
         """
         Adjust button timing parameters.
@@ -325,7 +323,7 @@ class ButtonController:
             if not (0.01 <= debounce_time <= 0.5):
                 raise ValueError(
                     f"Invalid debounce time: {debounce_time}. "
-                    f"Expected 0.01-0.5 seconds"
+                    f"Expected 0.01-0.5 seconds",
                 )
             self.debounce_time = debounce_time
             self.logger.info(f"Debounce time set to {debounce_time}s")
@@ -334,7 +332,7 @@ class ButtonController:
             if not (0.1 <= double_tap_window <= 2.0):
                 raise ValueError(
                     f"Invalid double tap window: {double_tap_window}. "
-                    f"Expected 0.1-2.0 seconds"
+                    f"Expected 0.1-2.0 seconds",
                 )
             self.double_tap_window = double_tap_window
             self.logger.info(f"Double tap window set to {double_tap_window}s")
@@ -385,14 +383,14 @@ class ButtonController:
             print(f"Last press: {status['last_press_time']}")
         """
         return {
-            'pin': self.pin,
-            'pull_up': self.pull_up,
-            'gpio_available': self.gpio.is_available(),
-            'debounce_time': self.debounce_time,
-            'double_tap_window': self.double_tap_window,
-            'pending_single_press': self.pending_single_press,
-            'callback_registered': self.callback_func is not None,
-            'last_press_time': self.last_press_time,
+            "pin": self.pin,
+            "pull_up": self.pull_up,
+            "gpio_available": self.gpio.is_available(),
+            "debounce_time": self.debounce_time,
+            "double_tap_window": self.double_tap_window,
+            "pending_single_press": self.pending_single_press,
+            "callback_registered": self.callback_func is not None,
+            "last_press_time": self.last_press_time,
         }
 
     def cleanup(self) -> None:

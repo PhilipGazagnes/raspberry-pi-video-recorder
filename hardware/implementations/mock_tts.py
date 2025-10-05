@@ -39,17 +39,16 @@ class MockTTS(TTSInterface):
 
         # Configuration that matches real TTS
         self._config = {
-            'rate': 125,  # Words per minute
-            'volume': 0.8,
-            'voice_id': 'mock_voice',
+            "rate": 125,  # Words per minute
+            "volume": 0.8,
+            "voice_id": "mock_voice",
         }
 
         # Track what was spoken (useful for testing)
         self.speech_history: list[str] = []
 
         self.logger.info(
-            f"Mock TTS initialized "
-            f"(simulate_timing: {simulate_timing})"
+            f"Mock TTS initialized (simulate_timing: {simulate_timing})",
         )
 
     def speak(self, text: str) -> None:
@@ -73,13 +72,13 @@ class MockTTS(TTSInterface):
             # Simulate speech duration based on text length and rate
             # Rough estimate: 1 word = ~0.5 seconds at 125 WPM
             word_count = len(text.split())
-            duration = word_count * (60.0 / self._config['rate'])
+            duration = word_count * (60.0 / self._config["rate"])
 
             # Add base overhead (engine startup, etc.)
             duration += 0.2
 
             self.logger.debug(
-                f"[MOCK TTS] Simulating {duration:.2f}s speech for {word_count} words"
+                f"[MOCK TTS] Simulating {duration:.2f}s speech for {word_count} words",
             )
             time.sleep(duration)
 
@@ -88,7 +87,7 @@ class MockTTS(TTSInterface):
         if not (50 <= rate <= 400):
             raise TTSError(f"Invalid rate: {rate}. Expected 50-400 WPM")
 
-        self._config['rate'] = rate
+        self._config["rate"] = rate
         self.logger.info(f"[MOCK TTS] Rate set to {rate} WPM")
 
     def set_volume(self, volume: float) -> None:
@@ -96,20 +95,20 @@ class MockTTS(TTSInterface):
         if not (0.0 <= volume <= 1.0):
             raise TTSError(f"Invalid volume: {volume}. Expected 0.0-1.0")
 
-        self._config['volume'] = volume
+        self._config["volume"] = volume
         self.logger.info(f"[MOCK TTS] Volume set to {volume}")
 
     def set_voice(self, voice_id: Optional[str] = None) -> None:
         """Set voice (logged but doesn't affect mock)"""
-        self._config['voice_id'] = voice_id or 'mock_voice'
+        self._config["voice_id"] = voice_id or "mock_voice"
         self.logger.info(f"[MOCK TTS] Voice set to {self._config['voice_id']}")
 
     def get_available_voices(self) -> list[str]:
         """Return fake voice list for testing"""
         return [
-            'mock_voice',
-            'mock_voice_french',
-            'mock_voice_english',
+            "mock_voice",
+            "mock_voice_french",
+            "mock_voice_english",
         ]
 
     def is_available(self) -> bool:

@@ -142,22 +142,25 @@ THREAD_QUEUE_SIZE = 512
 # RECORDING STATE TRACKING
 # =============================================================================
 
+
 class RecordingState(Enum):
     """
     States a recording session can be in.
 
     Lifecycle: IDLE -> STARTING -> RECORDING -> STOPPING -> IDLE
     """
-    IDLE = "idle"              # No recording active
-    STARTING = "starting"      # Camera warming up, preparing to record
-    RECORDING = "recording"    # Actively recording video
-    STOPPING = "stopping"      # Finalizing recording, closing file
-    ERROR = "error"           # Recording failed
+
+    IDLE = "idle"  # No recording active
+    STARTING = "starting"  # Camera warming up, preparing to record
+    RECORDING = "recording"  # Actively recording video
+    STOPPING = "stopping"  # Finalizing recording, closing file
+    ERROR = "error"  # Recording failed
 
 
 # =============================================================================
 # ERROR CODES
 # =============================================================================
+
 
 class RecordingError(Enum):
     """
@@ -165,6 +168,7 @@ class RecordingError(Enum):
 
     Used for specific error handling and user feedback.
     """
+
     CAMERA_NOT_FOUND = "camera_not_found"
     CAMERA_BUSY = "camera_busy"
     STORAGE_FULL = "storage_full"
@@ -193,12 +197,13 @@ MAX_CPU_TEMP = 75.0
 # UTILITY FUNCTIONS
 # =============================================================================
 
+
 def get_ffmpeg_command(
     input_device: str,
     output_file: str,
     width: int = VIDEO_WIDTH,
     height: int = VIDEO_HEIGHT,
-    fps: int = VIDEO_FPS
+    fps: int = VIDEO_FPS,
 ) -> list[str]:
     """
     Generate FFmpeg command for video capture.
@@ -222,28 +227,36 @@ def get_ffmpeg_command(
     """
     command = [
         "ffmpeg",
-
         # Input options
-        "-f", VIDEO_INPUT_FORMAT,              # Video4Linux2 input
-        "-input_format", "mjpeg",              # MJPEG from camera (less CPU than raw)
-        "-video_size", f"{width}x{height}",    # Resolution
-        "-framerate", str(fps),                # Frame rate
-        "-thread_queue_size", str(THREAD_QUEUE_SIZE),  # Buffer size
-        "-i", input_device,                    # Input device
-
+        "-f",
+        VIDEO_INPUT_FORMAT,  # Video4Linux2 input
+        "-input_format",
+        "mjpeg",  # MJPEG from camera (less CPU than raw)
+        "-video_size",
+        f"{width}x{height}",  # Resolution
+        "-framerate",
+        str(fps),  # Frame rate
+        "-thread_queue_size",
+        str(THREAD_QUEUE_SIZE),  # Buffer size
+        "-i",
+        input_device,  # Input device
         # Output options
-        "-c:v", VIDEO_CODEC,                   # H264 video codec
-        "-preset", VIDEO_PRESET,               # Encoding speed
-        "-crf", str(VIDEO_CRF),                # Quality level
-        "-pix_fmt", "yuv420p",                 # Pixel format (compatible)
-        "-movflags", "+faststart",             # Optimize for streaming
-
+        "-c:v",
+        VIDEO_CODEC,  # H264 video codec
+        "-preset",
+        VIDEO_PRESET,  # Encoding speed
+        "-crf",
+        str(VIDEO_CRF),  # Quality level
+        "-pix_fmt",
+        "yuv420p",  # Pixel format (compatible)
+        "-movflags",
+        "+faststart",  # Optimize for streaming
         # Logging
-        "-loglevel", FFMPEG_LOG_LEVEL,
-
+        "-loglevel",
+        FFMPEG_LOG_LEVEL,
         # Output file (overwrite if exists)
         "-y",
-        output_file
+        output_file,
     ]
 
     return command
@@ -305,5 +318,6 @@ def validate_camera_device(device_path: str) -> bool:
             print("Camera found!")
     """
     from pathlib import Path
+
     device = Path(device_path)
     return device.exists() and device.is_char_device()

@@ -23,10 +23,10 @@ from storage.utils.validation_utils import (
     validate_video_file,
 )
 
-
 # =============================================================================
 # QUICK VALIDATION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_quick_validate_valid_file(sample_video_file):
@@ -86,6 +86,7 @@ def test_quick_validate_too_small_file(temp_storage_dir):
 # FULL VALIDATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 def test_validate_video_file_valid(sample_video_file):
     """
@@ -95,7 +96,7 @@ def test_validate_video_file_valid(sample_video_file):
     """
     quality, error = validate_video_file(
         sample_video_file,
-        enable_ffmpeg=False  # Skip ffmpeg for unit test
+        enable_ffmpeg=False,  # Skip ffmpeg for unit test
     )
 
     # Should pass basic checks
@@ -110,7 +111,7 @@ def test_validate_video_file_nonexistent():
     """
     quality, error = validate_video_file(
         Path("/nonexistent/video.mp4"),
-        enable_ffmpeg=False
+        enable_ffmpeg=False,
     )
 
     assert quality == VideoQuality.CORRUPTED
@@ -129,7 +130,7 @@ def test_validate_video_file_too_small(temp_storage_dir):
 
     quality, error = validate_video_file(
         small_file,
-        enable_ffmpeg=False
+        enable_ffmpeg=False,
     )
 
     assert quality == VideoQuality.TOO_SMALL
@@ -139,6 +140,7 @@ def test_validate_video_file_too_small(temp_storage_dir):
 # =============================================================================
 # VIDEO INFO EXTRACTION TESTS
 # =============================================================================
+
 
 @pytest.mark.unit
 def test_get_video_duration_with_fake_file(sample_video_file):
@@ -196,7 +198,10 @@ def test_get_video_info_nonexistent_file():
 # ERROR HANDLING TESTS
 # =============================================================================
 
-@pytest.mark.skip(reason="Permission test unreliable - chmod behavior varies by filesystem/user")
+
+@pytest.mark.skip(
+    reason="Permission test unreliable - chmod behavior varies by filesystem/user",
+)
 @pytest.mark.unit
 def test_validate_video_file_with_permission_error(temp_storage_dir):
     """
@@ -221,7 +226,7 @@ def test_validate_video_file_with_permission_error(temp_storage_dir):
     try:
         quality, error = validate_video_file(
             restricted_file,
-            enable_ffmpeg=False
+            enable_ffmpeg=False,
         )
 
         # Should detect error (but may not on all systems)
@@ -237,6 +242,7 @@ def test_validate_video_file_with_permission_error(temp_storage_dir):
 # INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.unit_integration
 def test_validation_workflow(sample_video_file):
     """
@@ -251,7 +257,7 @@ def test_validation_workflow(sample_video_file):
     # Full validate
     quality, error = validate_video_file(
         sample_video_file,
-        enable_ffmpeg=False
+        enable_ffmpeg=False,
     )
     assert quality == VideoQuality.VALID
 

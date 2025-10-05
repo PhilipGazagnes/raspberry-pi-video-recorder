@@ -26,12 +26,12 @@ def test_led_system():
 
     # Check if running on real hardware
     hw_status = HardwareFactory.is_real_hardware_available()
-    if not hw_status['gpio']:
+    if not hw_status["gpio"]:
         print("WARNING: Not running on Raspberry Pi or GPIO not available")
         print("This test requires real GPIO hardware")
         print()
         response = input("Continue anyway with mock? (y/n): ")
-        if response.lower() != 'y':
+        if response.lower() != "y":
             return False
 
     # Create GPIO (real or mock based on availability)
@@ -45,7 +45,7 @@ def test_led_system():
     status = led.get_status()
     print(f"  GPIO Available: {status['gpio_available']}")
     print(f"  Current Pattern: {status['current_pattern']}")
-    print(f"  Pin Configuration:")
+    print("  Pin Configuration:")
     print(f"    Green:  GPIO {status['pins']['green']}")
     print(f"    Orange: GPIO {status['pins']['orange']}")
     print(f"    Red:    GPIO {status['pins']['red']}")
@@ -68,7 +68,7 @@ def test_led_system():
         print(f"  {description}...")
         led.set_status(pattern)
         time.sleep(duration)
-        print(f"    [OK]")
+        print("    [OK]")
 
     print()
 
@@ -165,5 +165,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nERROR: Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
