@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""
+Example Upload Usage
+
+Demonstrates how to use the upload module in your main service.
+"""
+
+import logging
+from datetime import datetime
+
+from upload import UploadController, UploadStatus
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+def example_basic_upload():
+    """Example: Basic video upload"""
+    logger.info("=" * 60)
+    logger.info("Example: Basic Upload")
+    logger.info("=" * 60)
+
+    # Initialize controller (reads from .env)
+    controller = UploadController()
+
+    # Check if ready
+    if not controller.is_ready():
+        logger.error("❌ Controller not ready - check authentication")
+        return
+
+    # Test connection
+    if not controller.test_connection():
+        logger.error("❌ Cannot connect to YouTube")
+        return
+
+    # Upload video
+    result = controller.upload_video(
+        video_path="/path/to/your/video.mp4",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+    # Handle result
+    if result.success:
+        logger.info(f"✅ Upload successful!")
+        logger.info(f"   Video ID: {result.video_id}")
+        logger.info(f"   Duration: {result.upload_duration:.1f}s")
+        logger.info(
+            f"   Size: {result.file_size / (1024 * 1024):.1f} MB"
+        )
+    else:
+        logger.error(f"❌ Upload failed: {result.error_message}")
+        logger.error(f"   Status: {result.status.value}")
+
+
+def example_with_error_handling():
+    """Example: Upload with comprehensive error handling"""
+    logger.info("\n" + "=" * 60)
+    logger.info("Example: Upload with Error Handling")
+    logger.info("=" * 60)
+
+    controller = UploadController()
+
+    result = controller.upload_video(
+        video_path="/path/to/video.mp4",
+        timestamp="2025-10-12 18:30:45",
+    )
+
+    # Handle different error types
+    if result.success:
+        logger.info(f"✅ Upload successful: {result.video_id}")
+
+        # Update your storage/database
+        # storage.mark_uploaded(video_path, result.video_id)
+
+        # Optional: Delete local file after successful upload
+        # os.remove(video_path)
+
+    else:
+        # Handle different failure types
+        if result.status == UploadStatus.NETWORK_ERROR:
+            logger.warning("Network error - will retry later")
+            # Add to retry queue
+            # retry_queue.add(video_path, timestamp)
+
+        elif result.status == UploadStatus.AUTH_ERROR:
+            logger.error("Authentication failed - admin intervention needed")
+            # Send alert
+            # send_admin_alert("YouTube auth failed!")
+
+        elif result.status == UploadStatus.QUOTA_EXCEEDED:
+            logger.error("API quota exceeded - will retry tomorrow")
+            # Schedule retry for next day
+            # schedule_retry(video_path, timestamp, delay_hours=24)
+
+        elif result.status == UploadStatus.INVALID_FILE:
+            logger.error(f"Invalid file: {result.error_message}")
+            # Don't retry - file is bad
+            # storage.mark_failed(video_path, result.error_message)
+
+        elif result.status == UploadStatus.TIMEOUT:
+            logger.warning("Upload timeout - will retry")
+            # Retry with same file
+            # retry_queue.add(video_path, timestamp)
+
+        else:
+            logger.error(f"Unknown error: {result.error_message}")
+            # Generic retry
+            # retry_queue.add(video_path, timestamp)
+
+
+def example_integration_with_service():
+    """Example: Integration with main recording service"""
+    logger.info("\n" + "=" * 60)
+    logger.info("Example: Main Service Integration")
+    logger.info("=" * 60)
+
+    class RecordingService:
+        """Example main service"""
+
+        def __init__(self):
+            self.uploader = UploadController()
+            self.retry_queue = []  # Simple queue for demo
+
+        def on_recording_complete(self, video_path: str, timestamp: str):
+            """Called when recording finishes"""
+            logger.info(f"Recording complete: {video_path}")
+
+            # Start upload in background (non-blocking for recording)
+            self._upload_video(video_path, timestamp)
+
+        def _upload_video(self, video_path: str, timestamp: str):
+            """Handle video upload"""
+            logger.info(f"Starting upload: {video_path}")
+
+            result = self.uploader.upload_video(video_path, timestamp)
+
+            if result.success:
+                self._handle_upload_success(video_path, result)
+            else:
+                self._handle_upload_failure(video_path, timestamp, result)
+
+        def _handle_upload_success(self, video_path: str, result):
+            """Handle successful upload"""
+            logger.info(
+                f"✅ Upload successful: {result.video_id} "
+                f"({result.upload_duration:.1f}s)"
+            )
+
+            # Update storage/database
+            # self.storage.mark_uploaded(video_path, result.video_id)
+
+            # Log for analytics
+            # self.analytics.log_upload(result.upload_duration, result.file_size)
+
+            # Optional: Clean up local file
+            # if self.config.delete_after_upload:
+            #     os.remove(video_path)
+
+        def _handle_upload_failure(
+            self, video_path: str, timestamp: str, result
+        ):
+            """Handle upload failure"""
+            logger.error(
+                f"❌ Upload failed: {result.error_message} "
+                f"(status: {result.status.value})"
+            )
+
+            # Decide on retry strategy
+            if result.status in [
+                UploadStatus.NETWORK_ERROR,
+                UploadStatus.TIMEOUT,
+            ]:
+                # Retryable errors - add to queue
+                self.retry_queue.append((video_path, timestamp))
+                logger.info(f"Added to retry queue: {video_path}")
+            elif result.status == UploadStatus.AUTH_ERROR:
+                # Critical error - alert admin
+                logger.critical("YouTube authentication failed!")
+                # self.send_admin_alert("YouTube auth issue")
+            elif result.status == UploadStatus.INVALID_FILE:
+                # Don't retry invalid files
+                logger.error(f"Invalid file, not retrying: {video_path}")
+                # self.storage.mark_failed(video_path, result.error_message)
+
+        def process_retry_queue(self):
+            """Process pending uploads"""
+            if not self.retry_queue:
+                return
+
+            logger.info(f"Processing {len(self.retry_queue)} pending uploads")
+
+            # Process one upload at a time
+            video_path, timestamp = self.retry_queue.pop(0)
+            self._upload_video(video_path, timestamp)
+
+    # Demo the service
+    service = RecordingService()
+
+    # Simulate recording completion
+    service.on_recording_complete(
+        video_path="/recordings/session_001.mp4",
+        timestamp="2025-10-12 18:30:45",
+    )
+
+    # Later, process any failed uploads
+    # service.process_retry_queue()
+
+
+def example_status_monitoring():
+    """Example: Monitor upload status"""
+    logger.info("\n" + "=" * 60)
+    logger.info("Example: Status Monitoring")
+    logger.info("=" * 60)
+
+    controller = UploadController()
+
+    # Get controller status
+    status = controller.get_status()
+
+    logger.info(f"Controller status:")
+    logger.info(f"  Ready: {status['ready']}")
+    logger.info(f"  Playlist: {status['playlist_id']}")
+    logger.info(f"  Uploader: {status['uploader_type']}")
+
+    # Test connection
+    if controller.test_connection():
+        logger.info("✅ YouTube API connection OK")
+    else:
+        logger.error("❌ YouTube API connection failed")
+
+
+if __name__ == "__main__":
+    try:
+        # Run examples
+        # example_basic_upload()
+        # example_with_error_handling()
+        # example_integration_with_service()
+        example_status_monitoring()
+
+    except KeyboardInterrupt:
+        logger.info("\n\n❌ Interrupted by user")
+    except Exception as e:
+        logger.error(f"\n\n❌ Error: {e}", exc_info=True)

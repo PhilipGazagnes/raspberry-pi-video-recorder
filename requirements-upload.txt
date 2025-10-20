@@ -1,0 +1,11 @@
+# Upload Module Dependencies
+# Install with: pip install -r requirements_upload.txt
+
+# Google OAuth & API
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
+
+# Environment variables (optional but recommended)
+python-dotenv>=1.0.0
