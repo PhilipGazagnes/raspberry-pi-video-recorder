@@ -10,13 +10,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from storage.config import StorageConfig
+import config.settings as settings
 from storage.constants import (
     DIR_CORRUPTED,
     DIR_FAILED,
     DIR_PENDING,
     DIR_UPLOADED,
     UploadStatus,
+    VideoQuality,
 )
 from storage.interfaces.storage_interface import StorageError, StorageInterface
 from storage.managers.cleanup_manager import CleanupManager
@@ -38,32 +39,25 @@ class LocalStorage(StorageInterface):
     It's the "real" storage that actually saves files and manages metadata.
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self):
         """
         Initialize local storage.
 
-        Args:
-            config: StorageConfig object (creates default if None)
+        Configuration is loaded from config.settings (central config).
         """
         self.logger = logging.getLogger(__name__)
 
-        # Load configuration
-        self.config = config or StorageConfig()
-
-        # Initialize managers
-        self.file_manager = FileManager(self.config.storage_base_path)
-        self.metadata_manager = MetadataManager(self.config.storage_base_path)
-        self.space_manager = SpaceManager(
-            self.config.storage_base_path,
-            self.config,
-        )
-        self.cleanup_manager = CleanupManager(self.config)
+        # Initialize managers (all now use config.settings internally)
+        self.file_manager = FileManager(settings.STORAGE_BASE_PATH)
+        self.metadata_manager = MetadataManager(settings.STORAGE_BASE_PATH)
+        self.space_manager = SpaceManager(settings.STORAGE_BASE_PATH)
+        self.cleanup_manager = CleanupManager()
 
         # Last cleanup timestamp (for auto-cleanup)
         self._last_cleanup = datetime.now()
 
         self.logger.info(
-            f"Local storage initialized (base: {self.config.storage_base_path})",
+            f"Local storage initialized (base: {settings.STORAGE_BASE_PATH})",
         )
 
     def initialize(self) -> None:
@@ -130,7 +124,7 @@ class LocalStorage(StorageInterface):
             )
 
             # Validate video
-            if self.config.enable_ffmpeg_validation:
+            if settings.ENABLE_FFMPEG_VALIDATION:
                 is_valid = self.validate_video(video)
                 if not is_valid:
                     # Video was marked corrupted and moved
@@ -257,8 +251,8 @@ class LocalStorage(StorageInterface):
         """
         quality, error = validate_video_file(
             video.filepath,
-            enable_ffmpeg=self.config.enable_ffmpeg_validation,
-            min_size=self.config.min_video_size_bytes,
+            enable_ffmpeg=settings.ENABLE_FFMPEG_VALIDATION,
+            min_size=settings.MIN_VIDEO_SIZE_BYTES,
         )
 
         if quality != VideoQuality.VALID:
@@ -362,7 +356,7 @@ class LocalStorage(StorageInterface):
         """Check if storage system is available"""
         try:
             return (
-                self.config.storage_base_path.exists()
+                settings.STORAGE_BASE_PATH.exists()
                 and self.file_manager.validate_storage_writable()
             )
         except Exception:

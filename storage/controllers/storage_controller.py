@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from storage.config import StorageConfig
+import config.settings as settings
 from storage.constants import DIR_FAILED, DIR_UPLOADED, UploadStatus
 from storage.implementations.local_storage import LocalStorage
 from storage.interfaces.storage_interface import StorageError, StorageInterface
@@ -38,22 +38,17 @@ class StorageController:
     def __init__(
         self,
         storage_impl: Optional[StorageInterface] = None,
-        config: Optional[StorageConfig] = None,
     ):
         """
         Initialize storage controller.
 
         Args:
             storage_impl: Storage implementation (None = auto-create LocalStorage)
-            config: StorageConfig object (None = load default)
         """
         self.logger = logging.getLogger(__name__)
 
-        # Configuration
-        self.config = config or StorageConfig()
-
         # Storage implementation
-        self.storage = storage_impl or LocalStorage(self.config)
+        self.storage = storage_impl or LocalStorage()
         self.storage.initialize()
 
         # Event callbacks (like hardware controllers)
@@ -301,7 +296,7 @@ class StorageController:
             # Use cleanup manager through storage
             from storage.managers.cleanup_manager import CleanupManager
 
-            cleanup_mgr = CleanupManager(self.config)
+            cleanup_mgr = CleanupManager()
 
             return cleanup_mgr.get_cleanup_summary(uploaded)
 
@@ -329,10 +324,10 @@ class StorageController:
             "retry_queue_size": len(self.get_retry_queue()),
             "can_record": self.check_space(),
             "config": {
-                "base_path": str(self.config.storage_base_path),
-                "min_free_space_gb": self.config.min_free_space_bytes / (1024**3),
-                "retention_days": self.config.uploaded_retention_days,
-                "max_uploaded_videos": self.config.max_uploaded_videos,
+                "base_path": str(settings.STORAGE_BASE_PATH),
+                "min_free_space_gb": settings.MIN_FREE_SPACE_BYTES / (1024**3),
+                "retention_days": settings.UPLOADED_RETENTION_DAYS,
+                "max_uploaded_videos": settings.MAX_UPLOADED_VIDEOS,
             },
         }
 

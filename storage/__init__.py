@@ -16,7 +16,6 @@ Architecture mirrors the hardware module:
 # storage/__init__.py - Main Package Exports
 # ============================================================================
 
-from storage.config import StorageConfig
 from storage.constants import (
     DIR_CORRUPTED,
     DIR_FAILED,
@@ -38,8 +37,6 @@ __all__ = [
     # Factory for creating storage
     "StorageFactory",
     "create_storage",
-    # Configuration
-    "StorageConfig",
     # Models
     "VideoFile",
     "StorageStats",

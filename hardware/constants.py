@@ -17,13 +17,15 @@ from enum import Enum
 # =============================================================================
 # GPIO PIN CONFIGURATION
 # =============================================================================
-# These match your config/settings.py but are hardware-specific
-# Keeping them here maintains separation of concerns
+# Import from central config.settings to maintain single source of truth
+# NEVER modify here - change in config/settings.py instead!
 
-GPIO_BUTTON_PIN = 18
-GPIO_LED_GREEN = 12
-GPIO_LED_ORANGE = 16
-GPIO_LED_RED = 20
+from config.settings import (
+    GPIO_BUTTON_PIN,
+    GPIO_LED_GREEN,
+    GPIO_LED_ORANGE,
+    GPIO_LED_RED,
+)
 
 
 # =============================================================================

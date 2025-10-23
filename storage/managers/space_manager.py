@@ -10,9 +10,8 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from storage.constants import (
-    StorageState,
-)
+import config.settings as settings
+from storage.constants import StorageState
 from storage.interfaces.storage_interface import StorageError
 
 
@@ -27,17 +26,17 @@ class SpaceManager:
     - Monitor space warnings
     """
 
-    def __init__(self, storage_base: Path, config):
+    def __init__(self, storage_base: Path):
         """
         Initialize space manager.
 
         Args:
             storage_base: Base storage directory
-            config: StorageConfig object for thresholds
+
+        Configuration loaded from config.settings
         """
         self.logger = logging.getLogger(__name__)
         self.storage_base = Path(storage_base)
-        self.config = config
 
         self.logger.info(f"Space manager initialized (path: {self.storage_base})")
 
@@ -82,13 +81,13 @@ class SpaceManager:
         Check if enough disk space is available.
 
         Args:
-            required_bytes: Specific requirement (default: MIN_FREE_SPACE_BYTES)
+            required_bytes: Specific requirement (default: from settings)
 
         Returns:
             True if enough space available
         """
         if required_bytes is None:
-            required_bytes = self.config.min_free_space_bytes
+            required_bytes = settings.MIN_FREE_SPACE_BYTES
 
         free_space = self.get_free_space()
 
@@ -112,9 +111,9 @@ class SpaceManager:
         try:
             free_space = self.get_free_space()
 
-            if free_space < self.config.min_free_space_bytes:
+            if free_space < settings.MIN_FREE_SPACE_BYTES:
                 return StorageState.DISK_FULL
-            if free_space < self.config.low_space_warning_bytes:
+            if free_space < settings.LOW_SPACE_WARNING_BYTES:
                 return StorageState.LOW_SPACE
             return StorageState.READY
 
@@ -219,7 +218,7 @@ class SpaceManager:
 
         if state == StorageState.DISK_FULL:
             free_gb = self.get_free_space_gb()
-            min_gb = self.config.min_free_space_bytes / (1024**3)
+            min_gb = settings.MIN_FREE_SPACE_BYTES / (1024**3)
             return False, f"Disk full: {free_gb:.2f} GB free (need {min_gb:.1f} GB)"
 
         # If estimated size provided, check against that too
@@ -257,8 +256,8 @@ class SpaceManager:
             "free_gb": free / (1024**3),
             "usage_percent": (used / total * 100) if total > 0 else 0,
             "state": self.get_storage_state().value,
-            "min_required_gb": self.config.min_free_space_bytes / (1024**3),
-            "warning_threshold_gb": self.config.low_space_warning_bytes / (1024**3),
+            "min_required_gb": settings.MIN_FREE_SPACE_BYTES / (1024**3),
+            "warning_threshold_gb": settings.LOW_SPACE_WARNING_BYTES / (1024**3),
         }
 
     def log_space_status(self) -> None:

@@ -42,20 +42,17 @@ HTTP_TIMEOUT = 30
 # =============================================================================
 # VIDEO METADATA CONFIGURATION
 # =============================================================================
+# NOTE: These values now come from config.settings for centralization
+# Import them there to maintain single source of truth
 
-# Default video privacy status
-# Options: "public", "private", "unlisted"
-DEFAULT_PRIVACY_STATUS = "unlisted"
-
-# Video category ID for Sports
-# YouTube category IDs: https://developers.google.com/youtube/v3/docs/videoCategories
-YOUTUBE_CATEGORY_SPORTS = "17"
-
-# Default video tags
-DEFAULT_VIDEO_TAGS = ["boxing", "training", "practice"]
-
-# Title format: "Boxing Session YYYY-MM-DD HH:MM:SS"
-VIDEO_TITLE_PREFIX = "Boxing Session"
+# These constants remain here for backward compatibility but should be
+# imported from config.settings in new code
+from config.settings import (
+    DEFAULT_PRIVACY_STATUS,
+    DEFAULT_VIDEO_TAGS,
+    SESSION_TITLE_PREFIX as VIDEO_TITLE_PREFIX,
+    YOUTUBE_CATEGORY_ID as YOUTUBE_CATEGORY_SPORTS,
+)
 
 # =============================================================================
 # UPLOAD STATUS

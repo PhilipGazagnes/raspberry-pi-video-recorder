@@ -149,11 +149,12 @@ class UploadController:
             timestamp: Timestamp string (format: "YYYY-MM-DD HH:MM:SS")
 
         Returns:
-            Formatted title: "Boxing Session YYYY-MM-DD HH:MM:SS"
+            Formatted title: "{SESSION_TITLE_PREFIX} YYYY-MM-DD HH:MM:SS"
 
         Example:
             _format_video_title("2025-10-12 18:30:45")
-            # Returns: "Boxing Session 2025-10-12 18:30:45"
+            # Returns: "Video Session 2025-10-12 18:30:45"
+            # (customize SESSION_TITLE_PREFIX in config.settings)
         """
         try:
             # Validate timestamp format

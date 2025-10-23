@@ -1,20 +1,179 @@
 # Raspberry Pi Video Recorder
 
-A Python service for recording videos on Raspberry Pi with hardware button control.
+A generic, production-ready video recording system for Raspberry Pi. Domain-agnostic and reusable - easily customizable for any use case (sports training, security, events, etc.).
 
 ## Project Overview
 
-Multi-camera video recording system for practice analysis. Users hit a button to start/stop recording, videos auto-upload to YouTube with LED status feedback and voice prompts.
+Multi-camera video recording system with hardware button control. Users press a button to start/stop recording, videos auto-upload to YouTube with LED status feedback and voice prompts.
+
+**Key Features:**
+- 🎥 One-button video recording with hardware interface
+- 📤 Automatic background upload to YouTube
+- 💡 LED status indicators (Green/Orange/Red)
+- 🔊 Voice feedback for all operations
+- 📦 Modular SOLID architecture
+- 🧪 Fully testable without hardware
+- ⚙️ Centralized configuration
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Virtual environment (automatically created)
+- Raspberry Pi (tested on Pi 5)
+- USB webcam (1080p recommended)
+- Optional: GPIO hardware (button, LEDs, speaker)
 
 ### Installation
 
-1. Clone the repository and navigate to the project directory
-2. The Python virtual environment will be automatically configured when you open the project in VS Code
+1. **Clone and setup:**
+   ```bash
+   git clone <repository-url>
+   cd raspberry-pi-video-recorder
+   ```
+
+2. **Configure the system:**
+
+   a. Copy and edit the main configuration file:
+   ```bash
+   cp config/settings.py config/settings.py.local  # Optional: keep custom config separate
+   ```
+
+   b. Edit `config/settings.py` to customize:
+   - GPIO pin assignments
+   - Recording duration and video quality
+   - Storage paths and retention policies
+   - Video title prefix (change from generic "Video Session" to your domain)
+
+   c. Setup YouTube authentication:
+   ```bash
+   # Copy the .env template
+   cp .env.example .env
+
+   # Edit .env and set the paths (defaults should work):
+   YOUTUBE_CLIENT_SECRET_PATH=credentials/client_secret.json
+   YOUTUBE_TOKEN_PATH=credentials/token.json
+   YOUTUBE_PLAYLIST_ID=your_playlist_id_here  # Optional
+   ```
+
+   d. Authenticate with YouTube (one-time setup):
+   ```bash
+   # Download client_secret.json from Google Cloud Console
+   # Place it in credentials/client_secret.json
+
+   # Run authentication setup (opens browser)
+   python setup_youtube_auth.py
+
+   # This creates credentials/token.json for automatic uploads
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+4. **Virtual environment** will be automatically configured if using VS Code
+
+---
+
+## Configuration Guide
+
+### 📋 Centralized Configuration
+
+**ALL configuration lives in `config/settings.py`** - this is your single source of truth.
+
+#### What You Can Configure:
+
+**Hardware:**
+- GPIO pin assignments (button, LEDs)
+- Audio/TTS settings (rate, volume, speaker device)
+
+**Recording:**
+- Video resolution, FPS, codec settings
+- Recording durations (default, extension, maximum)
+- Camera device path
+
+**Storage:**
+- Storage base path and directory structure
+- Space thresholds and retention policies
+- Upload retry configuration
+- Auto-cleanup settings
+
+**Upload:**
+- Video title prefix (customize for your domain!)
+- Default tags and privacy settings
+- YouTube category
+- Upload timeout and chunk size
+
+#### Example Customization:
+
+```python
+# config/settings.py
+
+# Change this to match your use case
+SESSION_TITLE_PREFIX = "Training Session"  # "Security Footage", "Event Recording", etc.
+DEFAULT_VIDEO_TAGS = ["training", "gym", "workout"]  # Customize for your domain
+
+# Adjust recording quality
+VIDEO_WIDTH = 1920
+VIDEO_HEIGHT = 1080
+VIDEO_FPS = 30
+
+# Storage retention
+UPLOADED_RETENTION_DAYS = 14  # Keep videos for 2 weeks
+MAX_UPLOADED_VIDEOS = 50
+```
+
+### 🔐 Secrets Management
+
+**NEVER commit credentials to version control!**
+
+This project uses **file-based OAuth** for YouTube uploads:
+
+1. **Download credentials from Google Cloud Console**:
+   - Create a project and enable YouTube Data API v3
+   - Create OAuth 2.0 credentials (Desktop app type)
+   - Download `client_secret.json`
+   - Place in `credentials/client_secret.json`
+
+2. **Authenticate once** (creates token.json):
+   ```bash
+   python setup_youtube_auth.py
+   ```
+   This opens a browser for you to grant permissions. The token is saved and refreshed automatically.
+
+3. **Configure .env** (paths to credential files):
+   ```bash
+   # .env (NEVER commit this file!)
+   YOUTUBE_CLIENT_SECRET_PATH=credentials/client_secret.json
+   YOUTUBE_TOKEN_PATH=credentials/token.json
+   YOUTUBE_PLAYLIST_ID=your_playlist_id  # Optional
+   ```
+
+The `credentials/` directory is already in `.gitignore` - your secrets are safe!
+
+---
+
+## Domain-Agnostic Design
+
+This system is intentionally **generic** - no hardcoded business logic. To adapt it for your use case:
+
+1. **Change video titles**: Edit `SESSION_TITLE_PREFIX` in `config/settings.py`
+2. **Customize tags**: Modify `DEFAULT_VIDEO_TAGS` for your domain
+3. **Adjust voice prompts**: Edit `AUDIO_MESSAGE_TEXTS` in `hardware/constants.py`
+4. **Configure retention**: Set `UPLOADED_RETENTION_DAYS` based on your needs
+
+### Example Use Cases:
+- **Sports Training**: "Training Session 2025-01-15 14:30"
+- **Security Camera**: "Security Recording 2025-01-15 14:30"
+- **Dance Studio**: "Class Recording 2025-01-15 14:30"
+- **Lecture Recording**: "Lecture 2025-01-15 14:30"
+
+Simply change one config value and the entire system adapts!
 
 ### Development Tools
 
@@ -124,35 +283,6 @@ The project includes VS Code settings that will:
 - Timestamped filename generation
 - Storage threshold warnings
 
-## File Structure
-
-```
-video-recorder/
-├── recorder_service.py              # Main service coordinator
-├── config/
-│   ├── __init__.py
-│   └── settings.py                  # All configuration parameters
-├── core/
-│   ├── __init__.py
-│   ├── state_machine.py            # State management and transitions
-│   ├── error_handler.py            # Error recovery logic
-│   └── event_bus.py                # Inter-component communication
-├── hardware/
-│   ├── __init__.py
-│   ├── led_controller.py           # 3-LED status dashboard
-│   ├── button_controller.py        # Button input with debouncing
-│   └── audio_controller.py         # TTS voice feedback
-├── recording/
-│   ├── __init__.py
-│   ├── camera_manager.py           # FFmpeg video capture
-│   └── recording_session.py        # Session management
-├── upload/
-│   ├── __init__.py
-│   └── upload_manager.py           # YouTube API integration
-└── storage/
-    ├── __init__.py
-    └── storage_manager.py          # File and space management
-```
 
 ## Hardware Configuration
 - **Controller**: Raspberry Pi 5 (8GB)
@@ -163,11 +293,13 @@ video-recorder/
 
 ## GPIO Pin Configuration
 
-(from config/settings.py)
-- GPIO_BUTTON_PIN = 18
-- GPIO_LED_GREEN = 12
-- GPIO_LED_ORANGE = 16
-- GPIO_LED_RED = 20
+Configure these in `config/settings.py`:
+```python
+GPIO_BUTTON_PIN = 18    # Button input pin
+GPIO_LED_GREEN = 12     # Green LED (ready/recording)
+GPIO_LED_ORANGE = 16    # Orange LED (processing)
+GPIO_LED_RED = 20       # Red LED (error)
+```
 
 ## System Behavior
 
@@ -197,18 +329,6 @@ video-recorder/
 - Ready state: "Ready for next recording"
 - Upload complete: "Upload successful"
 - Error states: "Memory full" / "Network disconnected" / "Camera error"
-
-## Development Status
-
-- ✅ State Machine: Complete with full state management
-- ✅ LED Controller: Complete with all status patterns
-- ✅ Button Controller: Complete with debouncing and double-tap
-- ✅ Audio Controller: Complete with full TTS voice feedback
-- 📝 Camera Manager: Not started
-- ✅ Recording Session
-- 📝 Upload Manager: Not started
-- ✅ Storage Manager
-- 📝 Main Service Integration: Waiting for all controllers
 
 ## Key Design Principles
 

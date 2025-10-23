@@ -9,6 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List
 
+import config.settings as settings
 from storage.constants import CLEANUP_BATCH_SIZE
 from storage.models.video_file import VideoFile
 
@@ -24,15 +25,13 @@ class CleanupManager:
     - Track cleanup statistics
     """
 
-    def __init__(self, config):
+    def __init__(self):
         """
         Initialize cleanup manager.
 
-        Args:
-            config: StorageConfig object for policies
+        Configuration loaded from config.settings
         """
         self.logger = logging.getLogger(__name__)
-        self.config = config
 
         self.logger.info("Cleanup manager initialized")
 
@@ -52,7 +51,7 @@ class CleanupManager:
 
         # Check age
         age_days = video.age_days
-        retention_days = self.config.uploaded_retention_days
+        retention_days = settings.UPLOADED_RETENTION_DAYS
 
         if age_days > retention_days:
             return (
@@ -101,7 +100,7 @@ class CleanupManager:
         Returns:
             List of excess videos to remove
         """
-        max_count = self.config.max_uploaded_videos
+        max_count = settings.MAX_UPLOADED_VIDEOS
 
         if len(all_uploaded) <= max_count:
             return []
@@ -287,11 +286,11 @@ class CleanupManager:
         Returns:
             True if cleanup should run now
         """
-        if not self.config.auto_cleanup_enabled:
+        if not settings.AUTO_CLEANUP_ENABLED:
             return False
 
         # Check if enough time has passed
-        interval = timedelta(seconds=self.config.cleanup_interval_seconds)
+        interval = timedelta(seconds=settings.CLEANUP_INTERVAL_SECONDS)
         next_cleanup = last_cleanup + interval
 
         should_run = datetime.now() >= next_cleanup

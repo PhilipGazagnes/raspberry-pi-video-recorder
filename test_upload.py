@@ -15,7 +15,7 @@ else:
 
 # Upload test video
 result = controller.upload_video(
-    video_path="/home/user/Téléchargements/test-video.mp4",
+    video_path="/Users/a1234/Documents/animation-musicale-ehpads.mp4",
     timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 )
 

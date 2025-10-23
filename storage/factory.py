@@ -6,9 +6,8 @@ Follows the same pattern as hardware/factory.py.
 """
 
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
-from storage.config import StorageConfig
 from storage.implementations.local_storage import LocalStorage
 from storage.implementations.mock_storage import MockStorage
 from storage.interfaces.storage_interface import StorageInterface
@@ -35,14 +34,12 @@ class StorageFactory:
     def create_storage(
         cls,
         mode: StorageMode = "auto",
-        config: Optional[StorageConfig] = None,
     ) -> StorageInterface:
         """
         Create a storage interface instance.
 
         Args:
             mode: "auto" (use real), "real" (force real), "mock" (force simulation)
-            config: StorageConfig object (None = create default)
 
         Returns:
             StorageInterface implementation (LocalStorage or MockStorage)
@@ -62,7 +59,7 @@ class StorageFactory:
         # (unlike hardware where auto tries real then falls back to mock,
         # storage is always available so we don't need fallback logic)
         cls._logger.info("Creating Local Storage")
-        return LocalStorage(config)
+        return LocalStorage()
 
     @classmethod
     def is_storage_available(cls) -> bool:
@@ -88,16 +85,12 @@ class StorageFactory:
 # Convenience functions for quick creation
 
 
-def create_storage(
-    force_mock: bool = False,
-    config: Optional[StorageConfig] = None,
-) -> StorageInterface:
+def create_storage(force_mock: bool = False) -> StorageInterface:
     """
     Quick storage creation with simple mock override.
 
     Args:
         force_mock: If True, always use mock (good for testing)
-        config: StorageConfig object
 
     Returns:
         Storage interface
@@ -110,4 +103,4 @@ def create_storage(
         storage = create_storage(force_mock=True)
     """
     mode = "mock" if force_mock else "auto"
-    return StorageFactory.create_storage(mode=mode, config=config)
+    return StorageFactory.create_storage(mode=mode)
