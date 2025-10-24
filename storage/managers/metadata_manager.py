@@ -7,6 +7,7 @@ Single responsibility: Database operations only.
 
 import logging
 import sqlite3
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -25,6 +26,13 @@ class MetadataManager:
     - Create and maintain database schema
     - CRUD operations for video metadata
     - Query videos by various criteria
+
+    Thread Safety:
+    - Designed for multi-threaded use (main + background threads)
+    - READ operations (select, list) are non-blocking and concurrent
+    - WRITE operations (insert, update, delete) use threading.Lock
+    - Lock pattern prevents concurrent writes while allowing concurrent reads
+    - SQLite's database-level locking handles read/write conflicts
     """
 
     def __init__(self, storage_base: Path):
@@ -33,10 +41,25 @@ class MetadataManager:
 
         Args:
             storage_base: Base storage directory (database goes here)
+
+        Thread Safety:
+            Creates a write lock for thread-safe WRITE operations.
+            READ operations (select, list) proceed without locking.
         """
         self.logger = logging.getLogger(__name__)
         self.db_path = storage_base / METADATA_DB_NAME
         self._connection: Optional[sqlite3.Connection] = None
+
+        # Thread synchronization for write operations
+        # WHY: Prevents concurrent INSERT/UPDATE/DELETE that could cause
+        #   data corruption or "database is locked" errors
+        # Context: RecordingSession runs monitoring in background thread,
+        #   UploadManager updates metadata from background thread. Multiple
+        #   threads could simultaneously write to database
+        # Pattern: Lock is only held during actual database writes, not
+        #   during reads. SQLite database-level locking handles read/write
+        #   coordination. Lock is only for write serialization
+        self._write_lock = threading.Lock()
 
         # Initialize database
         self._initialize_db()
@@ -134,6 +157,8 @@ class MetadataManager:
         """
         Insert new video into database.
 
+        Thread-safe: Uses lock to prevent concurrent inserts.
+
         Args:
             video: VideoFile object to insert
 
@@ -143,54 +168,57 @@ class MetadataManager:
         Raises:
             StorageError: If insert fails
         """
-        try:
-            conn = self._get_connection()
-            cursor = conn.cursor()
+        with self._write_lock:
+            try:
+                conn = self._get_connection()
+                cursor = conn.cursor()
 
-            data = video.to_dict()
+                data = video.to_dict()
 
-            cursor.execute(
-                """
-                INSERT INTO videos (
-                    filename, filepath, created_at, updated_at,
-                    duration_seconds, file_size_bytes, status,
-                    upload_attempts, last_upload_attempt, upload_error,
-                    youtube_url, quality, validation_error
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    data["filename"],
-                    data["filepath"],
-                    data["created_at"],
-                    data["updated_at"],
-                    data["duration_seconds"],
-                    data["file_size_bytes"],
-                    data["status"],
-                    data["upload_attempts"],
-                    data["last_upload_attempt"],
-                    data["upload_error"],
-                    data["youtube_url"],
-                    data["quality"],
-                    data["validation_error"],
-                ),
-            )
+                cursor.execute(
+                    """
+                    INSERT INTO videos (
+                        filename, filepath, created_at, updated_at,
+                        duration_seconds, file_size_bytes, status,
+                        upload_attempts, last_upload_attempt, upload_error,
+                        youtube_url, quality, validation_error
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                        data["filename"],
+                        data["filepath"],
+                        data["created_at"],
+                        data["updated_at"],
+                        data["duration_seconds"],
+                        data["file_size_bytes"],
+                        data["status"],
+                        data["upload_attempts"],
+                        data["last_upload_attempt"],
+                        data["upload_error"],
+                        data["youtube_url"],
+                        data["quality"],
+                        data["validation_error"],
+                    ),
+                )
 
-            conn.commit()
+                conn.commit()
 
-            # Set the ID on the video object
-            video.id = cursor.lastrowid
+                # Set the ID on the video object
+                video.id = cursor.lastrowid
 
-            self.logger.debug(f"Inserted video: {video.filename} (id={video.id})")
-            return video
+                self.logger.debug(f"Inserted video: {video.filename} (id={video.id})")
+                return video
 
-        except sqlite3.IntegrityError as e:
-            raise StorageError(f"Video already exists: {video.filename}") from e
-        except sqlite3.Error as e:
-            raise StorageError(f"Failed to insert video: {e}") from e
+            except sqlite3.IntegrityError as e:
+                raise StorageError(f"Video already exists: {video.filename}") from e
+            except sqlite3.Error as e:
+                raise StorageError(f"Failed to insert video: {e}") from e
 
     def update_video(self, video: VideoFile) -> None:
         """
         Update existing video in database.
+
+        Thread-safe: Uses lock to prevent concurrent updates.
 
         Args:
             video: VideoFile with updated data
@@ -198,60 +226,61 @@ class MetadataManager:
         Raises:
             StorageError: If update fails
         """
-        if video.id is None:
-            raise StorageError("Cannot update video without id")
+        with self._write_lock:
+            if video.id is None:
+                raise StorageError("Cannot update video without id")
 
-        try:
-            conn = self._get_connection()
-            cursor = conn.cursor()
+            try:
+                conn = self._get_connection()
+                cursor = conn.cursor()
 
-            # Update timestamp
-            video.updated_at = datetime.now()
-            data = video.to_dict()
+                # Update timestamp
+                video.updated_at = datetime.now()
+                data = video.to_dict()
 
-            cursor.execute(
-                """
-                UPDATE videos SET
-                    filename = ?,
-                    filepath = ?,
-                    updated_at = ?,
-                    duration_seconds = ?,
-                    file_size_bytes = ?,
-                    status = ?,
-                    upload_attempts = ?,
-                    last_upload_attempt = ?,
-                    upload_error = ?,
-                    youtube_url = ?,
-                    quality = ?,
-                    validation_error = ?
-                WHERE id = ?
-            """,
-                (
-                    data["filename"],
-                    data["filepath"],
-                    data["updated_at"],
-                    data["duration_seconds"],
-                    data["file_size_bytes"],
-                    data["status"],
-                    data["upload_attempts"],
-                    data["last_upload_attempt"],
-                    data["upload_error"],
-                    data["youtube_url"],
-                    data["quality"],
-                    data["validation_error"],
-                    video.id,
-                ),
-            )
+                cursor.execute(
+                    """
+                    UPDATE videos SET
+                        filename = ?,
+                        filepath = ?,
+                        updated_at = ?,
+                        duration_seconds = ?,
+                        file_size_bytes = ?,
+                        status = ?,
+                        upload_attempts = ?,
+                        last_upload_attempt = ?,
+                        upload_error = ?,
+                        youtube_url = ?,
+                        quality = ?,
+                        validation_error = ?
+                    WHERE id = ?
+                """,
+                    (
+                        data["filename"],
+                        data["filepath"],
+                        data["updated_at"],
+                        data["duration_seconds"],
+                        data["file_size_bytes"],
+                        data["status"],
+                        data["upload_attempts"],
+                        data["last_upload_attempt"],
+                        data["upload_error"],
+                        data["youtube_url"],
+                        data["quality"],
+                        data["validation_error"],
+                        video.id,
+                    ),
+                )
 
-            conn.commit()
+                conn.commit()
 
-            if cursor.rowcount == 0:
-                raise StorageError(f"Video not found: id={video.id}")
+                if cursor.rowcount == 0:
+                    raise StorageError(f"Video not found: id={video.id}")
 
-            self.logger.debug(f"Updated video: {video.filename} (id={video.id})")
+                self.logger.debug(f"Updated video: {video.filename} (id={video.id})")
 
-        except sqlite3.Error as e:
-            raise StorageError(f"Failed to update video: {e}") from e
+            except sqlite3.Error as e:
+                raise StorageError(f"Failed to update video: {e}") from e
 
     def get_video(self, video_id: int) -> Optional[VideoFile]:
         """
@@ -367,26 +396,29 @@ class MetadataManager:
         """
         Delete video from database.
 
+        Thread-safe: Uses lock to prevent concurrent deletes.
+
         Args:
             video_id: Database ID
 
         Raises:
             StorageError: If deletion fails
         """
-        try:
-            conn = self._get_connection()
-            cursor = conn.cursor()
+        with self._write_lock:
+            try:
+                conn = self._get_connection()
+                cursor = conn.cursor()
 
-            cursor.execute("DELETE FROM videos WHERE id = ?", (video_id,))
-            conn.commit()
+                cursor.execute("DELETE FROM videos WHERE id = ?", (video_id,))
+                conn.commit()
 
-            if cursor.rowcount == 0:
-                raise StorageError(f"Video not found: id={video_id}")
+                if cursor.rowcount == 0:
+                    raise StorageError(f"Video not found: id={video_id}")
 
-            self.logger.debug(f"Deleted video from database: id={video_id}")
+                self.logger.debug(f"Deleted video from database: id={video_id}")
 
-        except sqlite3.Error as e:
-            raise StorageError(f"Failed to delete video: {e}") from e
+            except sqlite3.Error as e:
+                raise StorageError(f"Failed to delete video: {e}") from e
 
     def get_videos_by_status(self, status: UploadStatus) -> List[VideoFile]:
         """
