@@ -96,6 +96,29 @@ class MetadataManager:
         """Get database connection (reuses existing or creates new)"""
         if self._connection is None:
             try:
+                # WHY check_same_thread=False: Allows this SQLite connection to
+                #   be used across multiple threads
+                # Context: SQLite default is check_same_thread=True (raises
+                #   error if different thread uses connection). This app may
+                #   access metadata from main thread AND background
+                #   upload/cleanup threads
+                # Tradeoff: Safety vs flexibility - we disable Python's thread
+                #   safety check, but SQLite itself handles concurrent access
+                #   via database-level locks. Must ensure we don't have
+                #   simultaneous writes (handled by serialize operations through
+                #   single manager instance)
+                # Risk: If multiple threads call write operations
+                #   (INSERT/UPDATE/DELETE) simultaneously, SQLite will raise
+                #   "database is locked" errors. Current design is safe because:
+                #   1) Single MetadataManager instance (not creating multiple
+                #      managers)
+                #   2) Short-lived write transactions (commit immediately after
+                #      each operation)
+                #   3) Most operations are reads (SELECT), which SQLite handles
+                #      concurrently
+                # Alternative: Use a connection pool or thread-local
+                #   connections, but adds complexity for minimal benefit in this
+                #   single-database, low-concurrency scenario
                 self._connection = sqlite3.connect(
                     str(self.db_path),
                     check_same_thread=False,  # Allow multi-threaded access
@@ -312,6 +335,26 @@ class MetadataManager:
                 query += " LIMIT ?"
                 params.append(limit)
 
+            # WHY use ? placeholders instead of f-strings: SQL injection
+            #   prevention
+            # Context: User input (or any dynamic data) must NEVER be
+            #   concatenated directly into SQL
+            # Tradeoff: Slightly more verbose than f-strings, but absolutely
+            #   necessary for security
+            # Risk: Using f-strings like f"WHERE status = '{status}'" is
+            #   catastrophically dangerous:
+            #   Example: If status = "'; DROP TABLE videos; --" it would
+            #   execute the DROP!
+            #   Parameterized queries (?) separate SQL structure from data
+            #   values. Database driver automatically escapes values,
+            #   preventing malicious SQL injection
+            # NEVER DO THIS: cursor.execute(f"SELECT * FROM videos WHERE
+            #   status = '{status}'")
+            # ALWAYS DO THIS: cursor.execute("SELECT * FROM videos WHERE
+            #   status = ?", (status,))
+            # Note: order_by uses f-string (line 309) because it's internal
+            #   constant, not user input. If order_by came from user, it would
+            #   also need validation/whitelist
             cursor.execute(query, params)
             rows = cursor.fetchall()
 

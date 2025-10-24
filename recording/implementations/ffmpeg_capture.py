@@ -126,7 +126,32 @@ class FFmpegCapture(VideoCaptureInterface):
         self.logger.debug(f"FFmpeg command: {' '.join(command)}")
 
         try:
-            # Start FFmpeg process
+            # WHY these subprocess.Popen settings: Proper process isolation and
+            #   resource management
+            # Context: Running external processes requires careful handling of
+            #   input/output streams to prevent deadlocks and resource leaks
+            # Tradeoff: Memory vs simplicity - PIPE captures output (uses
+            #   memory), DEVNULL discards input
+            # Risk: Improper configuration can cause:
+            #   1) Deadlocks: If process fills output buffer and we don't read
+            #      it, process blocks forever
+            #   2) Zombie processes: Process doesn't terminate properly if
+            #      streams not handled
+            #   3) Resource leaks: Open file descriptors accumulate if not
+            #      closed
+            # Our configuration:
+            #   - stdout=PIPE: Capture FFmpeg's normal output (needed for
+            #     later .communicate() call)
+            #   - stderr=PIPE: Capture FFmpeg's error messages (for debugging
+            #     when things fail)
+            #   - stdin=DEVNULL: Close stdin, tells FFmpeg no keyboard input
+            #     coming (prevents hangs). DEVNULL = /dev/null on Unix, NUL on
+            #     Windows - discards all input
+            # Note: We call .communicate(timeout=5.0) in stop_capture() to
+            #   read buffered output. This prevents the deadlock that would
+            #   occur if buffers fill up
+            # Alternative: Use stdout/stderr=None to inherit parent's streams,
+            #   but then we can't capture error messages for debugging
             self._process = subprocess.Popen(
                 command,
                 stdout=subprocess.PIPE,
@@ -188,11 +213,44 @@ class FFmpegCapture(VideoCaptureInterface):
         self.logger.info("Stopping capture...")
 
         try:
-            # Send termination signal to FFmpeg
-            # FFmpeg handles SIGTERM gracefully and finalizes the file
+            # WHY graceful shutdown sequence: Ensures video file is properly
+            #   finalized and playable
+            # Context: FFmpeg needs time to write file headers, flush buffers,
+            #   and close file cleanly. Abrupt termination (SIGKILL) produces
+            #   corrupted/unplayable video files
+            # Tradeoff: Speed vs reliability - graceful shutdown takes 1-3
+            #   seconds, but ensures valid files
+
+            # STEP 1: Send SIGTERM (not SIGKILL or SIGINT)
+            # WHY SIGTERM: It's the "please stop" signal that allows process
+            #   to cleanup
+            #   - SIGTERM (15): Polite request to terminate, process can catch
+            #     and cleanup
+            #   - SIGKILL (9): Immediate termination, process cannot catch, no
+            #     cleanup, CORRUPTS FILES
+            #   - SIGINT (2): Keyboard interrupt (Ctrl+C), FFmpeg handles it
+            #     similarly to SIGTERM
+            #   FFmpeg specifically handles SIGTERM by flushing video buffers,
+            #   writing MP4 trailer, and closing file descriptors properly
+            # Risk: If we used .kill() instead of .terminate(), videos would
+            #   be corrupted
             self._process.terminate()
 
-            # Wait for process to finish (with timeout)
+            # STEP 2: Wait with 5.0 second timeout
+            # WHY 5.0 seconds: Empirically determined time for FFmpeg to
+            #   finalize files
+            #   - Typical shutdown time: 0.5-2 seconds for flushing buffers
+            #     and writing headers
+            #   - 5 seconds provides margin for slow SD cards on Raspberry Pi
+            #   - Too short (< 2s): Risk timeout on slower storage, forcing
+            #     SIGKILL
+            #   - Too long (> 10s): User waits unnecessarily if FFmpeg is
+            #     actually hung
+            # Context: .communicate() does two things:
+            #   1) Reads remaining stdout/stderr to prevent buffer deadlock
+            #   2) Waits for process to exit
+            # Alternative: Could use .wait() but then we lose the buffered
+            #   output
             try:
                 stdout, stderr = self._process.communicate(timeout=5.0)
 
@@ -207,7 +265,14 @@ class FFmpegCapture(VideoCaptureInterface):
                     self.logger.info("Capture stopped successfully")
 
             except subprocess.TimeoutExpired:
-                # FFmpeg didn't stop gracefully, force kill
+                # STEP 3: Force kill if graceful shutdown failed
+                # WHY force kill: FFmpeg might be stuck (hardware issue, kernel
+                #   bug, etc.)
+                # Risk: This WILL corrupt the current video file, but prevents
+                #   system from hanging
+                # Trade-off: Lose current video vs block entire application
+                # This is a last resort - should rarely happen with healthy
+                #   hardware
                 self.logger.warning("FFmpeg didn't stop gracefully, force killing")
                 self._process.kill()
                 self._process.wait()

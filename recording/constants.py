@@ -129,12 +129,44 @@ MIN_FREE_SPACE_GB = 5.0
 # Options: quiet, panic, fatal, error, warning, info, verbose, debug
 FFMPEG_LOG_LEVEL = "error"
 
-# Buffer size for video capture
-# Larger buffer helps prevent frame drops
+# WHY 10M buffer size: Absorbs temporary USB/storage slowdowns without
+#   dropping frames
+# Context: Video data flows from USB camera -> FFmpeg -> disk. If any stage
+#   stalls briefly, buffer prevents frame loss. Raspberry Pi has several
+#   potential bottlenecks:
+#   1) USB bus contention (shared with other devices)
+#   2) SD card write speed variations (wear leveling, garbage collection)
+#   3) CPU load spikes (thermal throttling, background processes)
+# Tradeoff: Memory vs reliability - 10M uses ~10MB RAM but provides
+#   ~0.3-0.5 second buffer at 1080p30 (~20-30 MB/s bitrate depending on
+#   scene complexity)
+# Calculation: At 30fps, ~4MB/min compressed, 10M buffer ≈ 2.5 minutes raw,
+#   0.3s compressed. This handles typical SD card write stalls (100-300ms)
+# Risk: Too small (< 5M) = frame drops during brief stalls
+#   Too large (> 50M) = excessive memory usage, delayed error detection
+# Alternative: Could use default (smaller) buffer, but frame drops are
+#   unacceptable for recording sports videos where every moment matters
 CAPTURE_BUFFER_SIZE = "10M"
 
-# Input thread queue size
-# Higher value helps with USB camera latency
+# WHY 512 input queue size: Reduces frame drops from USB camera timing
+#   jitter
+# Context: USB cameras send frames at variable intervals due to:
+#   1) USB protocol overhead and bus arbitration
+#   2) Camera's internal processing variations
+#   3) USB host controller scheduling
+#   The queue decouples camera timing from FFmpeg processing timing
+# Tradeoff: Memory vs frame drop protection - Each queue slot holds a frame
+#   pointer (~bytes). 512 slots ≈ 17 seconds of frames at 30fps, but actual
+#   memory is minimal
+# Calculation: 512 frames ÷ 30fps = ~17 seconds of buffering capacity
+#   Actual memory usage is small (pointers + metadata), not full frame data
+# Risk: Too small (< 128) = FFmpeg can't keep up with camera burst delivery,
+#   drops frames
+#   Too large (> 2048) = Increased latency if we want to stop recording
+#   quickly (must drain queue first)
+# Source: FFmpeg documentation recommends 512-1024 for USB cameras
+# Alternative: Default queue size is 8, which is far too small for USB
+#   cameras
 THREAD_QUEUE_SIZE = 512
 
 

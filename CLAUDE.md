@@ -126,15 +126,22 @@ def process_recording(session: RecordingSession, duration: int) -> UploadResult:
     """
 ```
 
-**Educational comments** - explain WHY for:
+**Educational comments** - explain WHY, but MUST pass linting:
 - Python/RPi patterns
 - Hardware interactions (GPIO, threading)
 - Non-obvious design decisions
+- **CRITICAL**: Keep comment lines ≤ 88 characters (wrap if needed)
+- Format: Use multiple lines instead of one long line
 
 ```python
-# Pull-up resistor means: pressed=LOW, released=HIGH
-# More reliable than pull-down for mechanical buttons
-GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# WHY dual debouncing (hardware + software)?
+# Context: Switches bounce ~20ms - need filters
+#   Hardware: Electrical noise filter (GPIO library)
+#   Software: Safety net for missed bounces
+# Tradeoff: Lose very fast presses (<50ms), ok for humans
+time_since_last = current_time - self.last_press_time
+if time_since_last < self.debounce_time:
+    return  # Bounce detected, ignore
 ```
 
 **Dependency injection**:
@@ -168,12 +175,15 @@ Before creating/modifying modules:
 - Hardcode domain terms or credentials
 - Skip type hints or error handling
 - Mix hardware logic with business logic
+- Commit with linting errors - `./lint.sh` MUST pass with zero errors
 
 ✅ **Always**:
 - Inject dependencies
 - Keep functions < 50 lines
 - Put config in `config/`, secrets in `.env`
 - Add educational comments for complex patterns
+- Keep ALL comment lines ≤ 88 characters (wrap, don't skip comments)
+- Test before committing - `pytest` must pass with all tests green
 
 ## File Organization
 

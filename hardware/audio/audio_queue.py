@@ -110,20 +110,44 @@ class AudioQueue:
 
         while self._worker_running:
             try:
-                # Wait for message (1 second timeout to check if we should stop)
+                # WHY use queue.get(timeout=1.0)?
+                # Context: We need to be able to stop the worker thread when
+                #   shutdown() is called. Without a timeout, queue.get() blocks
+                #   forever waiting for a message, and we can't check
+                #   _worker_running flag.
+                #
+                # Why 1.0 seconds?
+                #   - Too short (0.1s): Wastes CPU checking flag repeatedly,
+                #     more context switches
+                #   - Too long (10s): Shutdown takes too long when worker is
+                #     idle
+                #   - 1.0s: Good balance - responsive shutdown, minimal CPU
+                #     waste
+                #
+                # Pattern: This is a standard "cooperative shutdown" pattern
+                #   with queues. When no message available, Empty exception
+                #   fires, we loop back and check flag. When message available,
+                #   we wake up immediately (don't wait full 1s).
                 text = self._message_queue.get(timeout=1.0)
 
                 # We have a message - speak it
                 self._speak_message(text)
 
-                # Mark task as done (for queue.join())
+                # WHY call task_done()?
+                # Context: queue.join() blocks until all items are "done".
+                #   Callers use wait_until_idle() to know when all queued
+                #   messages finished playing. Without task_done(),
+                #   wait_until_idle() would hang forever.
                 self._message_queue.task_done()
 
             except queue.Empty:
-                # No message in queue - loop continues to check if we should stop
+                # No message in queue within timeout window - loop continues
+                # to check if we should stop
                 continue
             except Exception as e:
                 # Never let worker crash - just log and continue
+                # This prevents one bad message from killing the entire audio
+                # system
                 self.logger.error(f"Error in worker loop: {e}", exc_info=True)
 
         self.logger.debug("Worker thread stopped")

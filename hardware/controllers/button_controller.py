@@ -185,13 +185,31 @@ class ButtonController:
         """
         current_time = time.time()
 
-        # Additional software debouncing (belt and suspenders approach)
-        # GPIO library does hardware debouncing, but this adds extra protection
+        # WHY dual debouncing (hardware + software)?
+        # Context: Mechanical button switches bounce - contact opens/closes
+        #   multiple times in ~20ms before settling
+        #   - Hardware debouncing (via GPIO library): Filters electrical noise,
+        #     but not perfectly reliable
+        #   - Software debouncing: Acts as safety net in case hardware missed
+        #     bounces
+        #   - "Belt and suspenders" approach ensures reliability even with
+        #     cheap/worn buttons
+        #
+        # Tradeoff: We lose some very fast presses (faster than debounce_time),
+        #   but that's acceptable for human-scale interactions (typical debounce
+        #   is 50ms, human fastest click is ~100ms)
+        #
+        # Risk: This check has a subtle race condition!
+        #   If button bounces VERY fast and this handler runs twice in parallel
+        #   somehow, we could get two button presses. But in practice RPi.GPIO
+        #   blocks at hardware level, and we're in a single-threaded GPIO
+        #   callback, so this is safe.
         time_since_last = current_time - self.last_press_time
         if time_since_last < self.debounce_time:
             self.logger.debug("Button press ignored (software debounce)")
             return
 
+        # Update timing for next press detection
         self.last_press_time = current_time
         self._handle_button_event()
 
@@ -227,10 +245,26 @@ class ButtonController:
         self.pending_single_press = True
         self.last_press_time = current_time
 
-        # Cancel any existing timer
+        # Cancel any existing timer (from previous press)
         self._cancel_single_press_timer()
 
-        # Start new timer to confirm single press
+        # WHY use threading.Timer instead of just a flag?
+        # Context: We need to distinguish between single and double taps, but
+        #   user must press within double_tap_window. Rather than polling in a
+        #   busy loop, we use a Timer that fires automatically after the window
+        #   closes.
+        #
+        # Threading note: Timer runs in a separate thread. When it fires, it
+        #   calls _confirm_single_press() which runs in Timer's thread context.
+        #   This is WHY _confirm_single_press() must be thread-safe and WHY we
+        #   use flags (pending_single_press) rather than calling callback
+        #   directly.
+        #
+        # Risk: If button pressed multiple times fast:
+        #   1. First press: Start timer
+        #   2. Second press within window: Cancel timer (line 243), fire DOUBLE
+        #   3. Second press outside window: Timer fires, then we start a new timer
+        #   This is correct behavior, but shows why careful ordering matters.
         self._single_press_timer = threading.Timer(
             self.double_tap_window,
             self._confirm_single_press,
