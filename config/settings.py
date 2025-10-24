@@ -63,6 +63,14 @@ DIR_UPLOADED = "uploaded"
 DIR_FAILED = "failed"
 DIR_CORRUPTED = "corrupted"
 
+# Video File Naming
+VIDEO_FILENAME_PREFIX = "recording"
+VIDEO_FILENAME_EXTENSION = ".mp4"
+VIDEO_FILENAME_PATTERN = (
+    f"{VIDEO_FILENAME_PREFIX}_%Y-%m-%d_%H%M%S{VIDEO_FILENAME_EXTENSION}"
+)
+METADATA_DB_NAME = "video_metadata.db"
+
 # Space Management (in bytes)
 MIN_FREE_SPACE_BYTES = 5 * 1024 * 1024 * 1024  # 5 GB
 LOW_SPACE_WARNING_BYTES = 10 * 1024 * 1024 * 1024  # 10 GB
@@ -77,6 +85,7 @@ RETRY_DELAY_SECONDS = 300  # 5 minutes
 
 # File Validation
 MIN_VIDEO_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB minimum
+VALIDATION_TIMEOUT_SECONDS = 10  # Timeout for video validation
 ENABLE_FFMPEG_VALIDATION = True  # Use FFmpeg for video validation
 
 # Cleanup Configuration

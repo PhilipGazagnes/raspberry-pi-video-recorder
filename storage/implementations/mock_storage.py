@@ -10,7 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from storage.constants import DIR_PENDING, UploadStatus
+from config.settings import DIR_PENDING
+from storage.constants import UploadStatus
 from storage.interfaces.storage_interface import StorageError, StorageInterface
 from storage.models.video_file import StorageStats, VideoFile
 

@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from storage.constants import (
+from config.settings import (
     DIR_CORRUPTED,
     DIR_FAILED,
     DIR_PENDING,

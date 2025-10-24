@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 from config import settings
-from storage.constants import DIR_FAILED, DIR_UPLOADED, UploadStatus
+from config.settings import DIR_FAILED, DIR_UPLOADED
+from storage.constants import UploadStatus
 from storage.implementations.local_storage import LocalStorage
 from storage.interfaces.storage_interface import StorageError, StorageInterface
 from storage.models.video_file import StorageStats, VideoFile

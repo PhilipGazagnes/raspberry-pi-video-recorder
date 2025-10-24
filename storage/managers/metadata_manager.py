@@ -11,7 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union
 
-from storage.constants import METADATA_DB_NAME, UploadStatus
+from config.settings import METADATA_DB_NAME
+from storage.constants import UploadStatus
 from storage.interfaces.storage_interface import StorageError
 from storage.models.video_file import VideoFile
 
@@ -368,7 +369,7 @@ class MetadataManager:
             cursor = conn.cursor()
 
             # Get failed videos that haven't exceeded retry limit
-            from storage.constants import MAX_UPLOAD_RETRIES
+            from config.settings import MAX_UPLOAD_RETRIES
 
             cursor.execute(
                 """

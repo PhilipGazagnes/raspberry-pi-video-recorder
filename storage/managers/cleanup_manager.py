@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Callable, List
 
 from config import settings
-from storage.constants import CLEANUP_BATCH_SIZE
+from config.settings import CLEANUP_BATCH_SIZE
 from storage.models.video_file import VideoFile
 
 

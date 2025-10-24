@@ -80,7 +80,7 @@ class VideoFile:
     @property
     def can_retry(self) -> bool:
         """Check if video can be retried (failed but under retry limit)"""
-        from storage.constants import MAX_UPLOAD_RETRIES
+        from config.settings import MAX_UPLOAD_RETRIES
 
         return self.is_failed and self.upload_attempts < MAX_UPLOAD_RETRIES
 
@@ -220,14 +220,14 @@ class StorageStats:
     @property
     def is_low_space(self) -> bool:
         """Check if space is below warning threshold"""
-        from storage.constants import LOW_SPACE_WARNING_BYTES
+        from config.settings import LOW_SPACE_WARNING_BYTES
 
         return self.free_space_bytes < LOW_SPACE_WARNING_BYTES
 
     @property
     def is_disk_full(self) -> bool:
         """Check if space is below minimum threshold"""
-        from storage.constants import MIN_FREE_SPACE_BYTES
+        from config.settings import MIN_FREE_SPACE_BYTES
 
         return self.free_space_bytes < MIN_FREE_SPACE_BYTES
 

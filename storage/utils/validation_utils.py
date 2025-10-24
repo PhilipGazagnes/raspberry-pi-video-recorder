@@ -11,11 +11,11 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
 
-from storage.constants import (
+from config.settings import (
     MIN_VIDEO_SIZE_BYTES,
     VALIDATION_TIMEOUT_SECONDS,
-    VideoQuality,
 )
+from storage.constants import VideoQuality
 
 logger = logging.getLogger(__name__)
 
