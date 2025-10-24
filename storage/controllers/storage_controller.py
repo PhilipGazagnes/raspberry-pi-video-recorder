@@ -7,7 +7,7 @@ Provides simple API with event callbacks for the main application.
 
 import logging
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from config import settings
 from config.settings import DIR_FAILED, DIR_UPLOADED
@@ -286,7 +286,7 @@ class StorageController:
             self._trigger_error(f"Cleanup failed: {e}")
             return 0
 
-    def get_cleanup_summary(self) -> dict:
+    def get_cleanup_summary(self) -> Dict[str, Any]:
         """
         Get summary of what would be cleaned up.
 
@@ -312,7 +312,7 @@ class StorageController:
     # STATUS AND DIAGNOSTICS
     # =========================================================================
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get comprehensive storage status.
 

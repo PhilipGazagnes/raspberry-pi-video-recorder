@@ -9,7 +9,7 @@ import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from config.settings import METADATA_DB_NAME
 from storage.constants import UploadStatus
@@ -421,7 +421,7 @@ class MetadataManager:
         except sqlite3.Error as e:
             raise StorageError(f"Failed to get old videos: {e}") from e
 
-    def get_count_by_status(self) -> dict:
+    def get_count_by_status(self) -> Dict[str, int]:
         """
         Get count of videos by status.
 

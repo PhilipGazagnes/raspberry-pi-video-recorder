@@ -10,6 +10,7 @@ SOLID Principles:
 """
 
 import logging
+from typing import Dict, List
 
 from hardware.constants import AUDIO_MESSAGE_TEXTS, AudioMessage
 
@@ -146,7 +147,7 @@ class MessageLibrary:
         del self._messages[key]
         self.logger.info(f"Removed custom message '{key.value}'")
 
-    def get_available_messages(self) -> list[AudioMessage]:
+    def get_available_messages(self) -> List[AudioMessage]:
         """
         Get list of all available message keys.
 
@@ -160,7 +161,7 @@ class MessageLibrary:
         """
         return list(self._messages.keys())
 
-    def get_message_count(self) -> dict[str, int]:
+    def get_message_count(self) -> Dict[str, int]:
         """
         Get count of default vs custom messages.
 

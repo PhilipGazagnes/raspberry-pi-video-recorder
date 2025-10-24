@@ -8,7 +8,7 @@ Similar to MockGPIO/MockTTS in hardware module.
 import logging
 import os
 import time
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from upload.constants import (
@@ -65,7 +65,7 @@ class MockUploader(UploaderInterface):
         self.playlist_id = playlist_id
 
         # Track upload history for testing
-        self.upload_history: list[dict] = []
+        self.upload_history: List[Dict[str, Any]] = []
 
         self.logger.info(
             f"Mock Uploader initialized "
@@ -77,7 +77,7 @@ class MockUploader(UploaderInterface):
         video_path: str,
         title: str,
         description: str = "",
-        tags: Optional[list[str]] = None,
+        tags: Optional[List[str]] = None,
         playlist_id: Optional[str] = None,
     ) -> UploadResult:
         """
@@ -224,7 +224,7 @@ class MockUploader(UploaderInterface):
     # TESTING HELPER METHODS
     # =========================================================================
 
-    def get_upload_history(self) -> list[dict]:
+    def get_upload_history(self) -> List[Dict[str, Any]]:
         """
         Get list of all uploads performed.
 
@@ -238,7 +238,7 @@ class MockUploader(UploaderInterface):
         self.upload_history.clear()
         self.logger.debug("[MOCK] Upload history cleared")
 
-    def get_last_upload(self) -> Optional[dict]:
+    def get_last_upload(self) -> Optional[Dict[str, Any]]:
         """
         Get most recent upload.
 

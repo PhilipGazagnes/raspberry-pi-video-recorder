@@ -8,7 +8,7 @@ not on concrete YouTube API implementation.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from upload.constants import UploadStatus
 
@@ -49,7 +49,7 @@ class UploaderInterface(ABC):
         video_path: str,
         title: str,
         description: str = "",
-        tags: Optional[list[str]] = None,
+        tags: Optional[List[str]] = None,
         playlist_id: Optional[str] = None,
     ) -> UploadResult:
         """

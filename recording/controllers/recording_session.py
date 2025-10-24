@@ -16,7 +16,7 @@ import logging
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from recording.constants import (
     DEFAULT_RECORDING_DURATION,
@@ -469,7 +469,7 @@ class RecordingSession:
     # STATUS AND INFO
     # =========================================================================
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get complete session status.
 

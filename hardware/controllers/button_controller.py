@@ -21,7 +21,7 @@ This demonstrates SOLID principles:
 import logging
 import threading
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from hardware.constants import (
     BUTTON_DEBOUNCE_TIME,
@@ -371,7 +371,7 @@ class ButtonController:
         self.callback_func = original_callback
         self.logger.info("Button test complete")
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get current button controller status.
 

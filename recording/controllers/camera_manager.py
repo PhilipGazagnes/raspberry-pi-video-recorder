@@ -12,7 +12,7 @@ SOLID Principles:
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from recording.constants import DEFAULT_CAMERA_DEVICE
 from recording.factory import create_capture
@@ -68,7 +68,7 @@ class CameraManager:
         self.capture = capture or create_capture()
 
         # Health monitoring
-        self._last_health_check: Optional[dict] = None
+        self._last_health_check: Optional[Dict[str, Any]] = None
         self._consecutive_health_failures = 0
         self._max_health_failures = 3  # Alert after 3 consecutive failures
 
@@ -221,7 +221,7 @@ class CameraManager:
         """
         return self.capture.get_output_file()
 
-    def check_health(self, force: bool = False) -> dict:
+    def check_health(self, force: bool = False) -> Dict[str, Any]:
         """
         Check camera health.
 
@@ -285,7 +285,7 @@ class CameraManager:
 
         return health
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get complete camera status.
 
@@ -316,7 +316,7 @@ class CameraManager:
             "health": self.check_health(),
         }
 
-    def get_camera_info(self) -> dict:
+    def get_camera_info(self) -> Dict[str, Any]:
         """
         Get camera device information.
 

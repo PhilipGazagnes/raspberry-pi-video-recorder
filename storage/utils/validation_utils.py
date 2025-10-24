@@ -9,7 +9,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from config.settings import (
     MIN_VIDEO_SIZE_BYTES,
@@ -222,7 +222,7 @@ def get_video_duration(file_path: Path) -> Optional[int]:
         return None
 
 
-def get_video_info(file_path: Path) -> dict:
+def get_video_info(file_path: Path) -> Dict[str, Any]:
     """
     Get detailed video information using ffprobe.
 

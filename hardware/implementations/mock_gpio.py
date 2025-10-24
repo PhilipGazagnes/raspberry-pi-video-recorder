@@ -17,7 +17,7 @@ Why mock hardware?
 import logging
 import threading
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from hardware.interfaces.gpio_interface import (
     EdgeDetection,
@@ -270,7 +270,7 @@ class MockGPIO(GPIOInterface):
             raise GPIOError(f"Pin {pin} not configured")
         return self._pins[pin]["state"]
 
-    def get_pin_info(self, pin: int) -> dict:
+    def get_pin_info(self, pin: int) -> Dict[str, Any]:
         """
         Get detailed pin information for debugging.
 

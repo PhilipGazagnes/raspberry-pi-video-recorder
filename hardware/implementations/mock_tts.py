@@ -13,7 +13,7 @@ Perfect for:
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from hardware.interfaces.tts_interface import TTSError, TTSInterface
 
@@ -103,7 +103,7 @@ class MockTTS(TTSInterface):
         self._config["voice_id"] = voice_id or "mock_voice"
         self.logger.info(f"[MOCK TTS] Voice set to {self._config['voice_id']}")
 
-    def get_available_voices(self) -> list[str]:
+    def get_available_voices(self) -> List[str]:
         """Return fake voice list for testing"""
         return [
             "mock_voice",
@@ -123,7 +123,7 @@ class MockTTS(TTSInterface):
     # TESTING HELPER METHODS (not part of TTSInterface)
     # =========================================================================
 
-    def get_speech_history(self) -> list[str]:
+    def get_speech_history(self) -> List[str]:
         """
         Get list of all text that was spoken.
         Useful for tests to verify correct messages were played.
@@ -159,7 +159,7 @@ class MockTTS(TTSInterface):
         """
         return text in self.speech_history
 
-    def get_config(self) -> dict:
+    def get_config(self) -> Dict[str, Any]:
         """
         Get current TTS configuration (for test verification).
 

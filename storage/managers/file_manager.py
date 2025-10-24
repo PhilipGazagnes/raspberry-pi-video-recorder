@@ -9,7 +9,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from config.settings import (
     DIR_CORRUPTED,
@@ -256,7 +256,7 @@ class FileManager:
 
         return False
 
-    def list_files(self, directory: str, pattern: str = "*.mp4") -> list[Path]:
+    def list_files(self, directory: str, pattern: str = "*.mp4") -> List[Path]:
         """
         List files in directory.
 
@@ -326,7 +326,7 @@ class FileManager:
         except OSError:
             return False
 
-    def get_storage_info(self) -> dict:
+    def get_storage_info(self) -> Dict[str, Any]:
         """
         Get storage directory information.
 

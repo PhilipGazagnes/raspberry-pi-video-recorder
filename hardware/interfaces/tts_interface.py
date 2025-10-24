@@ -10,7 +10,7 @@ High-level code (AudioController) depends on this abstraction, not on pyttsx3 di
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 
 class TTSInterface(ABC):
@@ -72,7 +72,7 @@ class TTSInterface(ABC):
         """
 
     @abstractmethod
-    def get_available_voices(self) -> list[str]:
+    def get_available_voices(self) -> List[str]:
         """
         Get list of available voice identifiers.
 

@@ -8,7 +8,7 @@ Handles video uploads with resumable upload protocol.
 import logging
 import os
 import time
-from typing import Optional
+from typing import List, Optional
 
 try:
     from googleapiclient.discovery import build
@@ -160,7 +160,7 @@ class YouTubeUploader(UploaderInterface):
         video_path: str,
         title: str,
         description: str = "",
-        tags: Optional[list[str]] = None,
+        tags: Optional[List[str]] = None,
         playlist_id: Optional[str] = None,
     ) -> UploadResult:
         """

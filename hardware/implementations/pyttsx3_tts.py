@@ -13,7 +13,7 @@ Why wrap pyttsx3?
 
 import logging
 import time
-from typing import Optional
+from typing import List, Optional
 
 try:
     import pyttsx3
@@ -216,7 +216,7 @@ class PyTTSx3Engine(TTSInterface):
         voice_name = voice_id if voice_id else "default"
         self.logger.info(f"Voice set to: {voice_name}")
 
-    def get_available_voices(self) -> list[str]:
+    def get_available_voices(self) -> List[str]:
         """
         Get list of available voice IDs.
 

@@ -12,7 +12,7 @@ This follows the same pattern as hardware/controllers/audio_controller.py
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from upload.constants import VIDEO_TITLE_PREFIX
 from upload.factory import create_uploader
@@ -211,7 +211,7 @@ class UploadController:
         """
         return self.uploader.is_available()
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get current controller status.
 

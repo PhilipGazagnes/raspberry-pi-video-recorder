@@ -20,7 +20,7 @@ This demonstrates SOLID principles:
 
 import logging
 import threading
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from hardware.constants import (
     GPIO_LED_GREEN,
@@ -332,7 +332,7 @@ class LEDController:
         self.set_status(original_pattern)
         self.logger.info("LED test sequence complete")
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get current LED controller status.
 

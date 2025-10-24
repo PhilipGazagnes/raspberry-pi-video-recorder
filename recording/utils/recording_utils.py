@@ -9,7 +9,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from recording.constants import FILENAME_FORMAT, MIN_FREE_SPACE_GB
 
@@ -70,7 +70,7 @@ def check_disk_space(path: Path, required_gb: float = MIN_FREE_SPACE_GB) -> bool
         return False
 
 
-def get_disk_space_info(path: Path) -> dict:
+def get_disk_space_info(path: Path) -> Dict[str, float]:
     """
     Get detailed disk space information.
 
@@ -266,7 +266,7 @@ def cleanup_old_recordings(
     return deleted_count
 
 
-def get_recording_files(directory: Path, pattern: str = "*.mp4") -> list[Path]:
+def get_recording_files(directory: Path, pattern: str = "*.mp4") -> List[Path]:
     """
     Get list of recording files in directory.
 

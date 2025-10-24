@@ -8,7 +8,7 @@ Single responsibility: Disk space management only.
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from config import settings
 from storage.constants import StorageState
@@ -239,7 +239,7 @@ class SpaceManager:
 
         return True, "Sufficient space available"
 
-    def get_space_stats(self) -> dict:
+    def get_space_stats(self) -> Dict[str, Any]:
         """
         Get detailed space statistics.
 

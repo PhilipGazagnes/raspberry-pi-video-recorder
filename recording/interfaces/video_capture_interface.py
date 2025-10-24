@@ -15,7 +15,7 @@ Why an interface?
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class VideoCaptureInterface(ABC):
@@ -107,7 +107,7 @@ class VideoCaptureInterface(ABC):
         """
 
     @abstractmethod
-    def check_health(self) -> dict:
+    def check_health(self) -> Dict[str, Any]:
         """
         Check health of capture process.
 

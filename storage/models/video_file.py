@@ -7,7 +7,7 @@ Data classes representing video files and their metadata.
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from storage.constants import UploadStatus, VideoQuality
 
@@ -116,7 +116,7 @@ class VideoFile:
         self.validation_error = error
         self.updated_at = datetime.now()
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""
         return {
             "filename": self.filename,
@@ -139,7 +139,7 @@ class VideoFile:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "VideoFile":
+    def from_dict(cls, data: Dict[str, Any]) -> "VideoFile":
         """Create VideoFile from dictionary (database row)"""
         return cls(
             id=data.get("id"),
@@ -231,7 +231,7 @@ class StorageStats:
 
         return self.free_space_bytes < MIN_FREE_SPACE_BYTES
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for logging/display"""
         return {
             "free_space_gb": round(self.free_space_gb, 2),

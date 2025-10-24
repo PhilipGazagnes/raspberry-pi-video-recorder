@@ -20,7 +20,7 @@ This demonstrates SOLID principles:
 """
 
 import logging
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from hardware.audio.audio_queue import AudioQueue
 from hardware.audio.message_library import MessageLibrary
@@ -259,7 +259,7 @@ class AudioController:
         """
         self.message_library.add_custom_message(key, text)
 
-    def get_available_messages(self) -> list[AudioMessage]:
+    def get_available_messages(self) -> List[AudioMessage]:
         """
         Get list of available message keys.
 
@@ -322,7 +322,7 @@ class AudioController:
 
         self.logger.info("All message tests complete")
 
-    def check_audio_system(self) -> dict:
+    def check_audio_system(self) -> Dict[str, Any]:
         """
         Check audio system health and capabilities.
 
@@ -349,7 +349,7 @@ class AudioController:
 
         return status
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get current audio controller status.
 

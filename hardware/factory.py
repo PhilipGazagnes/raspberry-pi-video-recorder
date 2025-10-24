@@ -15,7 +15,7 @@ an interface for creating objects without specifying their concrete classes.
 """
 
 import logging
-from typing import Literal
+from typing import Dict, Literal
 
 from hardware.implementations.mock_gpio import MockGPIO
 from hardware.implementations.mock_tts import MockTTS
@@ -153,7 +153,7 @@ class HardwareFactory:
             return MockTTS(simulate_timing=simulate_timing)
 
     @classmethod
-    def is_real_hardware_available(cls) -> dict[str, bool]:
+    def is_real_hardware_available(cls) -> Dict[str, bool]:
         """
         Check which real hardware is available.
 

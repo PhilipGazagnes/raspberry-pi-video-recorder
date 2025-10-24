@@ -17,7 +17,7 @@ SOLID Principles:
 import logging
 import queue
 import threading
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from hardware.interfaces.tts_interface import TTSInterface
 
@@ -306,7 +306,7 @@ class AudioQueue:
             self.logger.error(f"Error waiting for idle: {e}")
             return False
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """
         Get detailed queue status.
 
