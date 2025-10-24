@@ -38,6 +38,7 @@ Thumbs.db
 
 # Project specific
 /recordings/
+quick_check_videos/
 *.log
 
 # cache

@@ -22,7 +22,6 @@ Usage:
 
 import logging
 import sys
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -33,6 +32,7 @@ from hardware.factory import HardwareFactory
 from recording.controllers.camera_manager import CameraManager
 from recording.controllers.recording_session import RecordingSession
 from recording.factory import RecordingFactory
+from recording.interfaces.video_capture_interface import CaptureError
 from storage.controllers.storage_controller import StorageController
 from upload.controllers.upload_controller import UploadController
 from upload.factory import UploaderFactory
@@ -74,7 +74,9 @@ VIDEO_PRIVACY = "private"  # private, unlisted, public
 
 # Cleanup Settings
 KEEP_VIDEO_AFTER_UPLOAD = True  # Set to False to auto-delete after successful upload
-CLEANUP_ON_FAILURE = False  # Set to True to delete video if upload fails (useful for testing)
+CLEANUP_ON_FAILURE = (
+    False  # Set to True to delete video if upload fails (useful for testing)
+)
 
 # Logging
 LOG_LEVEL = logging.INFO
@@ -145,15 +147,20 @@ def quick_check() -> bool:
         capture = recording_factory.create_capture(mode=RECORDING_MODE)  # type: ignore[arg-type]
 
         # If it's real FFmpeg, update video parameters
-        if RECORDING_MODE == "real" or (RECORDING_MODE == "auto" and capture.is_available()):
+        if RECORDING_MODE == "real" or (
+            RECORDING_MODE == "auto" and capture.is_available()
+        ):
             from recording.implementations.ffmpeg_capture import FFmpegCapture
+
             if isinstance(capture, FFmpegCapture):
                 capture.width = VIDEO_WIDTH
                 capture.height = VIDEO_HEIGHT
                 capture.fps = VIDEO_FPS
 
         camera = CameraManager(capture)
-        logger.info(f"✅ Recording initialized (width={VIDEO_WIDTH}, height={VIDEO_HEIGHT}, fps={VIDEO_FPS})")
+        logger.info(
+            f"✅ Recording initialized (width={VIDEO_WIDTH}, height={VIDEO_HEIGHT}, fps={VIDEO_FPS})",
+        )
     except Exception as e:
         logger.error(f"❌ Failed to initialize recording: {e}")
         return False
@@ -166,6 +173,7 @@ def quick_check() -> bool:
         # Use StorageController with MockStorage for quick check
         # MockStorage simulates storage without requiring /home/pi directory
         from storage.implementations.mock_storage import MockStorage
+
         mock_storage_impl = MockStorage()
         storage = StorageController(storage_impl=mock_storage_impl)
 
@@ -198,27 +206,44 @@ def quick_check() -> bool:
                     # Try macOS AVFoundation format first
                     cmd = [
                         "ffmpeg",
-                        "-f", "avfoundation",
-                        "-video_size", f"{VIDEO_WIDTH}x{VIDEO_HEIGHT}",
-                        "-framerate", str(VIDEO_FPS),
-                        "-i", "0",  # Camera device 0 (FaceTime camera on macOS)
-                        "-t", str(RECORDING_DURATION_SECONDS),
-                        "-c:v", "libx264",
-                        "-preset", "ultrafast",
-                        "-crf", "23",
+                        "-f",
+                        "avfoundation",
+                        "-video_size",
+                        f"{VIDEO_WIDTH}x{VIDEO_HEIGHT}",
+                        "-framerate",
+                        str(VIDEO_FPS),
+                        "-i",
+                        "0",  # Camera device 0 (FaceTime camera on macOS)
+                        "-t",
+                        str(RECORDING_DURATION_SECONDS),
+                        "-c:v",
+                        "libx264",
+                        "-preset",
+                        "ultrafast",
+                        "-crf",
+                        "23",
                         "-y",
                         str(video_path),
                     ]
 
-                    result = subprocess.run(cmd, capture_output=True, timeout=RECORDING_DURATION_SECONDS + 10)
+                    result = subprocess.run(
+                        cmd,
+                        check=False,
+                        capture_output=True,
+                        timeout=RECORDING_DURATION_SECONDS + 10,
+                    )
                     if result.returncode != 0:
-                        logger.warning(f"FFmpeg AVFoundation failed, trying mock: {result.stderr.decode()[:200]}")
-                        raise Exception("AVFoundation failed")
+                        logger.warning(
+                            f"FFmpeg AVFoundation failed, trying mock: {result.stderr.decode()[:200]}",
+                        )
+                        raise CaptureError("AVFoundation failed")
 
                     # Success - file was created by FFmpeg
                     logger.info(f"📹 Recording to {video_path.name}... (direct FFmpeg)")
                 except Exception as e:
-                    logger.warning(f"Direct camera capture failed: {e}, falling back to mock...")
+                    logger.warning(
+                        f"Direct camera capture failed: {e}, falling back to mock...",
+                    )
                     # Fall back to mock recording below
                     use_builtin_camera = False
             else:
@@ -272,7 +297,10 @@ def quick_check() -> bool:
 
     try:
         # Save recording to storage
-        video = storage.save_recording(video_path, duration_seconds=RECORDING_DURATION_SECONDS)
+        video = storage.save_recording(
+            video_path,
+            duration_seconds=RECORDING_DURATION_SECONDS,
+        )
 
         if not video:
             logger.error("❌ Failed to save recording to storage")
@@ -344,7 +372,10 @@ def quick_check() -> bool:
                 logger.warning("Upload succeeded but storage marking failed")
         else:
             # Mark upload as failed
-            storage.mark_upload_failed(video, upload_result.error_message or "Unknown error")
+            storage.mark_upload_failed(
+                video,
+                upload_result.error_message or "Unknown error",
+            )
 
             logger.error(f"❌ Upload failed: {upload_result.error_message}")
 
@@ -356,7 +387,9 @@ def quick_check() -> bool:
                 try:
                     if actual_video_path.exists():
                         actual_video_path.unlink()
-                        logger.info(f"Cleaned up failed video: {actual_video_path.name}")
+                        logger.info(
+                            f"Cleaned up failed video: {actual_video_path.name}",
+                        )
                 except Exception as e:
                     logger.warning(f"Failed to cleanup video file: {e}")
 
