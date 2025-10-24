@@ -50,9 +50,9 @@ HTTP_TIMEOUT = 30
 from config.settings import (
     DEFAULT_PRIVACY_STATUS,
     DEFAULT_VIDEO_TAGS,
-    SESSION_TITLE_PREFIX as VIDEO_TITLE_PREFIX,
-    YOUTUBE_CATEGORY_ID as YOUTUBE_CATEGORY_SPORTS,
 )
+from config.settings import SESSION_TITLE_PREFIX as VIDEO_TITLE_PREFIX
+from config.settings import YOUTUBE_CATEGORY_ID as YOUTUBE_CATEGORY_SPORTS
 
 # =============================================================================
 # UPLOAD STATUS

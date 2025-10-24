@@ -10,7 +10,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-import config.settings as settings
+from config import settings
 from storage.constants import StorageState
 from storage.interfaces.storage_interface import StorageError
 
@@ -229,7 +229,8 @@ class SpaceManager:
                 free_gb = free_space / (1024**3)
                 return (
                     False,
-                    f"Insufficient space for recording: {free_gb:.2f} GB free, need {needed_gb:.2f} GB",
+                    f"Insufficient space for recording: {free_gb:.2f} GB free, "
+                    f"need {needed_gb:.2f} GB",
                 )
 
         # Space is available

@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Callable, List, Optional
 
-import config.settings as settings
+from config import settings
 from storage.constants import DIR_FAILED, DIR_UPLOADED, UploadStatus
 from storage.implementations.local_storage import LocalStorage
 from storage.interfaces.storage_interface import StorageError, StorageInterface
@@ -97,9 +97,12 @@ class StorageController:
         try:
             video = self.storage.save_video(video_path, duration_seconds)
 
+            # Calculate file size, handle None case
+            file_size_mb = (
+                (video.file_size_bytes / (1024**2)) if video.file_size_bytes else 0.0
+            )
             self.logger.info(
-                f"Recording saved: {video.filename} "
-                f"({video.file_size_bytes / (1024**2):.2f} MB)",
+                f"Recording saved: {video.filename} ({file_size_mb:.2f} MB)",
             )
 
             # Check space after save

@@ -4,7 +4,8 @@ Mock GPIO Implementation
 Simulated GPIO for development and testing without Raspberry Pi hardware.
 Allows you to develop and test on your laptop, CI/CD servers, etc.
 
-This is a "Test Double" (specifically, a "Fake" - it has working logic but no real hardware).
+This is a "Test Double" (specifically, a "Fake" - it has working logic
+but no real hardware).
 
 Why mock hardware?
 1. Development: Write code on Mac/PC before deploying to Pi

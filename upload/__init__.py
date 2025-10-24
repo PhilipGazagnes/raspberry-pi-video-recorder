@@ -22,7 +22,7 @@ Usage:
 from upload.constants import UploadStatus
 from upload.controllers.upload_controller import UploadController
 from upload.factory import create_uploader
-from upload.interfaces.uploader_interface import UploadResult, UploaderError
+from upload.interfaces.uploader_interface import UploaderError, UploadResult
 
 # Public API
 __all__ = [

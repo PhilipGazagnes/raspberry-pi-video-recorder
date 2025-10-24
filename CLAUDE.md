@@ -84,6 +84,8 @@ Before creating/modifying modules:
 - Integration tests: multi-component workflows
 - Hardware simulation: mock GPIO/camera for CI/CD
 
+**Keep in mind**: Simplicity. Think what top priority tests are needed and stick to that.
+
 ## Critical Rules
 
 ❌ **Never**:

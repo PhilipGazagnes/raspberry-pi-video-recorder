@@ -69,7 +69,7 @@ class MockUploader(UploaderInterface):
 
         self.logger.info(
             f"Mock Uploader initialized "
-            f"(timing: {simulate_timing}, fail_rate: {fail_rate})"
+            f"(timing: {simulate_timing}, fail_rate: {fail_rate})",
         )
 
     def upload_video(
@@ -94,7 +94,7 @@ class MockUploader(UploaderInterface):
             file_size = os.path.getsize(video_path)
 
             self.logger.info(
-                f"[MOCK] Starting upload: {video_path} ({file_size} bytes)"
+                f"[MOCK] Starting upload: {video_path} ({file_size} bytes)",
             )
 
             # Simulate upload timing
@@ -105,7 +105,7 @@ class MockUploader(UploaderInterface):
                 upload_seconds += 2.0
 
                 self.logger.debug(
-                    f"[MOCK] Simulating {upload_seconds:.1f}s upload"
+                    f"[MOCK] Simulating {upload_seconds:.1f}s upload",
                 )
                 time.sleep(upload_seconds)
 
@@ -137,8 +137,7 @@ class MockUploader(UploaderInterface):
             upload_duration = time.time() - start_time
 
             self.logger.info(
-                f"[MOCK] ✅ Upload successful: {video_id} "
-                f"({upload_duration:.1f}s)"
+                f"[MOCK] ✅ Upload successful: {video_id} ({upload_duration:.1f}s)",
             )
 
             return UploadResult(
@@ -258,7 +257,4 @@ class MockUploader(UploaderInterface):
         Returns:
             True if video in history
         """
-        return any(
-            record["video_path"] == video_path
-            for record in self.upload_history
-        )
+        return any(record["video_path"] == video_path for record in self.upload_history)

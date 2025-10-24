@@ -157,7 +157,7 @@ class PyTTSx3Engine(TTSInterface):
             if engine:
                 try:
                     engine.stop()
-                except:
+                except Exception:
                     pass  # Ignore errors during cleanup
                 del engine
 

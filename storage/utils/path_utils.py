@@ -168,11 +168,12 @@ def format_size(bytes: int) -> str:
     Example:
         print(format_size(1_500_000_000))  # "1.40 GB"
     """
+    size: float = float(bytes)
     for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if bytes < 1024.0:
-            return f"{bytes:.2f} {unit}"
-        bytes /= 1024.0
-    return f"{bytes:.2f} PB"
+        if size < 1024.0:
+            return f"{size:.2f} {unit}"
+        size /= 1024.0
+    return f"{size:.2f} PB"
 
 
 def format_duration(seconds: int) -> str:

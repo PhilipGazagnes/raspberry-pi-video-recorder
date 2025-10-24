@@ -9,7 +9,7 @@ import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from storage.constants import METADATA_DB_NAME, UploadStatus
 from storage.interfaces.storage_interface import StorageError
@@ -299,7 +299,7 @@ class MetadataManager:
             cursor = conn.cursor()
 
             query = "SELECT * FROM videos"
-            params = []
+            params: List[Union[str, int]] = []
 
             if status:
                 query += " WHERE status = ?"

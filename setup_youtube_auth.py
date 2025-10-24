@@ -56,7 +56,10 @@ def load_env_file():
 
 def validate_credentials():
     """Validate client_secret.json exists"""
-    client_secret_path = os.getenv("YOUTUBE_CLIENT_SECRET_PATH")
+    # Import settings after .env is loaded
+    from config import settings
+
+    client_secret_path = settings.YOUTUBE_CLIENT_SECRET_PATH
 
     if not client_secret_path:
         logger.error("❌ YOUTUBE_CLIENT_SECRET_PATH not set in .env")
@@ -77,7 +80,10 @@ def validate_credentials():
 
 def validate_token_path():
     """Validate token.json path is configured"""
-    token_path = os.getenv("YOUTUBE_TOKEN_PATH")
+    # Import settings after .env is loaded
+    from config import settings
+
+    token_path = settings.YOUTUBE_TOKEN_PATH
 
     if not token_path:
         logger.error("❌ YOUTUBE_TOKEN_PATH not set in .env")
@@ -112,7 +118,7 @@ def check_dependencies():
         logger.error(f"❌ Missing required packages: {', '.join(missing)}")
         logger.info("\nInstall with:")
         logger.info(
-            "pip install google-auth google-auth-oauthlib google-api-python-client"
+            "pip install google-auth google-auth-oauthlib google-api-python-client",
         )
         sys.exit(1)
 
@@ -131,7 +137,9 @@ def run_authentication(client_secret_path: str, token_path: str):
     logger.info("2. Log in to your Google/YouTube account")
     logger.info("3. Grant permissions to the app")
     logger.info("4. Token will be saved automatically")
-    logger.info("\n⚠️  Make sure to use the SAME Google account that owns the YouTube channel!")
+    logger.info(
+        "\n⚠️  Make sure to use the SAME Google account that owns the YouTube channel!",
+    )
     logger.info("\nPress Enter to continue...")
     input()
 
@@ -148,7 +156,9 @@ def run_authentication(client_secret_path: str, token_path: str):
         logger.info("\nYou can now use the upload module:")
         logger.info("  from upload import UploadController")
         logger.info("  controller = UploadController()")
-        logger.info("\n⚠️  Keep token.json secret - it grants access to your YouTube account!")
+        logger.info(
+            "\n⚠️  Keep token.json secret - it grants access to your YouTube account!",
+        )
     else:
         logger.error("\n" + "=" * 60)
         logger.error("❌ AUTHENTICATION FAILED")

@@ -14,16 +14,14 @@ from hardware.interfaces.gpio_interface import (
 )
 from hardware.interfaces.tts_interface import TTSError, TTSInterface
 
-# Public API - these are the names that can be imported
+# Public API (sorted alphabetically)
 __all__ = [
-    # GPIO Interface
+    "EdgeDetection",
+    "GPIOError",
     "GPIOInterface",
     "PinMode",
     "PinState",
     "PullMode",
-    "EdgeDetection",
-    "GPIOError",
-    # TTS Interface
-    "TTSInterface",
     "TTSError",
+    "TTSInterface",
 ]

@@ -179,7 +179,7 @@ class MockStorage(StorageInterface):
     def get_stats(self) -> StorageStats:
         """Get simulated storage statistics"""
         # Count by status
-        counts = {}
+        counts: dict[str, int] = {}
         for video in self._videos.values():
             status_val = video.status.value
             counts[status_val] = counts.get(status_val, 0) + 1
@@ -264,7 +264,7 @@ class MockStorage(StorageInterface):
 
         self._videos[self._next_id] = video
         self._next_id += 1
-        self._used_space += video.file_size_bytes
+        self._used_space += video.file_size_bytes or 0
 
         return video
 

@@ -7,9 +7,12 @@ Controllers depend on this interface, not concrete implementations.
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from storage.models.video_file import StorageStats, VideoFile
+
+if TYPE_CHECKING:
+    from storage.constants import UploadStatus
 
 
 class StorageInterface(ABC):
@@ -17,7 +20,8 @@ class StorageInterface(ABC):
     Abstract base class for storage operations.
 
     Any storage implementation must provide these methods.
-    This allows easy swapping between real filesystem storage and mock storage for testing.
+    This allows easy swapping between real filesystem storage and mock
+    storage for testing.
     """
 
     @abstractmethod

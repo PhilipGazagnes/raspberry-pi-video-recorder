@@ -76,9 +76,9 @@ class RecordingSession:
         self.state = RecordingState.IDLE
         self._output_file: Optional[Path] = None
         self._start_time: Optional[float] = None
-        self._initial_duration = DEFAULT_RECORDING_DURATION
-        self._current_duration_limit = DEFAULT_RECORDING_DURATION
-        self._extension_count = 0
+        self._initial_duration: float = DEFAULT_RECORDING_DURATION
+        self._current_duration_limit: float = DEFAULT_RECORDING_DURATION
+        self._extension_count: int = 0
 
         # Warning/completion tracking
         self._warning_issued = False
@@ -130,7 +130,8 @@ class RecordingSession:
             return False
 
         self.logger.info(
-            f"Starting recording session: {output_file.name} ({format_duration(duration)})",
+            f"Starting recording session: {output_file.name} "
+            f"({format_duration(duration)})",
         )
 
         # Update state
@@ -379,7 +380,8 @@ class RecordingSession:
                 if remaining <= 0:
                     self.logger.info("Duration limit reached, auto-stopping")
 
-                    # Stop monitoring thread first (we're in it, so just signal and exit)
+                    # Stop monitoring thread first
+                    # (we're in it, so just signal and exit)
                     self._monitor_stop_event.set()
 
                     # Update state

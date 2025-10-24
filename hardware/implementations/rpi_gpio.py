@@ -1,8 +1,8 @@
 """
 Raspberry Pi GPIO Implementation
 
-Concrete implementation of GPIOInterface for Raspberry Pi hardware using RPi.GPIO library.
-This wraps the RPi.GPIO library to match our abstract interface.
+Concrete implementation of GPIOInterface for Raspberry Pi hardware using
+RPi.GPIO library. This wraps the RPi.GPIO library to match our interface.
 
 Why wrap an existing library?
 1. Decoupling: If RPi.GPIO changes, only this file needs updating

@@ -4,13 +4,13 @@ Upload Factory
 Factory pattern for creating uploader implementations.
 Follows same pattern as hardware/factory.py for consistency.
 
-Automatically configures from environment variables.
+Automatically configures from config.settings (centralized config).
 """
 
 import logging
-import os
 from typing import Literal, Optional
 
+from config import settings
 from upload.auth.oauth_manager import OAuthManager
 from upload.implementations.mock_uploader import MockUploader
 from upload.implementations.youtube_uploader import YouTubeUploader
@@ -76,7 +76,7 @@ class UploaderFactory:
                 return uploader
             except Exception as e:
                 raise RuntimeError(
-                    f"YouTube uploader requested but not available: {e}"
+                    f"YouTube uploader requested but not available: {e}",
                 ) from e
 
         # mode == "auto" - try YouTube first, fall back to mock
@@ -86,7 +86,7 @@ class UploaderFactory:
             return uploader
         except Exception as e:
             cls._logger.warning(
-                f"YouTube uploader not available ({e}), using Mock Uploader"
+                f"YouTube uploader not available ({e}), using Mock Uploader",
             )
             return MockUploader(playlist_id=playlist_id)
 
@@ -96,9 +96,9 @@ class UploaderFactory:
         playlist_id: Optional[str] = None,
     ) -> YouTubeUploader:
         """
-        Create YouTube uploader from environment configuration.
+        Create YouTube uploader from central configuration.
 
-        Reads from .env:
+        Reads from config.settings (which loads from .env):
         - YOUTUBE_CLIENT_SECRET_PATH
         - YOUTUBE_TOKEN_PATH
         - YOUTUBE_PLAYLIST_ID (if playlist_id not provided)
@@ -107,27 +107,28 @@ class UploaderFactory:
             Configured YouTubeUploader
 
         Raises:
-            ValueError: If required env vars missing
+            ValueError: If required config missing
             RuntimeError: If OAuth initialization fails
         """
-        # Get credentials paths from environment
-        client_secret_path = os.getenv("YOUTUBE_CLIENT_SECRET_PATH")
-        token_path = os.getenv("YOUTUBE_TOKEN_PATH")
+        # Get credentials paths from centralized config
+        client_secret_path = settings.YOUTUBE_CLIENT_SECRET_PATH
+        token_path = settings.YOUTUBE_TOKEN_PATH
 
         if not client_secret_path:
             raise ValueError(
-                "YOUTUBE_CLIENT_SECRET_PATH not set in environment. "
-                "Add to .env file: YOUTUBE_CLIENT_SECRET_PATH=/path/to/client_secret.json"
+                "YOUTUBE_CLIENT_SECRET_PATH not configured. "
+                "Add to .env file: "
+                "YOUTUBE_CLIENT_SECRET_PATH=/path/to/client_secret.json",
             )
 
         if not token_path:
             raise ValueError(
-                "YOUTUBE_TOKEN_PATH not set in environment. "
-                "Add to .env file: YOUTUBE_TOKEN_PATH=/path/to/token.json"
+                "YOUTUBE_TOKEN_PATH not configured. "
+                "Add to .env file: YOUTUBE_TOKEN_PATH=/path/to/token.json",
             )
 
-        # Get playlist ID (argument overrides environment)
-        target_playlist = playlist_id or os.getenv("YOUTUBE_PLAYLIST_ID")
+        # Get playlist ID (argument overrides config)
+        target_playlist = playlist_id or settings.YOUTUBE_PLAYLIST_ID
 
         # Create OAuth manager
         oauth_manager = OAuthManager(

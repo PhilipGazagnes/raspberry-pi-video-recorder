@@ -11,7 +11,7 @@ from upload.interfaces.uploader_interface import (
 )
 
 __all__ = [
-    "UploaderInterface",
     "UploadResult",
     "UploaderError",
+    "UploaderInterface",
 ]

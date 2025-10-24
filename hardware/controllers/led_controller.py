@@ -139,10 +139,17 @@ class LEDController:
         if should_blink:
             # Start blinking pattern
             self._set_all_leds(False, False, False)  # Start with all off
-            self._start_blinking(
-                blink_color,
-                LED_BLINK_INTERVAL_NORMAL,
-            )
+            # Type safety: blink_color should always be set if should_blink is True
+            if blink_color is not None:
+                self._start_blinking(
+                    blink_color,
+                    LED_BLINK_INTERVAL_NORMAL,
+                )
+            else:
+                self.logger.error(
+                    f"Invalid LED config: {pattern} has should_blink=True "
+                    "but no blink_color",
+                )
         else:
             # Static pattern - just set the LEDs
             self._set_all_leds(green_on, orange_on, red_on)

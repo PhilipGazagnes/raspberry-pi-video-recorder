@@ -14,18 +14,18 @@ Why separate constants?
 
 from enum import Enum
 
-# =============================================================================
-# GPIO PIN CONFIGURATION
-# =============================================================================
-# Import from central config.settings to maintain single source of truth
-# NEVER modify here - change in config/settings.py instead!
-
 from config.settings import (
     GPIO_BUTTON_PIN,
     GPIO_LED_GREEN,
     GPIO_LED_ORANGE,
     GPIO_LED_RED,
 )
+
+# =============================================================================
+# GPIO PIN CONFIGURATION
+# =============================================================================
+# Import from central config.settings to maintain single source of truth
+# NEVER modify here - change in config/settings.py instead!
 
 
 # =============================================================================

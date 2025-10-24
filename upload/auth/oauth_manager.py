@@ -60,7 +60,7 @@ class OAuthManager:
             raise ImportError(
                 "Google auth libraries not available. "
                 "Install with: pip install google-auth google-auth-oauthlib "
-                "google-auth-httplib2 google-api-python-client"
+                "google-auth-httplib2 google-api-python-client",
             )
 
         self.client_secret_path = client_secret_path
@@ -86,13 +86,13 @@ class OAuthManager:
         if not os.path.exists(self.client_secret_path):
             raise FileNotFoundError(
                 f"Client secret file not found: {self.client_secret_path}\n"
-                f"Download from Google Cloud Console > Credentials"
+                f"Download from Google Cloud Console > Credentials",
             )
 
         if not os.path.exists(self.token_path):
             raise RuntimeError(
                 f"Token file not found: {self.token_path}\n"
-                f"Run 'python setup_youtube_auth.py' first to authenticate"
+                f"Run 'python setup_youtube_auth.py' first to authenticate",
             )
 
     def _load_credentials(self) -> None:
@@ -109,7 +109,11 @@ class OAuthManager:
 
             # Check if credentials are valid
             if not self.credentials or not self.credentials.valid:
-                if self.credentials and self.credentials.expired and self.credentials.refresh_token:
+                if (
+                    self.credentials
+                    and self.credentials.expired
+                    and self.credentials.refresh_token
+                ):
                     # Token expired but can be refreshed
                     self.logger.info("Access token expired, refreshing...")
                     self.credentials.refresh(Request())
@@ -119,7 +123,7 @@ class OAuthManager:
                     # No refresh token - need to re-authenticate
                     raise RuntimeError(
                         "Credentials invalid and cannot be refreshed. "
-                        "Run 'python setup_youtube_auth.py' to re-authenticate"
+                        "Run 'python setup_youtube_auth.py' to re-authenticate",
                     )
 
             self.logger.debug("Credentials loaded and validated")
@@ -150,7 +154,11 @@ class OAuthManager:
             RuntimeError: If credentials cannot be obtained
         """
         # Check if refresh needed
-        if self.credentials and self.credentials.expired and self.credentials.refresh_token:
+        if (
+            self.credentials
+            and self.credentials.expired
+            and self.credentials.refresh_token
+        ):
             self.logger.debug("Token expired, refreshing...")
             self.credentials.refresh(Request())
             self._save_credentials()
@@ -158,7 +166,7 @@ class OAuthManager:
         if not self.credentials or not self.credentials.valid:
             raise RuntimeError(
                 "Cannot get valid credentials. "
-                "Run 'python setup_youtube_auth.py' to re-authenticate"
+                "Run 'python setup_youtube_auth.py' to re-authenticate",
             )
 
         return self.credentials

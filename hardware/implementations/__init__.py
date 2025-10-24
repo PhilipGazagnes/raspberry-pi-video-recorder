@@ -9,12 +9,10 @@ from hardware.implementations.mock_tts import MockTTS
 from hardware.implementations.pyttsx3_tts import PyTTSx3Engine
 from hardware.implementations.rpi_gpio import RaspberryPiGPIO
 
-# Public API
+# Public API (sorted alphabetically)
 __all__ = [
-    # GPIO Implementations
-    "RaspberryPiGPIO",
     "MockGPIO",
-    # TTS Implementations
-    "PyTTSx3Engine",
     "MockTTS",
+    "PyTTSx3Engine",
+    "RaspberryPiGPIO",
 ]

@@ -1,0 +1,3 @@
+"""
+Recording Module Integration Tests
+"""

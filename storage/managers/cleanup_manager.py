@@ -7,9 +7,9 @@ Single responsibility: Cleanup operations only.
 
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from typing import Callable, List
 
-import config.settings as settings
+from config import settings
 from storage.constants import CLEANUP_BATCH_SIZE
 from storage.models.video_file import VideoFile
 
@@ -172,7 +172,7 @@ class CleanupManager:
     def cleanup_videos(
         self,
         videos_to_cleanup: List[VideoFile],
-        delete_func: callable,
+        delete_func: Callable[[VideoFile], None],
         batch_size: int = CLEANUP_BATCH_SIZE,
         dry_run: bool = False,
     ) -> dict:

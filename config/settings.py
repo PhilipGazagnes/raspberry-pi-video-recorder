@@ -81,6 +81,7 @@ ENABLE_FFMPEG_VALIDATION = True  # Use FFmpeg for video validation
 
 # Cleanup Configuration
 CLEANUP_INTERVAL_SECONDS = 3600  # 1 hour
+CLEANUP_BATCH_SIZE = 10  # Files per batch during cleanup
 AUTO_CLEANUP_ENABLED = True
 
 # =============================================================================
@@ -108,6 +109,9 @@ HTTP_TIMEOUT = 30  # seconds
 
 # YouTube OAuth Configuration (file-based)
 # These point to credential files, not inline secrets
-YOUTUBE_CLIENT_SECRET_PATH = os.getenv("YOUTUBE_CLIENT_SECRET_PATH", "credentials/client_secret.json")
+YOUTUBE_CLIENT_SECRET_PATH = os.getenv(
+    "YOUTUBE_CLIENT_SECRET_PATH",
+    "credentials/client_secret.json",
+)
 YOUTUBE_TOKEN_PATH = os.getenv("YOUTUBE_TOKEN_PATH", "credentials/token.json")
 YOUTUBE_PLAYLIST_ID = os.getenv("YOUTUBE_PLAYLIST_ID", "")  # Optional playlist ID

@@ -72,7 +72,7 @@ class UploadController:
         if not self.uploader.is_available():
             self.logger.warning(
                 "Uploader initialized but not available. "
-                "Check authentication and network connection."
+                "Check authentication and network connection.",
             )
 
         self.logger.info("Upload Controller initialized")
@@ -131,12 +131,12 @@ class UploadController:
             self.logger.info(
                 f"✅ Upload successful: {result.video_id} "
                 f"({result.upload_duration:.1f}s, "
-                f"{result.file_size / (1024 * 1024):.1f} MB)"
+                f"{result.file_size / (1024 * 1024):.1f} MB)",
             )
         else:
             self.logger.error(
                 f"❌ Upload failed: {result.error_message} "
-                f"(status: {result.status.value})"
+                f"(status: {result.status.value})",
             )
 
         return result
@@ -165,7 +165,7 @@ class UploadController:
             # Invalid format - use as-is with warning
             self.logger.warning(
                 f"Invalid timestamp format: {timestamp}. "
-                f"Expected: YYYY-MM-DD HH:MM:SS"
+                f"Expected: YYYY-MM-DD HH:MM:SS",
             )
             return f"{VIDEO_TITLE_PREFIX} {timestamp}"
 

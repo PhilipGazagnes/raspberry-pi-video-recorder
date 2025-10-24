@@ -91,14 +91,14 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
     """
     try:
         # Check if ffprobe is available
-        result = subprocess.run(
+        version_result = subprocess.run(
             ["ffprobe", "-version"],
             capture_output=True,
             timeout=5,
             check=False,
         )
 
-        if result.returncode != 0:
+        if version_result.returncode != 0:
             logger.warning("ffprobe not available, skipping advanced validation")
             return VideoQuality.VALID, None
 
@@ -128,9 +128,11 @@ def validate_with_ffmpeg(file_path: Path) -> Tuple[VideoQuality, Optional[str]]:
             check=False,
         )
 
-        # Check for errors in stderr
+        # Check for errors in stderr (result.stderr is str because text=True)
         if result.returncode != 0 or result.stderr:
-            error_msg = result.stderr.strip() if result.stderr else "ffprobe failed"
+            error_msg: str = (
+                result.stderr.strip() if result.stderr else "ffprobe failed"
+            )
             logger.debug(f"ffprobe error for {file_path.name}: {error_msg}")
             return VideoQuality.CORRUPTED, f"FFmpeg validation failed: {error_msg}"
 

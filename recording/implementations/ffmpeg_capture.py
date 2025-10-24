@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from recording.constants import (
     CAMERA_WARMUP_TIME,
@@ -182,6 +182,9 @@ class FFmpegCapture(VideoCaptureInterface):
             self.logger.warning("Not capturing, nothing to stop")
             return False
 
+        # At this point, self._process is guaranteed to be non-None by is_capturing()
+        assert self._process is not None
+
         self.logger.info("Stopping capture...")
 
         try:
@@ -197,7 +200,8 @@ class FFmpegCapture(VideoCaptureInterface):
                 if self._process.returncode != 0:
                     error_msg = stderr.decode("utf-8", errors="ignore")
                     self.logger.warning(
-                        f"FFmpeg exited with code {self._process.returncode}: {error_msg}",
+                        f"FFmpeg exited with code {self._process.returncode}: "
+                        f"{error_msg}",
                     )
                 else:
                     self.logger.info("Capture stopped successfully")
@@ -262,7 +266,7 @@ class FFmpegCapture(VideoCaptureInterface):
         Returns health information including process status,
         file size, and any errors.
         """
-        health = {
+        health: dict[str, Union[bool, str, int, float, None]] = {
             "is_healthy": True,
             "error_message": None,
             "frames_captured": 0,  # FFmpeg doesn't easily expose this
@@ -277,6 +281,7 @@ class FFmpegCapture(VideoCaptureInterface):
             return health
 
         # Check if process crashed
+        assert self._process is not None
         if self._process.poll() is not None:
             # Process exited unexpectedly
             health["is_healthy"] = False

@@ -23,7 +23,6 @@ from upload.auth.oauth_manager import OAuthManager
 from upload.constants import (
     DEFAULT_PRIVACY_STATUS,
     DEFAULT_VIDEO_TAGS,
-    HTTP_TIMEOUT,
     MAX_VIDEO_FILE_SIZE,
     MIN_VIDEO_FILE_SIZE,
     SUPPORTED_VIDEO_FORMATS,
@@ -73,7 +72,7 @@ class YouTubeUploader(UploaderInterface):
         if not GOOGLE_API_AVAILABLE:
             raise ImportError(
                 "Google API client not available. "
-                "Install with: pip install google-api-python-client"
+                "Install with: pip install google-api-python-client",
             )
 
         self.oauth_manager = oauth_manager
@@ -153,7 +152,7 @@ class YouTubeUploader(UploaderInterface):
             )
 
         self.logger.debug(
-            f"Video file validated: {video_path} ({file_size} bytes)"
+            f"Video file validated: {video_path} ({file_size} bytes)",
         )
 
     def upload_video(
@@ -189,7 +188,7 @@ class YouTubeUploader(UploaderInterface):
             file_size = os.path.getsize(video_path)
 
             self.logger.info(
-                f"Starting upload: {video_path} ({file_size} bytes)"
+                f"Starting upload: {video_path} ({file_size} bytes)",
             )
 
             # Prepare video metadata
@@ -232,7 +231,7 @@ class YouTubeUploader(UploaderInterface):
 
             self.logger.info(
                 f"✅ Upload successful: {video_id} "
-                f"({upload_duration:.1f}s, {file_size} bytes)"
+                f"({upload_duration:.1f}s, {file_size} bytes)",
             )
 
             return UploadResult(
@@ -324,7 +323,7 @@ class YouTubeUploader(UploaderInterface):
                 if e.resp.status in [500, 502, 503, 504]:
                     # Retryable server errors - wait and retry
                     self.logger.warning(
-                        f"Retryable error {e.resp.status}, retrying..."
+                        f"Retryable error {e.resp.status}, retrying...",
                     )
                     time.sleep(5)
                 else:
@@ -337,11 +336,10 @@ class YouTubeUploader(UploaderInterface):
         # Upload complete - extract video ID
         if response and "id" in response:
             return response["id"]
-        else:
-            raise UploaderError(
-                "Upload completed but no video ID returned",
-                status=UploadStatus.FAILED,
-            )
+        raise UploaderError(
+            "Upload completed but no video ID returned",
+            status=UploadStatus.FAILED,
+        )
 
     def _add_to_playlist(self, video_id: str, playlist_id: str) -> None:
         """
@@ -363,7 +361,7 @@ class YouTubeUploader(UploaderInterface):
                             "kind": "youtube#video",
                             "videoId": video_id,
                         },
-                    }
+                    },
                 },
             ).execute()
 
@@ -372,7 +370,7 @@ class YouTubeUploader(UploaderInterface):
         except HttpError as e:
             # Don't fail upload if playlist add fails
             self.logger.warning(
-                f"Failed to add video to playlist: {e.reason}"
+                f"Failed to add video to playlist: {e.reason}",
             )
 
     def _parse_http_error(self, error: HttpError) -> UploadStatus:
@@ -387,12 +385,11 @@ class YouTubeUploader(UploaderInterface):
         """
         if error.resp.status in [401, 403]:
             return UploadStatus.AUTH_ERROR
-        elif error.resp.status == 429:
+        if error.resp.status == 429:
             return UploadStatus.QUOTA_EXCEEDED
-        elif error.resp.status >= 500:
+        if error.resp.status >= 500:
             return UploadStatus.NETWORK_ERROR
-        else:
-            return UploadStatus.FAILED
+        return UploadStatus.FAILED
 
     def is_available(self) -> bool:
         """
@@ -402,8 +399,7 @@ class YouTubeUploader(UploaderInterface):
             True if authenticated and service initialized
         """
         return (
-            self.oauth_manager.is_authenticated()
-            and self.youtube_service is not None
+            self.oauth_manager.is_authenticated() and self.youtube_service is not None
         )
 
     def test_connection(self) -> bool:

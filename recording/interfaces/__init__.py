@@ -15,12 +15,12 @@ from recording.interfaces.video_capture_interface import (
 
 # Public API
 __all__ = [
-    # Interface
-    "VideoCaptureInterface",
+    "CameraBusyError",
+    "CameraNotFoundError",
     # Exceptions
     "CaptureError",
-    "CameraNotFoundError",
-    "CameraBusyError",
-    "StorageFullError",
     "CaptureProcessError",
+    "StorageFullError",
+    # Interface
+    "VideoCaptureInterface",
 ]

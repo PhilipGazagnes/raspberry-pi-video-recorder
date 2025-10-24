@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-import config.settings as settings
+from config import settings
 from storage.constants import (
     DIR_CORRUPTED,
     DIR_FAILED,

@@ -224,7 +224,7 @@ def cleanup_old_recordings(
         return 0
 
     # Get all video files
-    video_files = []
+    video_files: list[Path] = []
     for ext in [".mp4", ".avi", ".mkv"]:
         video_files.extend(directory.glob(f"*{ext}"))
 
