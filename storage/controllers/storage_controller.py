@@ -14,6 +14,7 @@ from config.settings import DIR_FAILED, DIR_UPLOADED
 from storage.constants import UploadStatus
 from storage.implementations.local_storage import LocalStorage
 from storage.interfaces.storage_interface import StorageError, StorageInterface
+from storage.managers.cleanup_manager import CleanupManager
 from storage.models.video_file import StorageStats, VideoFile
 
 
@@ -27,30 +28,45 @@ class StorageController:
     - Fires events for important conditions
     - Manages automatic cleanup
 
+    Dependency Injection: Accepts manager instances for flexibility and testing.
+    All parameters are optional and will be auto-created if not provided.
+
     Usage:
+        # Standard usage - auto-creates all dependencies
         storage = StorageController()
         storage.on_disk_full = lambda: handle_disk_full()
         storage.on_low_space = lambda bytes: handle_low_space(bytes)
 
-        video = storage.save_recording("/path/to/video.mp4")
-        storage.mark_upload_success(video, "https://youtube.com/...")
+        # Testing with mocks
+        mock_cleanup = MockCleanupManager()
+        storage = StorageController(
+            cleanup_manager=mock_cleanup
+        )
     """
 
     def __init__(
         self,
         storage_impl: Optional[StorageInterface] = None,
+        cleanup_manager: Optional[CleanupManager] = None,
     ):
         """
         Initialize storage controller.
 
         Args:
             storage_impl: Storage implementation (None = auto-create LocalStorage)
+            cleanup_manager: CleanupManager instance (None = auto-create).
+                           Useful for testing with mock implementations.
         """
         self.logger = logging.getLogger(__name__)
 
         # Storage implementation
-        self.storage = storage_impl or LocalStorage()
+        self.storage = storage_impl or LocalStorage(
+            cleanup_manager=cleanup_manager,
+        )
         self.storage.initialize()
+
+        # Cleanup manager for manual operations
+        self.cleanup_manager = cleanup_manager or CleanupManager()
 
         # Event callbacks (like hardware controllers)
         self.on_disk_full: Optional[Callable[[], None]] = None
@@ -297,12 +313,8 @@ class StorageController:
             # Get all uploaded videos
             uploaded = self.storage.list_videos(status=UploadStatus.COMPLETED)
 
-            # Use cleanup manager through storage
-            from storage.managers.cleanup_manager import CleanupManager
-
-            cleanup_mgr = CleanupManager()
-
-            return cleanup_mgr.get_cleanup_summary(uploaded)
+            # Use injected cleanup manager
+            return self.cleanup_manager.get_cleanup_summary(uploaded)
 
         except Exception as e:
             self.logger.error(f"Failed to get cleanup summary: {e}")

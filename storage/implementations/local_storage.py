@@ -36,11 +36,29 @@ class LocalStorage(StorageInterface):
 
     This class coordinates all managers to provide complete storage functionality.
     It's the "real" storage that actually saves files and manages metadata.
+
+    Dependency Injection: Accepts manager instances for flexibility and testing.
+    All parameters are optional and will be auto-created if not provided.
+
+    Usage:
+        # Standard usage - auto-creates all managers
+        storage = LocalStorage()
+
+        # Testing with mocks
+        mock_cleanup = MockCleanupManager()
+        storage = LocalStorage(cleanup_manager=mock_cleanup)
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        cleanup_manager: Optional[CleanupManager] = None,
+    ):
         """
         Initialize local storage.
+
+        Args:
+            cleanup_manager: CleanupManager instance (None = auto-create).
+                           Useful for testing with mock implementations.
 
         Configuration is loaded from config.settings (central config).
         """
@@ -50,7 +68,7 @@ class LocalStorage(StorageInterface):
         self.file_manager = FileManager(settings.STORAGE_BASE_PATH)
         self.metadata_manager = MetadataManager(settings.STORAGE_BASE_PATH)
         self.space_manager = SpaceManager(settings.STORAGE_BASE_PATH)
-        self.cleanup_manager = CleanupManager()
+        self.cleanup_manager = cleanup_manager or CleanupManager()
 
         # Last cleanup timestamp (for auto-cleanup)
         self._last_cleanup = datetime.now()
