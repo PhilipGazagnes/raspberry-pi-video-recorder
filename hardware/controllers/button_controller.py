@@ -132,33 +132,40 @@ class ButtonController:
         - Input pin with pull resistor
         - Interrupt callback for press detection
         - Hardware debouncing via GPIO library
+
+        Raises:
+            GPIOError: If GPIO setup fails (pin configuration, callback registration)
         """
-        # Configure pin as input with pull resistor
-        pull_mode = PullMode.UP if self.pull_up else PullMode.DOWN
-        self.gpio.setup_input(self.pin, pull_mode)
+        try:
+            # Configure pin as input with pull resistor
+            pull_mode = PullMode.UP if self.pull_up else PullMode.DOWN
+            self.gpio.setup_input(self.pin, pull_mode)
 
-        # Setup interrupt callback
-        # With pull-up: button press pulls pin LOW (falling edge)
-        # With pull-down: button press pulls pin HIGH (rising edge)
-        edge = EdgeDetection.FALLING if self.pull_up else EdgeDetection.RISING
+            # Setup interrupt callback
+            # With pull-up: button press pulls pin LOW (falling edge)
+            # With pull-down: button press pulls pin HIGH (rising edge)
+            edge = EdgeDetection.FALLING if self.pull_up else EdgeDetection.RISING
 
-        # Convert debounce time to milliseconds
-        debounce_ms = int(self.debounce_time * 1000)
+            # Convert debounce time to milliseconds
+            debounce_ms = int(self.debounce_time * 1000)
 
-        # Register interrupt callback
-        # This means _on_button_interrupt runs AUTOMATICALLY when button pressed
-        # No polling loop needed - very efficient!
-        self.gpio.add_event_callback(
-            self.pin,
-            edge,
-            self._on_button_interrupt,
-            debounce_ms,
-        )
+            # Register interrupt callback
+            # This means _on_button_interrupt runs AUTOMATICALLY when button pressed
+            # No polling loop needed - very efficient!
+            self.gpio.add_event_callback(
+                self.pin,
+                edge,
+                self._on_button_interrupt,
+                debounce_ms,
+            )
 
-        self.logger.debug(
-            f"Button setup complete "
-            f"(edge: {edge.value}, debounce: {debounce_ms}ms)",
-        )
+            self.logger.debug(
+                f"Button setup complete "
+                f"(edge: {edge.value}, debounce: {debounce_ms}ms)",
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to setup button on pin {self.pin}: {e}")
+            raise
 
     def _on_button_interrupt(self, channel: int) -> None:
         """

@@ -108,6 +108,9 @@ class AudioController:
         Args:
             message_key: Message identifier from AudioMessage enum
 
+        Note:
+            If the message key is not found, error is logged but no exception raised.
+
         Example:
             audio.play_message(AudioMessage.RECORDING_START)
             audio.play_message(AudioMessage.ONE_MINUTE_WARNING)
@@ -217,6 +220,9 @@ class AudioController:
         Args:
             volume: Volume level from 0.0 (silent) to 1.0 (max)
 
+        Note:
+            If setting volume fails, error is logged but no exception raised.
+
         Example:
             audio.set_volume(0.5)  # Half volume
         """
@@ -232,6 +238,9 @@ class AudioController:
 
         Args:
             rate: Words per minute (typical range: 100-300)
+
+        Note:
+            If setting speech rate fails, error is logged but no exception raised.
 
         Example:
             audio.set_speech_rate(150)  # Normal pace

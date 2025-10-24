@@ -35,6 +35,82 @@ Generic, production-ready video recording system for Raspberry Pi. Domain-agnost
 **ALL secrets in `.env` at root** (API keys, credentials)
 **Modules import from `config.settings`**, never use `os.getenv()` directly
 
+## Error Handling Pattern
+
+**Three-layer strategy**:
+
+### 1. Interfaces (Contracts)
+Define what exceptions can be raised or what is returned. Interface docstrings are the contract:
+
+```python
+class VideoCaptureInterface(Protocol):
+    def start_capture(self, output_file: Path, duration: Optional[float]) -> bool:
+        """Start video capture.
+
+        Returns:
+            True if capture started successfully, False otherwise.
+
+        Raises:
+            CaptureError: If camera hardware initialization fails
+        """
+
+    def stop_capture(self) -> bool:
+        """Stop video capture.
+
+        Returns:
+            True if stopped successfully, False if not capturing.
+        """
+```
+
+### 2. Controllers (Orchestrators)
+Controllers are safe wrappers - they **catch exceptions and return safe values**, never re-raise:
+
+```python
+class CameraManager:
+    def start_recording(self, output_file: Path, duration: Optional[float]) -> bool:
+        """Start recording video.
+
+        Returns:
+            True if recording started, False otherwise.
+            All errors are caught, logged, and converted to False return.
+        """
+        try:
+            success = self.capture.start_capture(output_file, duration)
+            return success
+        except CaptureError as e:
+            self.logger.error(f"Camera error: {e}")
+            return False  # Convert exception to safe return
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {e}")
+            return False
+```
+
+### 3. Implementations (Concrete)
+Implementations match their interface contract - raise exceptions as documented or return values as specified:
+
+```python
+class FFmpegCapture(VideoCaptureInterface):
+    def start_capture(self, output_file: Path, duration: Optional[float]) -> bool:
+        """Matches interface contract."""
+        if not self.is_available():
+            raise CameraNotFoundError("Camera not found")  # ✓ Documented in interface
+
+        if self.is_capturing():
+            raise CameraBusyError("Already capturing")  # ✓ Documented in interface
+
+        try:
+            # Actual FFmpeg startup
+            return True
+        except Exception as e:
+            raise CaptureError(f"Capture failed: {e}")  # ✓ Wrap in documented exception
+```
+
+**Key Rule**:
+- **Controllers catch and convert** exceptions to safe returns
+- **Implementations raise** documented exceptions
+- **Interfaces document** what happens
+- **Never have contradictory documentation** - docstring must match code behavior
+
 ## Code Style
 
 **Tools**: Black (88 chars) + isort + Ruff + mypy. Run `./lint.sh` before commits.

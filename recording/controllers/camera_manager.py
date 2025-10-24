@@ -118,16 +118,17 @@ class CameraManager:
             duration: Optional max duration in seconds
 
         Returns:
-            True if recording started, False otherwise
-
-        Raises:
-            CaptureError: If camera fails to start
+            True if recording started, False otherwise.
+            Errors (including CaptureError) are caught, logged, and False is returned.
 
         Example:
             success = camera.start_recording(
                 Path("/recordings/video.mp4"),
                 duration=600
             )
+            if not success:
+                # Recording failed - error was logged
+                pass
         """
         # Check readiness
         if not self.is_ready():
@@ -153,7 +154,7 @@ class CameraManager:
 
         except CaptureError as e:
             self.logger.error(f"Camera error: {e}")
-            raise
+            return False
         except Exception as e:
             self.logger.error(f"Unexpected error starting recording: {e}")
             return False
