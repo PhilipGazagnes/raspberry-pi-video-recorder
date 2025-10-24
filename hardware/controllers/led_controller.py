@@ -59,12 +59,18 @@ class LEDController:
                   Passing gpio is useful for testing with specific mock.
 
         Example:
-            # Normal usage - auto-detects hardware
-            led = LEDController()
+            # Using context manager (recommended)
+            with LEDController() as led:
+                led.set_status(LEDPattern.READY)
+                # ... LED operations ...
+            # Cleanup guaranteed even if exception occurs
 
-            # Testing with specific mock
-            mock = MockGPIO()
-            led = LEDController(gpio=mock)
+            # Using explicit cleanup (legacy)
+            led = LEDController()
+            try:
+                led.set_status(LEDPattern.READY)
+            finally:
+                led.cleanup()
         """
         self.logger = logging.getLogger(__name__)
 
@@ -84,6 +90,7 @@ class LEDController:
         # Blinking control
         self._blink_thread: Optional[threading.Thread] = None
         self._blink_stop_event = threading.Event()
+        self._cleaned_up = False
 
         # Initialize hardware
         self._setup_leds()
@@ -363,6 +370,7 @@ class LEDController:
 
         IMPORTANT: Always call this before program exits!
         Ensures LEDs are off and GPIO is released properly.
+        Safe to call multiple times - idempotent.
 
         Example:
             led = LEDController()
@@ -371,6 +379,9 @@ class LEDController:
             finally:
                 led.cleanup()  # Always cleanup, even on error
         """
+        if self._cleaned_up:
+            return
+
         self.logger.info("Cleaning up LED Controller")
 
         # Stop any blinking
@@ -383,13 +394,44 @@ class LEDController:
         pin_list = list(self.pins.values())
         safe_gpio_cleanup(self.gpio, pin_list, self.logger)
 
+        self._cleaned_up = True
         self.logger.info("LED Controller cleanup complete")
+
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with LEDController() as led:
+                led.set_status(LEDPattern.READY)
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
+        self.cleanup()
+        return False
 
     def __del__(self):
         """
-        Destructor - ensures cleanup even if not explicitly called.
+        Destructor - fallback cleanup if not properly closed.
 
-        This is a safety net. You should still call cleanup() explicitly,
-        but this catches cases where you forget.
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
         """
-        self.cleanup()
+        if not self._cleaned_up:
+            self.logger.warning(
+                "LEDController not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()

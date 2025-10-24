@@ -54,12 +54,18 @@ class CameraManager:
             camera_device: Camera device path (used if creating capture)
 
         Example:
-            # Normal usage - auto-creates capture
-            camera = CameraManager()
+            # Using context manager (recommended)
+            with CameraManager() as camera:
+                camera.start_recording(Path("video.mp4"))
+                # ... recording happens ...
+            # Cleanup guaranteed even if exception occurs
 
-            # Testing with mock
-            mock = MockCapture()
-            camera = CameraManager(capture=mock)
+            # Using explicit cleanup (legacy)
+            camera = CameraManager()
+            try:
+                camera.start_recording(Path("video.mp4"))
+            finally:
+                camera.cleanup()
         """
         self.logger = logging.getLogger(__name__)
         self.camera_device = camera_device
@@ -71,6 +77,7 @@ class CameraManager:
         self._last_health_check: Optional[Dict[str, Any]] = None
         self._consecutive_health_failures = 0
         self._max_health_failures = 3  # Alert after 3 consecutive failures
+        self._cleaned_up = False
 
         self.logger.info(
             f"Camera Manager initialized "
@@ -342,6 +349,7 @@ class CameraManager:
         Stop recording and clean up resources.
 
         Always call this before shutting down!
+        Safe to call multiple times - idempotent.
 
         Example:
             camera = CameraManager()
@@ -350,6 +358,9 @@ class CameraManager:
             finally:
                 camera.cleanup()
         """
+        if self._cleaned_up:
+            return
+
         self.logger.info("Cleaning up Camera Manager")
 
         # Stop any active recording
@@ -362,8 +373,44 @@ class CameraManager:
         except Exception as e:
             self.logger.error(f"Error during capture cleanup: {e}")
 
+        self._cleaned_up = True
         self.logger.info("Camera Manager cleanup complete")
 
-    def __del__(self):
-        """Destructor - ensure cleanup"""
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with CameraManager() as camera:
+                camera.start_recording(Path("video.mp4"))
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
         self.cleanup()
+        return False
+
+    def __del__(self):
+        """
+        Destructor - fallback cleanup if not properly closed.
+
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
+        """
+        if not self._cleaned_up:
+            self.logger.warning(
+                "CameraManager not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()

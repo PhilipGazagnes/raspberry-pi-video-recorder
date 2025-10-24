@@ -42,6 +42,7 @@ class RaspberryPiGPIO(GPIOInterface):
 
         # Track which pins we've configured (for cleanup)
         self._configured_pins: set[int] = set()
+        self._cleaned_up = False
 
         if not GPIO_AVAILABLE:
             raise GPIOError(
@@ -160,7 +161,11 @@ class RaspberryPiGPIO(GPIOInterface):
         Reset GPIO pins and release resources.
 
         Important: Always call this before program exits to leave pins in safe state.
+        Safe to call multiple times - idempotent.
         """
+        if self._cleaned_up and pins is None:
+            return
+
         try:
             if pins is None:
                 # Clean up all pins we configured
@@ -170,6 +175,7 @@ class RaspberryPiGPIO(GPIOInterface):
                         f"Cleaned up {len(self._configured_pins)} GPIO pins",
                     )
                     self._configured_pins.clear()
+                self._cleaned_up = True
             else:
                 # Clean up specific pins
                 GPIO.cleanup(pins)
@@ -183,6 +189,41 @@ class RaspberryPiGPIO(GPIOInterface):
         """Check if running on real Raspberry Pi hardware"""
         return GPIO_AVAILABLE
 
-    def __del__(self):
-        """Destructor - ensure cleanup even if not explicitly called"""
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with RaspberryPiGPIO() as gpio:
+                gpio.setup_output(pin)
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
         self.cleanup()
+        return False
+
+    def __del__(self):
+        """
+        Destructor - fallback cleanup if not properly closed.
+
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
+        """
+        if not self._cleaned_up:
+            self.logger.warning(
+                "RaspberryPiGPIO not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()

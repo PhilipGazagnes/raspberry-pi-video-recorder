@@ -62,6 +62,20 @@ class FFmpegCapture(VideoCaptureInterface):
             width: Video width in pixels
             height: Video height in pixels
             fps: Frame rate
+
+        Usage:
+            # Using context manager (recommended)
+            with FFmpegCapture() as capture:
+                capture.start_capture(Path("video.mp4"))
+                # ... recording happens ...
+            # Cleanup guaranteed even if exception occurs
+
+            # Using explicit cleanup (legacy)
+            capture = FFmpegCapture()
+            try:
+                capture.start_capture(Path("video.mp4"))
+            finally:
+                capture.cleanup()
         """
         self.logger = logging.getLogger(__name__)
 
@@ -76,6 +90,7 @@ class FFmpegCapture(VideoCaptureInterface):
         self._output_file: Optional[Path] = None
         self._start_time: Optional[float] = None
         self._target_duration: Optional[float] = None
+        self._cleaned_up = False
 
         self.logger.info(
             f"FFmpeg Capture initialized "
@@ -389,13 +404,19 @@ class FFmpegCapture(VideoCaptureInterface):
     def cleanup(self) -> None:
         """
         Stop capture and clean up resources.
+
+        Safe to call multiple times - idempotent.
         """
+        if self._cleaned_up:
+            return
+
         self.logger.info("Cleaning up FFmpeg Capture")
 
         # Stop any active capture
         if self.is_capturing():
             self.stop_capture()
 
+        self._cleaned_up = True
         self.logger.info("FFmpeg Capture cleanup complete")
 
     def _cleanup_failed_capture(self) -> None:
@@ -446,6 +467,41 @@ class FFmpegCapture(VideoCaptureInterface):
 
         return info
 
-    def __del__(self):
-        """Destructor - ensure cleanup"""
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with FFmpegCapture() as capture:
+                capture.start_capture(Path("video.mp4"))
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
         self.cleanup()
+        return False
+
+    def __del__(self):
+        """
+        Destructor - fallback cleanup if not properly closed.
+
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
+        """
+        if not self._cleaned_up:
+            self.logger.warning(
+                "FFmpegCapture not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()

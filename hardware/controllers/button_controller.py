@@ -86,15 +86,18 @@ class ButtonController:
                     False = pull-down resistor (button press = HIGH)
 
         Example:
-            # Normal usage with defaults
+            # Using context manager (recommended)
+            with ButtonController() as button:
+                button.register_callback(on_press)
+                # ... button listening ...
+            # Cleanup guaranteed even if exception occurs
+
+            # Using explicit cleanup (legacy)
             button = ButtonController()
-
-            # Custom pin
-            button = ButtonController(pin=17)
-
-            # Testing with mock
-            mock = MockGPIO()
-            button = ButtonController(gpio=mock)
+            try:
+                button.register_callback(on_press)
+            finally:
+                button.cleanup()
         """
         self.logger = logging.getLogger(__name__)
 
@@ -116,6 +119,7 @@ class ButtonController:
 
         # Timer for single press detection
         self._single_press_timer: Optional[threading.Timer] = None
+        self._cleaned_up = False
 
         # Initialize hardware
         self._setup_button()
@@ -439,7 +443,11 @@ class ButtonController:
         Clean up GPIO resources and stop threads.
 
         IMPORTANT: Always call this before program exits!
+        Safe to call multiple times - idempotent.
         """
+        if self._cleaned_up:
+            return
+
         self.logger.info("Cleaning up Button Controller")
 
         # Cancel any pending timers
@@ -454,12 +462,44 @@ class ButtonController:
         # Clean up GPIO using shared utility (safe - won't crash)
         safe_gpio_cleanup(self.gpio, [self.pin], self.logger)
 
+        self._cleaned_up = True
         self.logger.info("Button Controller cleanup complete")
+
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with ButtonController() as button:
+                button.register_callback(on_press)
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
+        self.cleanup()
+        return False
 
     def __del__(self):
         """
-        Destructor - ensures cleanup even if not explicitly called.
+        Destructor - fallback cleanup if not properly closed.
 
-        This is a safety net. You should still call cleanup() explicitly.
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
         """
-        self.cleanup()
+        if not self._cleaned_up:
+            self.logger.warning(
+                "ButtonController not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()

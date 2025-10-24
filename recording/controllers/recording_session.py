@@ -66,8 +66,18 @@ class RecordingSession:
             camera_manager: Camera manager for video capture
 
         Example:
-            camera = CameraManager()
+            # Using context manager (recommended)
+            with RecordingSession(camera) as session:
+                session.start(Path("video.mp4"))
+                # ... recording happens ...
+            # Cleanup guaranteed even if exception occurs
+
+            # Using explicit cleanup (legacy)
             session = RecordingSession(camera)
+            try:
+                session.start(Path("video.mp4"))
+            finally:
+                session.cleanup()
         """
         self.logger = logging.getLogger(__name__)
         self.camera = camera_manager
@@ -95,6 +105,8 @@ class RecordingSession:
         self.on_complete: Optional[Callable[[], None]] = None
         self.on_error: Optional[Callable[[str], None]] = None
         self.on_extension: Optional[Callable[[int], None]] = None
+
+        self._cleaned_up = False
 
         self.logger.info("Recording Session initialized")
 
@@ -520,7 +532,11 @@ class RecordingSession:
         Stop session and clean up resources.
 
         Always call this when done with session!
+        Safe to call multiple times - idempotent.
         """
+        if self._cleaned_up:
+            return
+
         self.logger.info("Cleaning up Recording Session")
 
         # Stop monitoring
@@ -530,8 +546,44 @@ class RecordingSession:
         if self.state in [RecordingState.RECORDING, RecordingState.STARTING]:
             self.stop()
 
+        self._cleaned_up = True
         self.logger.info("Recording Session cleanup complete")
 
-    def __del__(self):
-        """Destructor - ensure cleanup"""
+    def __enter__(self):
+        """
+        Enter context manager.
+
+        Usage:
+            with RecordingSession(camera) as session:
+                session.start(Path("video.mp4"))
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit context manager - always cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False - propagates exceptions up the stack
+        """
         self.cleanup()
+        return False
+
+    def __del__(self):
+        """
+        Destructor - fallback cleanup if not properly closed.
+
+        WARNING: Use context manager (`with` statement) or
+        call cleanup() explicitly instead of relying on __del__.
+        """
+        if not self._cleaned_up:
+            self.logger.warning(
+                "RecordingSession not properly cleaned up - "
+                "use 'with' statement or call cleanup() explicitly",
+            )
+            self.cleanup()
