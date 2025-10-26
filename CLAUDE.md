@@ -152,6 +152,50 @@ class RecordingService:
         self.storage = storage
 ```
 
+## Module Public API
+
+**Every module MUST define a clear public API in `__init__.py`**:
+
+```python
+"""
+Module Name
+
+Brief description of module purpose.
+
+Public API:
+    - MainController: Primary interface
+    - create_something: Factory function
+    - SomeInterface: Contract definition
+    - SomeError: Custom exceptions
+
+Usage:
+    from module import MainController
+
+    controller = MainController()
+    result = controller.do_something()
+"""
+
+from module.submodule import MainController, SomeInterface
+from module.factory import create_something
+from module.exceptions import SomeError
+
+__all__ = [
+    "MainController",
+    "create_something",
+    "SomeInterface",
+    "SomeError",
+]
+```
+
+**Public API Rules**:
+- **ALWAYS import from module's public API**, never from submodules
+  - ✅ `from hardware import create_gpio`
+  - ❌ `from hardware.factory import create_gpio`
+- **Export only what users need** - interfaces, controllers, factories, errors
+- **Keep internal implementations private** - don't export implementation classes
+- **Document usage** - show common import pattern in module docstring
+- **Use `__all__`** - explicit is better than implicit
+
 ## Module Design Checklist
 
 Before creating/modifying modules:
@@ -160,6 +204,8 @@ Before creating/modifying modules:
 3. Dependencies injected?
 4. Testable without hardware?
 5. Any domain-specific logic? (extract it)
+6. **Public API defined in `__init__.py`?**
+7. **All imports use public API?**
 
 ## Testing
 
