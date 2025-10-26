@@ -4,16 +4,25 @@ A generic, production-ready video recording system for Raspberry Pi. Domain-agno
 
 ## Project Overview
 
-Multi-camera video recording system with hardware button control. Users press a button to start/stop recording, videos auto-upload to YouTube with LED status feedback and voice prompts.
+Single-camera video recording system with hardware button control. Users press a button to start/stop recording, videos auto-upload to YouTube in the background with LED status feedback and silent operation.
+
+**System Design Philosophy:**
+- **Recording is Priority #1**: Users can record unlimited videos back-to-back
+- **Uploads are Invisible**: Background upload queue processes videos when possible
+- **No Waiting**: System returns to READY immediately after saving recording
+- **Network Resilience**: Failed uploads auto-retry with configurable delays
+- **Simple Operation**: One button, three LEDs, zero user intervention needed
 
 **Key Features:**
-- 🎥 One-button video recording with hardware interface
-- 📤 Automatic background upload to YouTube
-- 💡 LED status indicators (Green/Orange/Red)
-- 🔊 Voice feedback for all operations
+- 🎥 One-button video recording (start/stop/extend)
+- 📤 Silent background upload queue to YouTube
+- 💡 LED status indicators (Green=Ready, Orange=Busy, Red=Error)
+- 🔇 Silent operation (no audio feedback during normal operation)
 - 📦 Modular SOLID architecture
 - 🧪 Fully testable without hardware
 - ⚙️ Centralized configuration
+- 🔄 Automatic retry on upload failures
+- 🧹 Automatic cleanup of old uploaded videos
 
 ---
 
@@ -303,32 +312,111 @@ GPIO_LED_RED = 20       # Red LED (error)
 
 ## System Behavior
 
-### Recording Workflow
+### Recording Workflow (Typical Day)
 
-- System Ready: Green LED solid, "System ready" voice prompt
-- Start Recording: Single button press → Green LED blinking, "Recording started"
-- Extension: Double button press during recording → "5 minutes added"
-- Warning: At 9 minutes → "One minute remaining, press button twice to extend"
-- Stop Recording: Single button press → Orange LED, "Recording complete, uploading"
-- Ready: Background upload complete → Green LED, "Ready for next recording"
+**Morning - System Startup:**
+1. Pi boots, service starts automatically
+2. Green LED turns solid → System READY
+3. Silent (no audio feedback)
+
+**During Day - Continuous Recording:**
+1. **Start Recording**: Single button press
+   - Green LED starts blinking
+   - Recording begins (10 minutes default)
+   - Silent operation
+
+2. **Extend Recording** (optional): Double button press during recording
+   - Adds 5 minutes (max 25 minutes total)
+   - Silent operation
+
+3. **Stop Recording**: Single button press (or auto-stop at duration limit)
+   - Green LED stops blinking
+   - Orange LED turns on briefly (2-3 seconds while saving to storage)
+   - Video saved to storage database
+   - **Green LED returns immediately** → System READY for next recording
+   - Upload queued in background (invisible to user)
+
+4. **Back-to-back recordings**: Repeat step 1 immediately
+   - No waiting for uploads to complete
+   - Record as many videos as needed
+   - Uploads process in background queue (oldest first, one at a time)
+
+**Background Operations (Invisible to User):**
+
+- **Upload Queue**:
+  - Processes videos in order (oldest first)
+  - One upload at a time
+  - Can run during new recordings
+  - Silent on success
+  - Auto-retries on failure (wait 5 minutes, retry when idle)
+  - Max 2 retry attempts per video
+
+- **Automatic Cleanup**:
+  - Runs every hour
+  - Deletes uploaded videos after 7 days OR when 30 videos reached
+  - Keeps disk space available
+
+### LED Status Guide
+
+- **Green Solid**: System ready for recording
+- **Green Blinking**: Recording in progress
+- **Orange Solid**: System busy (saving/processing) - brief (2-3 seconds)
+- **Red Solid**: Error state (disk full, camera error, etc.)
 
 ### Error Handling
 
-- Storage Full: Red LED, "Memory full" voice prompt
-- Camera Error: Red LED, "Camera error" voice prompt
-- Network Down: Red LED, "Network disconnected" voice prompt
-- Recovery: Single button press in error state attempts recovery
+**Disk Full:**
+- Red LED solid
+- Cannot record new videos
+- Recovery: Single button press (checks if cleanup freed space)
 
-### Audio Feedback Messages
+**Camera Error:**
+- Red LED solid
+- Cannot start recording
+- Recovery: Single button press (re-checks camera availability)
 
-- System startup: "System ready"
-- Recording start: "Recording started"
-- 9-minute warning: "One minute remaining, press button twice to extend"
-- Extension confirmed: "5 minutes added, recording continues"
-- Recording stop: "Recording complete, uploading"
-- Ready state: "Ready for next recording"
-- Upload complete: "Upload successful"
-- Error states: "Memory full" / "Network disconnected" / "Camera error"
+**Upload Failure:**
+- Silent (no LED change)
+- Logged to `/var/log/recorder-service.log`
+- Auto-retry after 5 minutes when system idle
+- Check logs via SSH: `tail -f /var/log/recorder-service.log`
+
+**Network Issues:**
+- Uploads fail with network error logged
+- System continues recording normally
+- Uploads retry automatically when network restored
+- No user intervention needed
+
+### Monitoring & Logs
+
+**Check system status:**
+```bash
+# SSH into Raspberry Pi
+ssh pi@<raspberry-pi-ip>
+
+# View live logs
+tail -f /var/log/recorder-service.log
+
+# View recent errors
+grep ERROR /var/log/recorder-service.log | tail -20
+
+# View upload status
+grep -i upload /var/log/recorder-service.log | tail -20
+
+# Check disk space
+df -h /home/pi/videos
+```
+
+**Log files:**
+- Location: `/var/log/recorder-service.log`
+- Automatic rotation: Daily, keeps 7 days
+- Max size per file: 10MB
+- What's logged:
+  - Recording start/stop with timestamps
+  - Upload successes/failures with error details
+  - Network errors with diagnostic info
+  - Cleanup operations
+  - Error recovery attempts
 
 ## Key Design Principles
 

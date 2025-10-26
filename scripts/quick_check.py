@@ -49,8 +49,8 @@ VIDEO_FPS = 30  # Use actual camera FPS
 USE_BUILTIN_CAMERA = True  # Record from built-in camera (macOS/Linux with camera)
 
 # Storage Settings - Save to project directory
-STORAGE_BASE_PATH = Path(__file__).parent.parent / "quick_check_videos"
-METADATA_DB_PATH = Path(__file__).parent.parent / "quick_check_videos"
+STORAGE_BASE_PATH = Path(__file__).parent.parent / "temp_videos"
+METADATA_DB_PATH = Path(__file__).parent.parent / "temp_videos"
 
 # Audio Feedback Messages
 MESSAGE_RECORDING_START = "Recording started"

@@ -55,7 +55,7 @@ CAMERA_WARMUP_TIME = 1.0  # seconds
 # =============================================================================
 
 # Storage Paths
-STORAGE_BASE_PATH = Path("/home/pi/videos")
+STORAGE_BASE_PATH = Path("./temp_videos") #/home/pi/videos
 
 # Directory Names (subdirectories under STORAGE_BASE_PATH)
 DIR_PENDING = "pending"
