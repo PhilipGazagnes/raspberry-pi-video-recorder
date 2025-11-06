@@ -25,7 +25,14 @@ pip install -r requirements-upload.txt
 
 # 5. Reboot (required for gpio group)
 sudo reboot
+
+# 6. After reboot: YouTube Authentication (requires browser)
+cd /opt/raspberry-pi-video-recorder
+source .venv/bin/activate
+python setup_youtube_auth.py
 ```
+
+**Note:** YouTube authentication (`setup_youtube_auth.py`) opens a browser and must be run from the Pi with a display, or via VNC/remote desktop.
 
 ---
 
@@ -82,7 +89,8 @@ python recorder_service.py
 - [ ] Fresh Raspberry Pi OS install
 - [ ] Internet connection
 - [ ] Camera connected and detected (`ls /dev/video*`)
-- [ ] YouTube API credentials ready
+- [ ] YouTube `client_secret.json` downloaded (optional, for uploads)
+- [ ] Display/browser access to Pi (for YouTube auth, or use VNC)
 - [ ] 3x LEDs with built-in resistors (panel mount)
 - [ ] 1x momentary push button
 - [ ] Jumper wires

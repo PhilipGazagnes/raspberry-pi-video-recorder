@@ -113,7 +113,7 @@ python -c "import RPi.GPIO; print('✓ RPi.GPIO (rpi-lgpio) imported successfull
 }
 
 echo ""
-echo "Step 7: YouTube Authentication Setup..."
+echo "Step 7: YouTube Authentication Check..."
 echo "----------------------------------------"
 
 # Check if .env exists
@@ -141,48 +141,48 @@ mkdir -p credentials
 # Check if client_secret.json exists
 if [ ! -f "credentials/client_secret.json" ]; then
     echo ""
-    echo "⚠️  YouTube authentication not configured!"
+    echo "⚠️  YouTube authentication NOT configured"
     echo ""
-    echo "To enable YouTube uploads, you need to:"
-    echo "1. Download client_secret.json from Google Cloud Console"
-    echo "2. Place it in: credentials/client_secret.json"
-    echo "3. Run: python setup_youtube_auth.py"
+    echo "📋 To enable YouTube uploads:"
+    echo "   1. Download client_secret.json from Google Cloud Console"
+    echo "      (https://console.cloud.google.com/apis/credentials)"
+    echo "   2. Place it in: credentials/client_secret.json"
+    echo "   3. After reboot, run: python setup_youtube_auth.py"
     echo ""
-    read -p "Do you have client_secret.json ready now? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo ""
-        echo "Please place client_secret.json in credentials/ directory"
-        read -p "Press Enter when ready to continue..."
-
-        if [ -f "credentials/client_secret.json" ]; then
-            echo "✓ Found client_secret.json"
-            echo ""
-            echo "Running YouTube authentication setup..."
-            python setup_youtube_auth.py || {
-                echo "⚠️  Authentication setup failed or was skipped"
-                echo "You can run it later with: python setup_youtube_auth.py"
-            }
-        else
-            echo "⚠️  client_secret.json not found"
-            echo "You can set this up later with: python setup_youtube_auth.py"
-        fi
-    else
-        echo ""
-        echo "Skipping YouTube setup for now."
-        echo "Run later with: python setup_youtube_auth.py"
-    fi
+    echo "   The setup_youtube_auth.py script will open a browser for"
+    echo "   OAuth authentication. You'll need to run it from the Pi"
+    echo "   with a display/browser, or via VNC/remote desktop."
+    echo ""
 else
     echo "✓ client_secret.json found"
+
+    # Validate it's valid JSON
+    if python3 -c "import json; json.load(open('credentials/client_secret.json'))" 2>/dev/null; then
+        echo "✓ client_secret.json is valid JSON"
+
+        # Check if it has the required structure
+        if python3 -c "import json; data=json.load(open('credentials/client_secret.json')); exit(0 if 'installed' in data or 'web' in data else 1)" 2>/dev/null; then
+            echo "✓ client_secret.json has valid OAuth structure"
+        else
+            echo "⚠️  client_secret.json may not be valid (missing 'installed' or 'web' key)"
+            echo "   Make sure you downloaded the correct OAuth 2.0 Client ID file"
+        fi
+    else
+        echo "❌ client_secret.json is NOT valid JSON!"
+        echo "   Please re-download from Google Cloud Console"
+    fi
 
     # Check if token.json exists
     if [ ! -f "credentials/token.json" ]; then
         echo ""
-        echo "Running YouTube authentication (will open browser)..."
-        python setup_youtube_auth.py || {
-            echo "⚠️  Authentication setup failed or was skipped"
-            echo "You can run it later with: python setup_youtube_auth.py"
-        }
+        echo "📋 YouTube Authentication Required:"
+        echo "   After reboot, run the following command to authenticate:"
+        echo ""
+        echo "   source .venv/bin/activate"
+        echo "   python setup_youtube_auth.py"
+        echo ""
+        echo "   This will open a browser for you to grant YouTube access."
+        echo ""
     else
         echo "✓ YouTube authentication already configured (token.json exists)"
     fi
@@ -193,20 +193,48 @@ echo "=========================================="
 echo "✅ Setup Complete!"
 echo "=========================================="
 echo ""
-echo "IMPORTANT: You must log out and back in (or reboot)"
-echo "for GPIO group membership to take effect!"
+echo "IMPORTANT: You must REBOOT for GPIO group membership to take effect!"
 echo ""
-echo "After reboot:"
+
+# Check YouTube authentication status for final message
+YOUTUBE_STATUS="✓ Configured"
+YOUTUBE_TODO=""
+if [ ! -f "credentials/client_secret.json" ]; then
+    YOUTUBE_STATUS="❌ Missing client_secret.json"
+    YOUTUBE_TODO="
+   📋 Next Steps for YouTube:
+      1. Download client_secret.json from Google Cloud Console
+      2. Place it in: credentials/client_secret.json
+      3. Run: python setup_youtube_auth.py (requires browser)
+"
+elif [ ! -f "credentials/token.json" ]; then
+    YOUTUBE_STATUS="⚠️  Needs authentication"
+    YOUTUBE_TODO="
+   📋 Next Step for YouTube:
+      Run this command after reboot (requires browser):
+
+      source .venv/bin/activate
+      python setup_youtube_auth.py
+"
+fi
+
+echo "Installation Summary:"
+echo "  • GPIO Libraries:      ✓ Installed"
+echo "  • Permissions:         ✓ Configured (takes effect after reboot)"
+echo "  • Virtual Environment: ✓ Created"
+echo "  • Dependencies:        ✓ Installed"
+echo "  • YouTube Auth:        $YOUTUBE_STATUS"
+echo ""
+
+if [ -n "$YOUTUBE_TODO" ]; then
+    echo "$YOUTUBE_TODO"
+fi
+
+echo "After reboot, start the service:"
 echo "  cd /opt/raspberry-pi-video-recorder"
 echo "  source .venv/bin/activate"
 echo "  python recorder_service.py"
 echo ""
-
-if [ ! -f "credentials/token.json" ]; then
-    echo "⚠️  Remember to setup YouTube authentication:"
-    echo "  python setup_youtube_auth.py"
-    echo ""
-fi
 
 echo "Would you like to reboot now? (recommended)"
 read -p "Reboot? (y/N) " -n 1 -r

@@ -107,17 +107,25 @@ pip install -r requirements.txt
 pip install -r requirements-upload.txt  # YouTube upload dependencies
 ```
 
-### 6. Configuration
+### 6. YouTube Authentication (Optional)
+
+⚠️ **Requires a browser** - do this step from the Pi with a display, or via VNC/remote desktop.
 
 ```bash
-# Copy example environment file
-cp .env.example .env
+# Ensure credentials directory exists
+mkdir -p credentials
 
-# Edit with your credentials
-nano .env
+# Place your client_secret.json file (from Google Cloud Console)
+# in credentials/client_secret.json
+
+# Run authentication script (opens browser)
+source .venv/bin/activate
+python setup_youtube_auth.py
 ```
 
-Add your YouTube API credentials (see [YouTube Setup](docs/youtube-setup.md) for details).
+This creates `credentials/token.json` which is used for automatic uploads.
+
+**Skip this step if:** You want to test the system without YouTube uploads first (it will use mock uploader).
 
 ---
 
