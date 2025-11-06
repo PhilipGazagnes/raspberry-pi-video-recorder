@@ -42,11 +42,11 @@ from upload.factory import UploaderFactory
 # =============================================================================
 
 # Recording Settings
-RECORDING_DURATION_SECONDS = 5  # Quick test with 5 seconds of actual video
+RECORDING_DURATION_SECONDS = 10  # Quick test with 5 seconds of actual video
 VIDEO_WIDTH = 1280  # Use actual camera resolution
 VIDEO_HEIGHT = 720
 VIDEO_FPS = 30  # Use actual camera FPS
-USE_BUILTIN_CAMERA = True  # Record from built-in camera (macOS/Linux with camera)
+USE_BUILTIN_CAMERA = False  # Record from built-in camera (macOS/Linux with camera)
 
 # Storage Settings - Save to project directory
 STORAGE_BASE_PATH = Path(__file__).parent.parent / "temp_videos"
