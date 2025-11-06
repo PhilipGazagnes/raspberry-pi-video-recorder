@@ -596,12 +596,13 @@ class RecorderService:
             )
 
             if result.success:
+                video_url = f"https://www.youtube.com/watch?v={result.video_id}"
                 self.logger.info(
-                    f"Upload successful: {video.filename} → {result.video_url}",
+                    f"Upload successful: {video.filename} → {video_url}",
                 )
 
                 # Mark as uploaded in storage
-                self.storage.mark_upload_success(video, result.video_url or "")
+                self.storage.mark_upload_success(video, video_url)
 
                 # Silent on success - no audio feedback
 

@@ -114,6 +114,7 @@ class LocalStorage(StorageInterface):
         if not self.space_manager.check_space_available():
             raise StorageError("Insufficient disk space for video")
 
+        dest_path = None  # Initialize to avoid UnboundLocalError in except block
         try:
             # Save file to pending directory
             dest_path = self.file_manager.save_file(
