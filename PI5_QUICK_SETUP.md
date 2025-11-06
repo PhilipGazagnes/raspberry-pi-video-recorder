@@ -23,10 +23,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 pip install -r requirements-upload.txt
 
-# 5. Reboot (required for gpio group)
+# 5. Setup log file (included in setup_pi5.sh)
+sudo touch /var/log/recorder-service.log
+sudo chown $(whoami) /var/log/recorder-service.log
+
+# 6. Reboot (required for gpio group)
 sudo reboot
 
-# 6. After reboot: YouTube Authentication (requires browser)
+# 7. After reboot: YouTube Authentication (requires browser)
 cd /opt/raspberry-pi-video-recorder
 source .venv/bin/activate
 python setup_youtube_auth.py

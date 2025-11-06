@@ -129,6 +129,26 @@ This creates `credentials/token.json` which is used for automatic uploads.
 
 ---
 
+### 7. Configure Logging (Automatic in setup script)
+
+The service logs to `/var/log/recorder-service.log` by default.
+
+**Automatic setup** (if you used `setup_pi5.sh`):
+- Log file already created with proper permissions ✓
+
+**Manual setup** (if you skipped the script):
+```bash
+# Create log file with proper permissions
+sudo touch /var/log/recorder-service.log
+sudo chown $(whoami):$(whoami) /var/log/recorder-service.log
+sudo chmod 664 /var/log/recorder-service.log
+```
+
+**Fallback behavior:**
+If `/var/log/` is not writable, logs automatically write to `logs/recorder-service.log` in the project directory.
+
+---
+
 ## Testing
 
 ### Test GPIO Hardware

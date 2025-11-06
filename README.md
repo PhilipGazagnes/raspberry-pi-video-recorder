@@ -404,6 +404,10 @@ GPIO_LED_RED = 19       # Red LED (error) - Hardware PWM
 
 ### Monitoring & Logs
 
+**Log Location:**
+- **Primary**: `/var/log/recorder-service.log` (standard Linux location)
+- **Fallback**: `logs/recorder-service.log` (if `/var/log/` not writable)
+
 **Check system status:**
 ```bash
 # SSH into Raspberry Pi
@@ -411,6 +415,8 @@ ssh pi@<raspberry-pi-ip>
 
 # View live logs
 tail -f /var/log/recorder-service.log
+# Or if using fallback:
+tail -f logs/recorder-service.log
 
 # View recent errors
 grep ERROR /var/log/recorder-service.log | tail -20
@@ -419,19 +425,23 @@ grep ERROR /var/log/recorder-service.log | tail -20
 grep -i upload /var/log/recorder-service.log | tail -20
 
 # Check disk space
-df -h /home/pi/videos
+df -h
 ```
 
-**Log files:**
-- Location: `/var/log/recorder-service.log`
-- Automatic rotation: Daily, keeps 7 days
+**Log Configuration:**
+- Automatic rotation: Daily at midnight
+- Retention: 7 days
 - Max size per file: 10MB
-- What's logged:
-  - Recording start/stop with timestamps
-  - Upload successes/failures with error details
-  - Network errors with diagnostic info
-  - Cleanup operations
-  - Error recovery attempts
+- Format: Timestamped with module and level
+
+**What's logged:**
+- System state transitions (BOOTING → READY → RECORDING)
+- Recording start/stop with timestamps and duration
+- Upload successes/failures with error details
+- Network errors with diagnostic info
+- Cleanup operations and disk space warnings
+- Error recovery attempts
+- Button presses and LED state changes
 
 ## Key Design Principles
 

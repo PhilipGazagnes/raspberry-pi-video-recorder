@@ -105,7 +105,35 @@ if [ ! -f "requirements.txt" ] && [ ! -f "requirements-upload.txt" ]; then
 fi
 
 echo ""
-echo "Step 6: Testing GPIO access..."
+echo "Step 6: Setting up log file..."
+echo "----------------------------------------"
+
+# Create log file in /var/log/ with proper permissions
+LOG_FILE="/var/log/recorder-service.log"
+
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Creating $LOG_FILE..."
+    sudo touch "$LOG_FILE"
+    sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_FILE"
+    sudo chmod 664 "$LOG_FILE"
+    echo "✓ Log file created with proper permissions"
+else
+    echo "✓ Log file already exists"
+    # Fix ownership if needed
+    if [ ! -w "$LOG_FILE" ]; then
+        echo "  Fixing permissions..."
+        sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_FILE"
+        sudo chmod 664 "$LOG_FILE"
+        echo "  ✓ Permissions updated"
+    fi
+fi
+
+# Create fallback logs directory in project
+mkdir -p logs
+echo "✓ Created fallback logs/ directory"
+
+echo ""
+echo "Step 7: Testing GPIO access..."
 echo "----------------------------------------"
 python -c "import RPi.GPIO; print('✓ RPi.GPIO (rpi-lgpio) imported successfully')" || {
     echo "❌ GPIO import failed"
@@ -113,7 +141,7 @@ python -c "import RPi.GPIO; print('✓ RPi.GPIO (rpi-lgpio) imported successfull
 }
 
 echo ""
-echo "Step 7: YouTube Authentication Check..."
+echo "Step 8: YouTube Authentication Check..."
 echo "----------------------------------------"
 
 # Check if .env exists
@@ -223,6 +251,7 @@ echo "  • GPIO Libraries:      ✓ Installed"
 echo "  • Permissions:         ✓ Configured (takes effect after reboot)"
 echo "  • Virtual Environment: ✓ Created"
 echo "  • Dependencies:        ✓ Installed"
+echo "  • Log File:            ✓ /var/log/recorder-service.log"
 echo "  • YouTube Auth:        $YOUTUBE_STATUS"
 echo ""
 
