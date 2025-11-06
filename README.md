@@ -37,6 +37,19 @@ Single-camera video recording system with hardware button control. Users press a
 
 ### Installation
 
+**⚡ Quick install for Raspberry Pi 5:**
+```bash
+git clone <repository-url>
+cd raspberry-pi-video-recorder
+./setup_pi5.sh  # Automated setup for Pi 5
+```
+
+**📖 For detailed instructions or troubleshooting, see:**
+- **[INSTALL.md](INSTALL.md)** - Complete installation guide
+- **[PI5_QUICK_SETUP.md](PI5_QUICK_SETUP.md)** - Quick reference card for Pi 5
+
+**Manual installation:**
+
 1. **Clone and setup:**
    ```bash
    git clone <repository-url>
@@ -304,11 +317,13 @@ The project includes VS Code settings that will:
 
 Configure these in `config/settings.py`:
 ```python
-GPIO_BUTTON_PIN = 18    # Button input pin
-GPIO_LED_GREEN = 12     # Green LED (ready/recording)
-GPIO_LED_ORANGE = 16    # Orange LED (processing)
-GPIO_LED_RED = 20       # Red LED (error)
+GPIO_BUTTON_PIN = 18    # Button input pin (Physical pin 12)
+GPIO_LED_GREEN = 13     # Green LED (ready/recording) - Hardware PWM
+GPIO_LED_ORANGE = 12    # Orange LED (processing) - Hardware PWM
+GPIO_LED_RED = 19       # Red LED (error) - Hardware PWM
 ```
+
+**Note:** All LEDs use hardware PWM pins (12, 13, 19) for consistent brightness. See [PI5_QUICK_SETUP.md](PI5_QUICK_SETUP.md) for wiring details.
 
 ## System Behavior
 
