@@ -411,21 +411,31 @@ class RecorderService:
 
         self.logger.info("Stopping recording session")
 
+        # Save references before clearing (prevent race condition)
+        session = self.current_session
+        output_file = self.current_output_file
+        start_time = self.session_start_time
+
+        # Clear session references IMMEDIATELY to prevent double-stop
+        # This must happen BEFORE stopping the session to prevent
+        # the on_complete callback from re-entering this function
+        self.current_session = None
+        self.current_output_file = None
+        self.session_start_time = None
+
         # Transition to PROCESSING first (orange LED while saving)
         self._transition_to_processing()
 
         # Stop the session
-        self.current_session.stop()
+        session.stop()
 
         # Calculate recording duration
-        duration = (
-            time.time() - self.session_start_time if self.session_start_time else 0
-        )
+        duration = time.time() - start_time if start_time else 0
 
         # Save to storage (this takes 2-3 seconds)
         try:
             video = self.storage.save_recording(
-                video_path=self.current_output_file,
+                video_path=output_file,
                 duration_seconds=int(duration),
             )
             self.logger.info(f"Recording saved to storage: {video.filename}")
@@ -437,11 +447,6 @@ class RecorderService:
             self.logger.error(f"Failed to save recording: {e}")
             self._transition_to_error(f"Storage error: {e}")
             return
-
-        # Clean up session
-        self.current_session = None
-        self.current_output_file = None
-        self.session_start_time = None
 
         # Immediately back to READY (green LED)
         # Upload happens in background, invisible to user
