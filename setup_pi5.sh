@@ -88,7 +88,20 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
     echo "✓ Installed dependencies from requirements.txt"
 else
-    echo "⚠️  No requirements.txt found, skipping pip install"
+    echo "⚠️  No requirements.txt found"
+fi
+
+# Install upload dependencies
+if [ -f "requirements-upload.txt" ]; then
+    pip install -r requirements-upload.txt
+    echo "✓ Installed upload dependencies from requirements-upload.txt"
+else
+    echo "⚠️  No requirements-upload.txt found"
+fi
+
+# Check if all went well
+if [ ! -f "requirements.txt" ] && [ ! -f "requirements-upload.txt" ]; then
+    echo "⚠️  No requirements files found, skipping pip install"
 fi
 
 echo ""

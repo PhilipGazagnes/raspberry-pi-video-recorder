@@ -104,6 +104,7 @@ python -c "import RPi.GPIO; print('GPIO OK')"
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+pip install -r requirements-upload.txt  # YouTube upload dependencies
 ```
 
 ### 6. Configuration

@@ -21,6 +21,7 @@ python3 -m venv .venv --system-site-packages
 # 4. Install dependencies
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-upload.txt
 
 # 5. Reboot (required for gpio group)
 sudo reboot
@@ -115,6 +116,7 @@ rm -rf .venv
 python3 -m venv .venv --system-site-packages
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-upload.txt
 ```
 
 ---
