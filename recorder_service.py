@@ -436,8 +436,9 @@ class RecorderService:
             )
             self.logger.info(f"Recording saved to storage: {video.filename}")
 
-            # Queue upload in background (silent - no audio)
-            self._queue_upload(video)
+            # Upload will be picked up automatically by the upload worker
+            # which checks storage.get_pending_uploads() continuously
+            # No need to queue here - prevents double upload attempts
 
         except Exception as e:
             self.logger.error(f"Failed to save recording: {e}")
@@ -609,7 +610,7 @@ class RecorderService:
 
             else:
                 # Upload failed
-                error_msg = result.error or "Unknown error"
+                error_msg = result.error_message or "Unknown error"
                 self.logger.error(f"Upload failed: {video.filename} - {error_msg}")
 
                 # Mark as failed in storage
