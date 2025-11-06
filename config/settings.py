@@ -17,10 +17,10 @@ from pathlib import Path
 # =============================================================================
 
 # GPIO Pin Assignments
-GPIO_BUTTON_PIN = 18
-GPIO_LED_GREEN = 12
-GPIO_LED_ORANGE = 16
-GPIO_LED_RED = 20
+GPIO_BUTTON_PIN = 18  # Hardware PWM pin (physical pin 12)
+GPIO_LED_GREEN = 13   # Hardware PWM pin (physical pin 33)
+GPIO_LED_ORANGE = 12  # Hardware PWM pin (physical pin 32)
+GPIO_LED_RED = 19     # Hardware PWM pin (physical pin 35)
 
 # Audio/TTS Configuration
 TTS_RATE = 150  # Words per minute
