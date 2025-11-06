@@ -22,6 +22,9 @@ GPIO_LED_GREEN = 13   # Hardware PWM pin (physical pin 33)
 GPIO_LED_ORANGE = 12  # Hardware PWM pin (physical pin 32)
 GPIO_LED_RED = 19     # Hardware PWM pin (physical pin 35)
 
+# Button Configuration
+BUTTON_LONG_PRESS_DURATION = 2.0  # seconds - hold duration for long press
+
 # Audio/TTS Configuration
 TTS_RATE = 150  # Words per minute
 TTS_VOLUME = 0.8  # 0.0 to 1.0

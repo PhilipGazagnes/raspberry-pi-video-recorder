@@ -15,6 +15,7 @@ Why separate constants?
 from enum import Enum
 
 from config.settings import (
+    BUTTON_LONG_PRESS_DURATION,
     GPIO_BUTTON_PIN,
     GPIO_LED_GREEN,
     GPIO_LED_ORANGE,
@@ -38,9 +39,9 @@ from config.settings import (
 # 50ms is standard for mechanical buttons - electrical bounce settles by then
 BUTTON_DEBOUNCE_TIME = 0.05
 
-# Maximum time between two presses to count as "double tap" (in seconds)
-# 500ms feels natural - longer feels sluggish, shorter is hard to trigger
-BUTTON_DOUBLE_TAP_WINDOW = 0.5
+# Long press duration (imported from config.settings)
+# Hold button for this duration to trigger long press action
+# Configured in config/settings.py: BUTTON_LONG_PRESS_DURATION
 
 
 # =============================================================================

@@ -18,10 +18,10 @@ State Flow:
                 +------------ ERROR (with recovery)-+
 
 Button Logic:
-- READY: Single press = start recording
-- RECORDING: Single press = stop, Double press = extend (+5min)
+- READY: Short or long press = start recording
+- RECORDING: Short press = stop, Long press = extend (+5min)
 - PROCESSING: Brief state while saving (2-3 seconds), button disabled
-- ERROR: Single press = attempt recovery
+- ERROR: Short or long press = attempt recovery
 
 Upload Queue:
 - Runs in background thread
@@ -71,8 +71,8 @@ class SystemState(Enum):
 class ButtonPress(Enum):
     """Button press types detected by ButtonController."""
 
-    SINGLE = "single"
-    DOUBLE = "double"
+    SHORT = "short"
+    LONG = "long"
 
 
 class RecorderService:
@@ -269,9 +269,9 @@ class RecorderService:
         Called by ButtonController when button pressed.
 
         Args:
-            press_type: "single" or "double"
+            press_type: "short" or "long"
         """
-        press = ButtonPress.SINGLE if press_type == "single" else ButtonPress.DOUBLE
+        press = ButtonPress.SHORT if press_type == "short" else ButtonPress.LONG
         self.logger.info(f"Button press: {press_type} in state {self.state.value}")
 
         # Delegate to state-specific handlers
@@ -288,24 +288,22 @@ class RecorderService:
         """
         Handle button in READY state.
 
-        Single press: Start recording
-        Double press: Ignored
+        Short or long press: Start recording (both trigger same action)
         """
-        if press == ButtonPress.SINGLE:
-            self._start_recording()
-        else:
-            self.logger.debug("Double press ignored in READY state")
+        # Both short and long press start recording in READY state
+        self.logger.debug(f"{press.value} press in READY → start recording")
+        self._start_recording()
 
     def _handle_button_recording(self, press: ButtonPress):
         """
         Handle button in RECORDING state.
 
-        Single press: Stop recording
-        Double press: Extend recording by 5 minutes
+        Short press: Stop recording
+        Long press: Extend recording by 5 minutes
         """
-        if press == ButtonPress.SINGLE:
+        if press == ButtonPress.SHORT:
             self._stop_recording()
-        elif press == ButtonPress.DOUBLE:
+        elif press == ButtonPress.LONG:
             self._extend_recording()
 
     def _handle_button_processing(self, press: ButtonPress):
@@ -321,13 +319,11 @@ class RecorderService:
         """
         Handle button in ERROR state.
 
-        Single press: Attempt recovery
-        Double press: Ignored
+        Short or long press: Attempt recovery (both trigger same action)
         """
-        if press == ButtonPress.SINGLE:
-            self._attempt_recovery()
-        else:
-            self.logger.debug("Double press ignored in ERROR state")
+        # Both short and long press attempt recovery in ERROR state
+        self.logger.debug(f"{press.value} press in ERROR → attempt recovery")
+        self._attempt_recovery()
 
     # =========================================================================
     # RECORDING OPERATIONS

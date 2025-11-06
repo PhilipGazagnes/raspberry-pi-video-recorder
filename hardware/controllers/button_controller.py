@@ -1,7 +1,7 @@
 """
 Button Controller - Refactored
 
-Handles button input with debouncing and single/double-tap detection.
+Handles button input with debouncing and long press detection.
 Uses interrupt-driven GPIO for efficient, responsive button handling.
 
 IMPROVEMENTS FROM ORIGINAL:
@@ -19,19 +19,19 @@ This demonstrates SOLID principles:
 """
 
 import logging
-import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
 from hardware.constants import (
     BUTTON_DEBOUNCE_TIME,
-    BUTTON_DOUBLE_TAP_WINDOW,
+    BUTTON_LONG_PRESS_DURATION,
     GPIO_BUTTON_PIN,
 )
 from hardware.factory import create_gpio
 from hardware.interfaces.gpio_interface import (
     EdgeDetection,
     GPIOInterface,
+    PinState,
     PullMode,
 )
 from hardware.utils.gpio_utils import safe_gpio_cleanup
@@ -42,29 +42,29 @@ class ButtonPress:
     Button press types.
 
     Using a class with constants instead of Enum for simpler usage.
-    Controllers can check: if press_type == ButtonPress.SINGLE
+    Controllers can check: if press_type == ButtonPress.SHORT
     """
 
-    SINGLE = "single"
-    DOUBLE = "double"
+    SHORT = "short"   # Press & release < long press duration
+    LONG = "long"     # Press & hold >= long press duration
 
 
 class ButtonController:
     """
-    Manages button input with debouncing and tap detection.
+    Manages button input with debouncing and long press detection.
 
     Features:
     - Hardware debouncing (ignores electrical noise)
-    - Single vs double-tap detection
+    - Short vs long press detection (based on hold duration)
     - Interrupt-driven (efficient - no polling)
     - Works with real GPIO or mock for testing
 
     Usage:
         def on_button(press_type):
-            if press_type == ButtonPress.SINGLE:
-                print("Single press!")
-            elif press_type == ButtonPress.DOUBLE:
-                print("Double press!")
+            if press_type == ButtonPress.SHORT:
+                print("Short press!")
+            elif press_type == ButtonPress.LONG:
+                print("Long press!")
 
         button = ButtonController()
         button.register_callback(on_button)
@@ -110,15 +110,13 @@ class ButtonController:
 
         # Timing configuration from constants (no magic numbers!)
         self.debounce_time = BUTTON_DEBOUNCE_TIME
-        self.double_tap_window = BUTTON_DOUBLE_TAP_WINDOW
+        self.long_press_duration = BUTTON_LONG_PRESS_DURATION
 
         # State tracking
-        self.last_press_time = 0.0
-        self.pending_single_press = False
+        self.button_press_time: Optional[float] = None  # When button pressed down
+        self.last_event_time = 0.0  # For debouncing
         self.callback_func: Optional[Callable[[str], None]] = None
 
-        # Timer for single press detection
-        self._single_press_timer: Optional[threading.Timer] = None
         self._cleaned_up = False
 
         # Initialize hardware
@@ -134,7 +132,7 @@ class ButtonController:
 
         Sets up:
         - Input pin with pull resistor
-        - Interrupt callback for press detection
+        - Interrupt callback for press AND release detection
         - Hardware debouncing via GPIO library
 
         Raises:
@@ -145,17 +143,17 @@ class ButtonController:
             pull_mode = PullMode.UP if self.pull_up else PullMode.DOWN
             self.gpio.setup_input(self.pin, pull_mode)
 
-            # Setup interrupt callback
-            # With pull-up: button press pulls pin LOW (falling edge)
-            # With pull-down: button press pulls pin HIGH (rising edge)
-            edge = EdgeDetection.FALLING if self.pull_up else EdgeDetection.RISING
+            # Setup interrupt callback for BOTH edges
+            # We need to detect both press (falling) and release (rising)
+            # to measure how long the button was held
+            edge = EdgeDetection.BOTH
 
             # Convert debounce time to milliseconds
             debounce_ms = int(self.debounce_time * 1000)
 
             # Register interrupt callback
-            # This means _on_button_interrupt runs AUTOMATICALLY when button pressed
-            # No polling loop needed - very efficient!
+            # This means _on_button_interrupt runs AUTOMATICALLY when button
+            # is pressed OR released - No polling loop needed - very efficient!
             self.gpio.add_event_callback(
                 self.pin,
                 edge,
@@ -165,7 +163,7 @@ class ButtonController:
 
             self.logger.debug(
                 f"Button setup complete "
-                f"(edge: {edge.value}, debounce: {debounce_ms}ms)",
+                f"(edge: BOTH, debounce: {debounce_ms}ms)",
             )
         except Exception as e:
             self.logger.error(f"Failed to setup button on pin {self.pin}: {e}")
@@ -173,7 +171,7 @@ class ButtonController:
 
     def _on_button_interrupt(self, channel: int) -> None:
         """
-        GPIO interrupt handler - called automatically on button press.
+        GPIO interrupt handler - called on button press OR release.
 
         This runs in a separate thread created by the GPIO library.
         We need to be thread-safe here!
@@ -182,10 +180,10 @@ class ButtonController:
             channel: GPIO pin that triggered (always our button pin)
 
         How this works:
-        1. Button pressed → hardware interrupt fires
-        2. This method runs in background thread
-        3. We check if it's single or double tap
-        4. Call registered callback with the press type
+        1. Button pressed → interrupt fires, record press time
+        2. Button released → interrupt fires, calculate hold duration
+        3. If held >= long_press_duration → LONG press callback
+        4. If held < long_press_duration → SHORT press callback
         """
         current_time = time.time()
 
@@ -208,102 +206,58 @@ class ButtonController:
         #   somehow, we could get two button presses. But in practice RPi.GPIO
         #   blocks at hardware level, and we're in a single-threaded GPIO
         #   callback, so this is safe.
-        time_since_last = current_time - self.last_press_time
+        time_since_last = current_time - self.last_event_time
         if time_since_last < self.debounce_time:
-            self.logger.debug("Button press ignored (software debounce)")
+            self.logger.debug("Button event ignored (software debounce)")
             return
 
-        # Update timing for next press detection
-        self.last_press_time = current_time
-        self._handle_button_event()
+        # Update timing for next event
+        self.last_event_time = current_time
 
-    def _handle_button_event(self) -> None:
-        """
-        Process a button press and determine single vs double tap.
+        # Read current pin state to determine if pressed or released
+        pin_state = self.gpio.read(self.pin)
 
-        Logic:
-        - First press: Start timer, wait to see if second press comes
-        - Second press within window: It's a double tap!
-        - Timer expires: It was just a single tap
+        # Determine if button is currently pressed based on pull resistor config
+        # With pull-up: pressed = LOW, released = HIGH
+        # With pull-down: pressed = HIGH, released = LOW
+        if self.pull_up:
+            is_pressed = (pin_state == PinState.LOW)
+        else:
+            is_pressed = (pin_state == PinState.HIGH)
 
-        This is the "debouncing" logic for tap detection, not electrical debouncing.
-        """
-        current_time = time.time()
-
-        if self.pending_single_press:
-            # This is a second press - check if within double-tap window
-            time_since_first = current_time - self.last_press_time
-
-            if time_since_first <= self.double_tap_window:
-                # Double tap detected!
-                self.logger.debug("Double tap detected")
-                self._cancel_single_press_timer()
-                self.pending_single_press = False
-                self._trigger_callback(ButtonPress.DOUBLE)
+        if is_pressed:
+            # Button pressed down - record the time
+            self.button_press_time = current_time
+            self.logger.debug("Button pressed down")
+        else:
+            # Button released - calculate hold duration and trigger callback
+            if self.button_press_time is None:
+                # Spurious release event (no matching press)
+                self.logger.debug("Button release ignored (no press recorded)")
                 return
-            # Too slow - treat as separate single presses
-            # The pending one will fire via timer
 
-        # This is potentially a single press
-        # Start timer - if no second press comes, it's confirmed single
-        self.pending_single_press = True
-        self.last_press_time = current_time
+            hold_duration = current_time - self.button_press_time
+            self.button_press_time = None  # Clear for next press
 
-        # Cancel any existing timer (from previous press)
-        self._cancel_single_press_timer()
+            # Determine press type based on hold duration
+            if hold_duration >= self.long_press_duration:
+                self.logger.debug(
+                    f"Long press detected (held {hold_duration:.2f}s)",
+                )
+                self._trigger_callback(ButtonPress.LONG)
+            else:
+                self.logger.debug(
+                    f"Short press detected (held {hold_duration:.2f}s)",
+                )
+                self._trigger_callback(ButtonPress.SHORT)
 
-        # WHY use threading.Timer instead of just a flag?
-        # Context: We need to distinguish between single and double taps, but
-        #   user must press within double_tap_window. Rather than polling in a
-        #   busy loop, we use a Timer that fires automatically after the window
-        #   closes.
-        #
-        # Threading note: Timer runs in a separate thread. When it fires, it
-        #   calls _confirm_single_press() which runs in Timer's thread context.
-        #   This is WHY _confirm_single_press() must be thread-safe and WHY we
-        #   use flags (pending_single_press) rather than calling callback
-        #   directly.
-        #
-        # Risk: If button pressed multiple times fast:
-        #   1. First press: Start timer
-        #   2. Second press within window: Cancel timer (line 243), fire DOUBLE
-        #   3. Second press outside window: Timer fires, then we start a new timer
-        #   This is correct behavior, but shows why careful ordering matters.
-        self._single_press_timer = threading.Timer(
-            self.double_tap_window,
-            self._confirm_single_press,
-        )
-        self._single_press_timer.start()
-
-        self.logger.debug("Button press detected, waiting for potential double tap")
-
-    def _confirm_single_press(self) -> None:
-        """
-        Timer callback - confirms this was a single press.
-
-        Called after double-tap window expires with no second press.
-        """
-        if self.pending_single_press:
-            self.logger.debug("Single tap confirmed")
-            self.pending_single_press = False
-            self._trigger_callback(ButtonPress.SINGLE)
-
-    def _cancel_single_press_timer(self) -> None:
-        """
-        Cancel pending single press timer.
-
-        Called when double tap is detected before timer expires.
-        """
-        if self._single_press_timer:
-            self._single_press_timer.cancel()
-            self._single_press_timer = None
 
     def _trigger_callback(self, press_type: str) -> None:
         """
         Call the registered callback function with press type.
 
         Args:
-            press_type: ButtonPress.SINGLE or ButtonPress.DOUBLE
+            press_type: ButtonPress.SHORT or ButtonPress.LONG
 
         This runs in a background thread (from GPIO interrupt),
         so the callback needs to be thread-safe!
@@ -326,13 +280,13 @@ class ButtonController:
 
         Args:
             callback_func: Function that takes press_type (string) as argument.
-                          Will be called with ButtonPress.SINGLE or ButtonPress.DOUBLE
+                          Will be called with ButtonPress.SHORT or ButtonPress.LONG
 
         Example:
             def on_press(press_type):
-                if press_type == ButtonPress.SINGLE:
+                if press_type == ButtonPress.SHORT:
                     start_recording()
-                elif press_type == ButtonPress.DOUBLE:
+                elif press_type == ButtonPress.LONG:
                     extend_recording()
 
             button.register_callback(on_press)
@@ -345,7 +299,7 @@ class ButtonController:
     def set_timing(
         self,
         debounce_time: Optional[float] = None,
-        double_tap_window: Optional[float] = None,
+        long_press_duration: Optional[float] = None,
     ) -> None:
         """
         Adjust button timing parameters.
@@ -355,11 +309,11 @@ class ButtonController:
 
         Args:
             debounce_time: Debounce time in seconds (default from constants)
-            double_tap_window: Double tap detection window in seconds
+            long_press_duration: Long press threshold in seconds
 
         Example:
-            # Make double tap easier (longer window)
-            button.set_timing(double_tap_window=0.7)
+            # Make long press easier (shorter threshold)
+            button.set_timing(long_press_duration=1.5)
 
             # More aggressive debouncing (noisy button)
             button.set_timing(debounce_time=0.1)
@@ -373,14 +327,14 @@ class ButtonController:
             self.debounce_time = debounce_time
             self.logger.info(f"Debounce time set to {debounce_time}s")
 
-        if double_tap_window is not None:
-            if not (0.1 <= double_tap_window <= 2.0):
+        if long_press_duration is not None:
+            if not (0.5 <= long_press_duration <= 5.0):
                 raise ValueError(
-                    f"Invalid double tap window: {double_tap_window}. "
-                    f"Expected 0.1-2.0 seconds",
+                    f"Invalid long press duration: {long_press_duration}. "
+                    f"Expected 0.5-5.0 seconds",
                 )
-            self.double_tap_window = double_tap_window
-            self.logger.info(f"Double tap window set to {double_tap_window}s")
+            self.long_press_duration = long_press_duration
+            self.logger.info(f"Long press duration set to {long_press_duration}s")
 
     def test_button(self, duration: float = 10.0) -> None:
         """
@@ -406,7 +360,7 @@ class ButtonController:
         self.register_callback(test_callback)
 
         # Wait for duration
-        self.logger.info("Press button to test (single and double presses)")
+        self.logger.info("Press button to test (short and long presses)")
         try:
             time.sleep(duration)
         except KeyboardInterrupt:
@@ -425,22 +379,22 @@ class ButtonController:
 
         Example:
             status = button.get_status()
-            print(f"Last press: {status['last_press_time']}")
+            print(f"Button is pressed: {status['button_is_pressed']}")
         """
         return {
             "pin": self.pin,
             "pull_up": self.pull_up,
             "gpio_available": self.gpio.is_available(),
             "debounce_time": self.debounce_time,
-            "double_tap_window": self.double_tap_window,
-            "pending_single_press": self.pending_single_press,
+            "long_press_duration": self.long_press_duration,
+            "button_is_pressed": self.button_press_time is not None,
             "callback_registered": self.callback_func is not None,
-            "last_press_time": self.last_press_time,
+            "last_event_time": self.last_event_time,
         }
 
     def cleanup(self) -> None:
         """
-        Clean up GPIO resources and stop threads.
+        Clean up GPIO resources.
 
         IMPORTANT: Always call this before program exits!
         Safe to call multiple times - idempotent.
@@ -449,9 +403,6 @@ class ButtonController:
             return
 
         self.logger.info("Cleaning up Button Controller")
-
-        # Cancel any pending timers
-        self._cancel_single_press_timer()
 
         # Remove interrupt callback
         try:
