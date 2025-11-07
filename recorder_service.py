@@ -608,8 +608,20 @@ class RecorderService:
         """
         Process a single video upload.
 
+        Coordinates storage, upload status, and LED feedback:
+        - Marks upload started in database
+        - Activates BLUE LED (blinks during upload)
+        - Uploads to YouTube with automatic retry on failure
+        - Marks upload success/failed in database
+        - Always deactivates BLUE LED in finally block
+
         Args:
             video: VideoFile to upload
+
+        LED Behavior:
+            - BLUE LED blinks continuously while upload is in progress
+            - BLUE LED turns off immediately when upload completes (success/failure)
+            - Blinking at 0.5s interval (on 0.25s, off 0.25s)
         """
         with self.upload_lock:
             self.currently_uploading = video

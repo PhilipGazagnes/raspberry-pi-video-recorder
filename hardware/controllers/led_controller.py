@@ -120,7 +120,13 @@ class LEDController:
         This is DRY (Don't Repeat Yourself) in action.
         Includes main LEDs (G, O, R) and status LEDs (WHITE, BLUE).
         """
-        # Main status LEDs (green, orange, red)
+        # WHY GPIO output pins for LEDs?
+        # Context: LEDs are controlled by driving GPIO pins LOW/HIGH
+        #   - HIGH state sinks current through LED cathode (LED on)
+        #   - LOW state stops current flow (LED off)
+        # All pins initialized to LOW (LEDs off) on startup
+        # GPIO pins support PWM (pulse width modulation) for future
+        # brightness control by varying HIGH pulse duration
         pin_list = list(self.pins.values())
         # Network and upload status LEDs (white, blue)
         pin_list.extend([GPIO_LED_WHITE, GPIO_LED_BLUE])
@@ -524,24 +530,29 @@ class LEDController:
         """
         Set WHITE LED status based on internet connectivity.
 
-        WHITE LED is dimmed (50% brightness) to provide subtle feedback.
-        Solid ON when internet available, OFF when disconnected.
+        Provides continuous network status feedback:
+        - Solid ON when internet is available
+        - OFF when internet is disconnected
+
+        Network monitoring runs in background (every 30 seconds by default).
 
         Args:
             is_connected: True if internet is available, False otherwise
 
         Example:
-            led.set_network_status(True)   # Turn on WHITE LED
-            led.set_network_status(False)  # Turn off WHITE LED
+            led.set_network_status(True)   # Turn on WHITE LED (internet available)
+            led.set_network_status(False)  # Turn off WHITE LED (no internet)
         """
-        # Set WHITE LED to 50% brightness (dimmed) when connected
-        # 50% brightness = half intensity (achievable via PWM)
-        brightness = 128 if is_connected else 0  # 0-255, 128 = 50%
+        # Update WHITE LED based on connectivity
+        # Note: Future enhancement could add PWM dimming (50% brightness)
+        # for visual distinction, but binary ON/OFF is sufficient
+        # for clear internet availability indication
+        brightness = 128 if is_connected else 0  # 0-255 range for future PWM
         self.gpio.write(
             GPIO_LED_WHITE,
             PinState.HIGH if brightness > 0 else PinState.LOW,
         )
-        status = "ON (50% brightness)" if is_connected else "OFF"
+        status = "ON" if is_connected else "OFF"
         self.logger.debug(f"Network status LED: {status}")
 
     def set_upload_active(self, is_uploading: bool) -> None:
@@ -593,6 +604,15 @@ class LEDController:
         brightness_high = PinState.HIGH
         brightness_low = PinState.LOW
 
+        # WHY Event-driven timing instead of simple sleep()?
+        # Context: Need responsive shutdown when upload finishes
+        #   Problem: sleep(duration) blocks for full duration
+        #   Solution: use Event.wait(timeout) which:
+        #     1. Sleeps for timeout duration
+        #     2. BUT wakes early if event is set
+        #   Result: LED stops blinking IMMEDIATELY when upload done,
+        #           instead of waiting up to 0.5s for sleep to complete
+        # Pattern: .wait(timeout) returns False if timeout, True if set
         while not self._upload_blink_event.wait(blink_interval):
             # Blink: ON for interval
             self.gpio.write(GPIO_LED_BLUE, brightness_high)
