@@ -50,8 +50,8 @@ class ButtonPress:
     - LONG: Hold for long_press_duration (triggers immediately, release ignored)
     """
 
-    SHORT = "short"   # Press & release < long press duration
-    LONG = "long"     # Hold >= long press duration (triggers while holding)
+    SHORT = "short"  # Press & release < long press duration
+    LONG = "long"  # Hold >= long press duration (triggers while holding)
 
 
 class ButtonController:
@@ -176,8 +176,7 @@ class ButtonController:
             )
 
             self.logger.debug(
-                f"Button setup complete "
-                f"(edge: BOTH, debounce: {debounce_ms}ms)",
+                f"Button setup complete " f"(edge: BOTH, debounce: {debounce_ms}ms)",
             )
         except Exception as e:
             self.logger.error(f"Failed to setup button on pin {self.pin}: {e}")
@@ -235,9 +234,9 @@ class ButtonController:
         # With pull-up: pressed = LOW, released = HIGH
         # With pull-down: pressed = HIGH, released = LOW
         if self.pull_up:
-            is_pressed = (pin_state == PinState.LOW)
+            is_pressed = pin_state == PinState.LOW
         else:
-            is_pressed = (pin_state == PinState.HIGH)
+            is_pressed = pin_state == PinState.HIGH
 
         if is_pressed:
             # Button pressed down - start timer for long press detection

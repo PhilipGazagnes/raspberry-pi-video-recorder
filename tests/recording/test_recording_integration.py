@@ -17,10 +17,8 @@ from pathlib import Path
 import pytest
 
 # Import constants
-from recording.constants import (
-    EXTENSION_DURATION,
-    RecordingState,
-)
+from config.settings import EXTENSION_DURATION
+from recording.constants import RecordingState
 
 # Import controllers
 from recording.controllers.camera_manager import CameraManager

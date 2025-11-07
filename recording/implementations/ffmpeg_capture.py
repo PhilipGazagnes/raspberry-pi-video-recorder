@@ -14,15 +14,14 @@ import time
 from pathlib import Path
 from typing import Optional, Union
 
-from recording.constants import (
+from config.settings import (
     CAMERA_WARMUP_TIME,
     DEFAULT_CAMERA_DEVICE,
     VIDEO_FPS,
     VIDEO_HEIGHT,
     VIDEO_WIDTH,
-    get_ffmpeg_command,
-    validate_camera_device,
 )
+from recording.constants import get_ffmpeg_command, validate_camera_device
 from recording.interfaces.video_capture_interface import (
     CameraBusyError,
     CameraNotFoundError,

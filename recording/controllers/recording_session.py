@@ -18,14 +18,13 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from recording.constants import (
+from config.settings import (
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
     MAX_RECORDING_DURATION,
     WARNING_TIME,
-    RecordingState,
-    format_duration,
 )
+from recording.constants import RecordingState, format_duration
 from recording.controllers.camera_manager import CameraManager
 
 

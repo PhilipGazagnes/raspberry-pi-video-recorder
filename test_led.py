@@ -14,7 +14,7 @@ import time
 from config.settings import GPIO_LED_GREEN, GPIO_LED_ORANGE, GPIO_LED_RED
 
 try:
-    import RPi.GPIO as GPIO
+    from RPi import GPIO
 
     # Setup GPIO
     GPIO.setmode(GPIO.BCM)

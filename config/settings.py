@@ -18,9 +18,9 @@ from pathlib import Path
 
 # GPIO Pin Assignments
 GPIO_BUTTON_PIN = 18  # Hardware PWM pin (physical pin 12)
-GPIO_LED_GREEN = 13   # Hardware PWM pin (physical pin 33)
+GPIO_LED_GREEN = 13  # Hardware PWM pin (physical pin 33)
 GPIO_LED_ORANGE = 12  # Hardware PWM pin (physical pin 32)
-GPIO_LED_RED = 19     # Hardware PWM pin (physical pin 35)
+GPIO_LED_RED = 19  # Hardware PWM pin (physical pin 35)
 
 # Button Configuration
 BUTTON_LONG_PRESS_DURATION = 2.0  # seconds - hold duration for long press
@@ -35,10 +35,10 @@ SPEAKER_DEVICE = "hw:1,0"  # USB speaker device
 # =============================================================================
 
 # Recording Durations (in seconds)
-DEFAULT_RECORDING_DURATION = 600  # 10 minutes
-EXTENSION_DURATION = 300  # 5 minutes
-MAX_RECORDING_DURATION = 1500  # 25 minutes
-WARNING_TIME = 60  # 1 minute before end
+DEFAULT_RECORDING_DURATION = 60  # 60 seconds (1 minute)
+EXTENSION_DURATION = 60  # 60 seconds (1 minute)
+MAX_RECORDING_DURATION = 180  # 180 seconds (3 minutes)
+WARNING_TIME = 20  # 20 seconds before end
 
 # Video Settings
 VIDEO_WIDTH = 1920
@@ -58,7 +58,7 @@ CAMERA_WARMUP_TIME = 1.0  # seconds
 # =============================================================================
 
 # Storage Paths
-STORAGE_BASE_PATH = Path("./temp_videos") #/home/pi/videos
+STORAGE_BASE_PATH = Path("./temp_videos")  # /home/pi/videos
 
 # Directory Names (subdirectories under STORAGE_BASE_PATH)
 DIR_PENDING = "pending"

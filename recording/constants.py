@@ -9,64 +9,38 @@ Why separate constants?
 - Clear documentation of system limits
 - Type safety with enums
 - Single source of truth
+
+Note: Configuration values (durations, video settings, etc.) have been moved to
+config/settings.py per CLAUDE.md guidelines. This file now contains only
+enums, FFmpeg-specific constants, and utility functions.
 """
 
 from enum import Enum
 from pathlib import Path
 
+from config.settings import (
+    VIDEO_CODEC,
+    VIDEO_CRF,
+    VIDEO_FPS,
+    VIDEO_HEIGHT,
+    VIDEO_PRESET,
+    VIDEO_WIDTH,
+)
+
 # =============================================================================
 # RECORDING DURATION CONFIGURATION
 # =============================================================================
-
-# Default recording duration in seconds
-# 10 minutes is a typical sparring round duration
-DEFAULT_RECORDING_DURATION = 600  # 10 minutes
-
-# Extension duration when user double-presses button
-# 5 minutes allows for extended rounds
-EXTENSION_DURATION = 300  # 5 minutes
-
-# Maximum total recording duration
-# 25 minutes = 10 + 3 extensions (safety limit to prevent filling disk)
-MAX_RECORDING_DURATION = 1500  # 25 minutes
-
-# Warning time before recording ends
-# 1 minute gives user time to decide on extension
-WARNING_TIME = 60  # 1 minute (triggers at 9:00 remaining)
+# NOTE: Duration settings moved to config/settings.py
+# Import from there: DEFAULT_RECORDING_DURATION, EXTENSION_DURATION,
+# MAX_RECORDING_DURATION, WARNING_TIME
 
 
 # =============================================================================
 # VIDEO CAPTURE CONFIGURATION
 # =============================================================================
-
-# Video resolution (width x height)
-# 1920x1080 = Full HD, good balance of quality and file size
-VIDEO_WIDTH = 1920
-VIDEO_HEIGHT = 1080
-
-# Frame rate in frames per second
-# 30 FPS is smooth for sports analysis, lower than 60 to save space
-VIDEO_FPS = 30
-
-# Video codec for encoding
-# h264 is widely supported, good compression, hardware accelerated on Pi
-VIDEO_CODEC = "libx264"
-
-# Encoding preset for h264
-# "ultrafast" prioritizes speed over compression
-# Good for Pi 5 - real-time encoding without dropping frames
-# Options: ultrafast, superfast, veryfast, faster, fast, medium, slow
-VIDEO_PRESET = "ultrafast"
-
-# Constant Rate Factor (quality setting)
-# Lower = better quality, larger files
-# 23 is default, 18-28 is typical range
-# 23 is visually lossless for most content
-VIDEO_CRF = 23
-
-# Video container format
-# mp4 is universally compatible, good for YouTube upload
-VIDEO_FORMAT = "mp4"
+# NOTE: Video settings moved to config/settings.py
+# Import from there: VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS, VIDEO_CODEC,
+# VIDEO_PRESET, VIDEO_CRF, VIDEO_FORMAT
 
 
 # =============================================================================
@@ -87,20 +61,12 @@ AUDIO_BITRATE = "128k"
 # =============================================================================
 # CAMERA DEVICE CONFIGURATION
 # =============================================================================
-
-# Default camera device path
-# /dev/video0 is typically the first USB webcam on Linux
-# Can be overridden at runtime if multiple cameras
-DEFAULT_CAMERA_DEVICE = "/dev/video0"
+# NOTE: Camera settings moved to config/settings.py
+# Import from there: DEFAULT_CAMERA_DEVICE, CAMERA_WARMUP_TIME
 
 # Video input format
 # v4l2 is Video4Linux2, standard Linux video capture API
 VIDEO_INPUT_FORMAT = "v4l2"
-
-# Camera warmup time in seconds
-# Brief delay after opening camera before recording starts
-# Allows auto-exposure and auto-focus to stabilize
-CAMERA_WARMUP_TIME = 1.0
 
 
 # =============================================================================

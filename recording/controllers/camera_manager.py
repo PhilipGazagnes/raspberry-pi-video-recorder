@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from recording.constants import DEFAULT_CAMERA_DEVICE
+from config.settings import DEFAULT_CAMERA_DEVICE
 from recording.factory import create_capture
 from recording.interfaces.video_capture_interface import (
     CaptureError,

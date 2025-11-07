@@ -14,7 +14,7 @@ import time
 from config.settings import GPIO_BUTTON_PIN
 
 try:
-    import RPi.GPIO as GPIO
+    from RPi import GPIO
 
     # Setup GPIO
     GPIO.setmode(GPIO.BCM)
