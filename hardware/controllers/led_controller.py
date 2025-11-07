@@ -454,12 +454,20 @@ class LEDController:
         """
         Restore a previous LED pattern.
 
-        Used by flash_error to return to normal after flashing.
+        Used by flash_error and flash_extension_success to return to normal.
 
         Args:
             pattern: Pattern to restore
+
+        Note: Sets to OFF first to force set_status() to refresh even if
+              restoring to the same pattern (needed after stopping threads).
         """
         self._stop_blinking()
+        # Force set_status to refresh by setting to a different pattern first
+        # This is needed because _stop_blinking() stopped the thread but
+        # didn't change current_pattern, so set_status would see pattern==current
+        # and return early without restarting the blinking thread
+        self.current_pattern = LEDPattern.OFF
         self.set_status(pattern)
         self.logger.debug(f"LED pattern restored to {pattern.value}")
 
