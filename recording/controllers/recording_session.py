@@ -349,12 +349,24 @@ class RecordingSession:
         self.logger.debug("Monitoring thread started")
 
     def _stop_monitoring(self) -> None:
-        """Stop monitoring thread"""
+        """
+        Stop monitoring thread safely.
+
+        Sets stop event and waits for thread to exit. Verifies join
+        completed successfully before clearing reference.
+        """
         if self._monitor_thread and self._monitor_thread.is_alive():
             self._monitor_stop_event.set()
             self._monitor_thread.join(timeout=2.0)
+            # Verify thread actually stopped
+            if self._monitor_thread.is_alive():
+                self.logger.warning(
+                    "Monitoring thread did not stop within timeout (possible "
+                    "deadlock or hang)",
+                )
+            else:
+                self.logger.debug("Monitoring thread stopped")
             self._monitor_thread = None
-            self.logger.debug("Monitoring thread stopped")
 
     def _monitor_worker(self) -> None:
         """
@@ -424,9 +436,19 @@ class RecordingSession:
                         )
                         if health.get("critical", False):
                             self.logger.error("Critical camera error, stopping")
+                            # WHY: Don't call stop() from monitor thread - would
+                            # deadlock trying to join itself. Instead, follow the
+                            # same pattern as auto-stop: signal, stop camera,
+                            # trigger callback, and exit.
+                            self._monitor_stop_event.set()
                             self.state = RecordingState.ERROR
+                            try:
+                                self.camera.stop_recording()
+                            except Exception as e:
+                                self.logger.error(
+                                    f"Error stopping on error: {e}",
+                                )
                             self._trigger_error_callback(health["error_message"])
-                            self.stop()
                             break
 
             except Exception as e:

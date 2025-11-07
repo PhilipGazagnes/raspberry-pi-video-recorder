@@ -47,9 +47,11 @@ from typing import Optional
 from config.settings import (
     CLEANUP_INTERVAL_SECONDS,
     DEFAULT_RECORDING_DURATION,
+    EXTENSION_DURATION,
     MAX_UPLOAD_RETRIES,
     RETRY_DELAY_SECONDS,
     STORAGE_BASE_PATH,
+    WARNING_TIME,
 )
 from hardware import ButtonController, LEDController
 from hardware.constants import LEDPattern
@@ -424,6 +426,7 @@ class RecorderService:
 
         # Stop the session
         session.stop()
+        session.cleanup()  # Clean up monitoring thread and resources
 
         # Calculate recording duration
         duration = time.time() - start_time if start_time else 0
@@ -466,18 +469,32 @@ class RecorderService:
         success = self.current_session.extend()
 
         if success:
-            self.logger.info("Recording extended by 5 minutes")
+            extension_minutes = EXTENSION_DURATION // 60
+            extension_seconds = EXTENSION_DURATION % 60
+            if extension_seconds > 0:
+                time_str = f"{extension_minutes}:{extension_seconds:02d}"
+                self.logger.info(f"Recording extended by {time_str}")
+            else:
+                self.logger.info(f"Recording extended by {extension_minutes} minutes")
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")
 
     def _handle_recording_warning(self):
         """
-        Handle 1-minute warning from recording session.
+        Handle recording warning from recording session.
 
-        Called by RecordingSession when 1 minute remaining.
+        Called by RecordingSession when WARNING_TIME seconds remaining.
         Silent operation - just log, no audio.
         """
-        self.logger.info("Recording warning: 1 minute remaining")
+        warning_minutes = WARNING_TIME // 60
+        warning_seconds = WARNING_TIME % 60
+        if warning_minutes > 0 and warning_seconds > 0:
+            time_remaining = f"{warning_minutes}:{warning_seconds:02d}"
+        elif warning_minutes > 0:
+            time_remaining = f"{warning_minutes} minute(s)"
+        else:
+            time_remaining = f"{warning_seconds} seconds"
+        self.logger.info(f"Recording warning: {time_remaining} remaining")
         # Silent - no audio feedback
 
     def _handle_recording_complete(self):
@@ -502,6 +519,7 @@ class RecorderService:
         # Stop session if active
         if self.current_session:
             self.current_session.stop()
+            self.current_session.cleanup()  # Clean up monitoring thread
             self.current_session = None
 
         # Clean up
@@ -808,6 +826,8 @@ class RecorderService:
         if self.current_session:
             self.logger.info("Stopping active recording session...")
             self.current_session.stop()
+            self.current_session.cleanup()  # Clean up monitoring thread
+            self.current_session = None
 
         # Wait for current upload to finish (with timeout)
         if self.currently_uploading:

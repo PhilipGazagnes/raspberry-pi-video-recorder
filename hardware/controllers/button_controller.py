@@ -176,7 +176,7 @@ class ButtonController:
             )
 
             self.logger.debug(
-                f"Button setup complete " f"(edge: BOTH, debounce: {debounce_ms}ms)",
+                f"Button setup complete (edge: BOTH, debounce: {debounce_ms}ms)",
             )
         except Exception as e:
             self.logger.error(f"Failed to setup button on pin {self.pin}: {e}")
