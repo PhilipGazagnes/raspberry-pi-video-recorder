@@ -49,10 +49,12 @@ from config.settings import (
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
     MAX_UPLOAD_RETRIES,
+    NETWORK_CHECK_INTERVAL,
     RETRY_DELAY_SECONDS,
     STORAGE_BASE_PATH,
     WARNING_TIME,
 )
+from core.network import check_internet_connectivity
 from hardware import ButtonController, LEDController
 from hardware.constants import LEDPattern
 from recording import CameraManager, RecordingSession
@@ -118,6 +120,9 @@ class RecorderService:
         self.cleanup_worker_thread: Optional[threading.Thread] = None
         self.last_cleanup_time = time.time()
 
+        # Network monitoring worker
+        self.network_monitor_thread: Optional[threading.Thread] = None
+
         # Initialize hardware controllers
         self.logger.info("Initializing hardware controllers...")
         self.led = LEDController()
@@ -167,6 +172,7 @@ class RecorderService:
         # Start background workers
         self._start_upload_worker()
         self._start_cleanup_worker()
+        self._start_network_monitor()
 
         # Transition from BOOTING to READY
         self._transition_to_ready()
@@ -611,8 +617,9 @@ class RecorderService:
         try:
             self.logger.info(f"Starting upload: {video.filename}")
 
-            # Mark upload started
+            # Mark upload started and activate BLUE LED
             self.storage.mark_upload_started(video)
+            self.led.set_upload_active(True)
 
             # Generate timestamp for video title
             timestamp = video.created_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -666,6 +673,9 @@ class RecorderService:
             self.storage.mark_upload_failed(video, str(e))
 
         finally:
+            # Deactivate BLUE LED when upload completes
+            self.led.set_upload_active(False)
+
             with self.upload_lock:
                 self.currently_uploading = None
 
@@ -749,6 +759,54 @@ class RecorderService:
                 time.sleep(60)
 
         self.logger.info("Cleanup worker thread stopped")
+
+    # =========================================================================
+    # NETWORK MONITORING
+    # =========================================================================
+
+    def _start_network_monitor(self):
+        """Start background network monitoring thread."""
+        self.logger.info("Starting network monitor...")
+        self.network_monitor_thread = threading.Thread(
+            target=self._network_monitor_worker,
+            daemon=True,
+            name="NetworkMonitor",
+        )
+        self.network_monitor_thread.start()
+
+    def _network_monitor_worker(self):
+        """
+        Background worker for network connectivity monitoring.
+
+        Runs continuously:
+        - Checks internet connectivity every NETWORK_CHECK_INTERVAL seconds
+        - Updates WHITE LED status based on connectivity
+        - Silent operation - just tracks and updates LED
+        """
+        self.logger.info("Network monitor thread started")
+
+        while self.running:
+            try:
+                # Check internet connectivity
+                is_connected = check_internet_connectivity()
+
+                # Update WHITE LED status
+                self.led.set_network_status(is_connected)
+
+                # Log state changes for debugging
+                if is_connected:
+                    self.logger.debug("Internet: available")
+                else:
+                    self.logger.debug("Internet: unavailable")
+
+                # Sleep for the configured interval
+                time.sleep(NETWORK_CHECK_INTERVAL)
+
+            except Exception as e:
+                self.logger.error(f"Network monitor error: {e}", exc_info=True)
+                time.sleep(NETWORK_CHECK_INTERVAL)
+
+        self.logger.info("Network monitor thread stopped")
 
     # =========================================================================
     # STORAGE ERROR HANDLERS
@@ -861,6 +919,10 @@ class RecorderService:
         if self.cleanup_worker_thread and self.cleanup_worker_thread.is_alive():
             self.logger.info("Waiting for cleanup worker to stop...")
             self.cleanup_worker_thread.join(timeout=5.0)
+
+        if self.network_monitor_thread and self.network_monitor_thread.is_alive():
+            self.logger.info("Waiting for network monitor to stop...")
+            self.network_monitor_thread.join(timeout=5.0)
 
         # Clean up hardware
         self.logger.info("Cleaning up hardware...")

@@ -21,6 +21,8 @@ GPIO_BUTTON_PIN = 18  # Hardware PWM pin (physical pin 12)
 GPIO_LED_GREEN = 13  # Hardware PWM pin (physical pin 33)
 GPIO_LED_ORANGE = 12  # Hardware PWM pin (physical pin 32)
 GPIO_LED_RED = 19  # Hardware PWM pin (physical pin 35)
+GPIO_LED_WHITE = 27  # Status LED for network connectivity (dimmed)
+GPIO_LED_BLUE = 17  # Status LED for upload activity (dimmed, blinking)
 
 # Button Configuration
 BUTTON_LONG_PRESS_DURATION = 2.0  # seconds - hold duration for long press
@@ -39,6 +41,12 @@ DEFAULT_RECORDING_DURATION = 600  # (10 minute)
 EXTENSION_DURATION = 300  # (5 minute)
 MAX_RECORDING_DURATION = 1500  # (25 minutes)
 WARNING_TIME = 60  # 60 seconds before end
+
+# Network Connectivity Monitoring
+NETWORK_CHECK_INTERVAL = 30  # Check internet every 30 seconds (configurable)
+NETWORK_CHECK_TIMEOUT = 3  # Timeout for connectivity check (seconds)
+NETWORK_CHECK_HOST = "8.8.8.8"  # Google DNS - reliable external host
+NETWORK_CHECK_PORT = 53  # DNS port
 
 # Video Settings
 VIDEO_WIDTH = 1920

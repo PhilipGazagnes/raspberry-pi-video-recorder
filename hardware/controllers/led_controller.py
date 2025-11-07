@@ -23,6 +23,7 @@ import threading
 import time
 from typing import Any, Dict, Optional
 
+from config.settings import GPIO_LED_BLUE, GPIO_LED_WHITE
 from hardware.constants import (
     GPIO_LED_GREEN,
     GPIO_LED_ORANGE,
@@ -91,6 +92,11 @@ class LEDController:
         # Blinking control
         self._blink_thread: Optional[threading.Thread] = None
         self._blink_stop_event = threading.Event()
+
+        # Upload LED blinking control
+        self._upload_blink_thread: Optional[threading.Thread] = None
+        self._upload_blink_event: Optional[threading.Event] = None
+
         self._cleaned_up = False
 
         # Initialize hardware
@@ -509,6 +515,89 @@ class LEDController:
         # Restore original pattern
         self.set_status(original_pattern)
         self.logger.info("LED test sequence complete")
+
+    def set_network_status(self, is_connected: bool) -> None:
+        """
+        Set WHITE LED status based on internet connectivity.
+
+        WHITE LED is dimmed (50% brightness) to provide subtle feedback.
+        Solid ON when internet available, OFF when disconnected.
+
+        Args:
+            is_connected: True if internet is available, False otherwise
+
+        Example:
+            led.set_network_status(True)   # Turn on WHITE LED
+            led.set_network_status(False)  # Turn off WHITE LED
+        """
+        # Set WHITE LED to 50% brightness (dimmed) when connected
+        # 50% brightness = half intensity (achievable via PWM)
+        brightness = 128 if is_connected else 0  # 0-255, 128 = 50%
+        self.gpio.write(
+            GPIO_LED_WHITE,
+            PinState.HIGH if brightness > 0 else PinState.LOW,
+        )
+        status = "ON (50% brightness)" if is_connected else "OFF"
+        self.logger.debug(f"Network status LED: {status}")
+
+    def set_upload_active(self, is_uploading: bool) -> None:
+        """
+        Control BLUE LED blinking based on upload activity.
+
+        BLUE LED is dimmed (50% brightness) and blinks when uploading.
+        Uses same blink rate as recording pattern (0.5s interval).
+
+        Args:
+            is_uploading: True to start blinking, False to stop
+
+        Example:
+            led.set_upload_active(True)   # Start BLUE LED blinking
+            led.set_upload_active(False)  # Stop BLUE LED blinking
+        """
+        if is_uploading:
+            self.logger.debug("Upload LED: Starting blink")
+            # Start blinking BLUE LED in background thread
+            self._upload_blink_thread = threading.Thread(
+                target=self._upload_blink_worker,
+                daemon=True,
+                name="LED-Upload-Blink",
+            )
+            self._upload_blink_event = threading.Event()
+            self._upload_blink_thread.start()
+        else:
+            self.logger.debug("Upload LED: Stopping blink")
+            # Stop the upload blink thread
+            if self._upload_blink_event is not None:
+                self._upload_blink_event.set()
+            # Turn off BLUE LED
+            self.gpio.write(GPIO_LED_BLUE, PinState.LOW)
+
+    def _upload_blink_worker(self) -> None:
+        """
+        Background worker for BLUE LED upload blinking.
+
+        Blinks at 50% brightness with normal blink interval (0.5s).
+        Continues until _upload_blink_event is set.
+        """
+        # _upload_blink_event is guaranteed to be set by set_upload_active()
+        # before this thread starts
+        if self._upload_blink_event is None:
+            self.logger.error("Upload blink event is None")
+            return
+
+        blink_interval = LED_BLINK_INTERVAL_NORMAL
+        brightness_high = PinState.HIGH
+        brightness_low = PinState.LOW
+
+        while not self._upload_blink_event.wait(blink_interval):
+            # Blink: ON for interval
+            self.gpio.write(GPIO_LED_BLUE, brightness_high)
+
+            if self._upload_blink_event.wait(blink_interval):
+                break
+
+            # Blink: OFF for interval
+            self.gpio.write(GPIO_LED_BLUE, brightness_low)
 
     def get_status(self) -> Dict[str, Any]:
         """
