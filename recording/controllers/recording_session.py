@@ -354,8 +354,18 @@ class RecordingSession:
 
         Sets stop event and waits for thread to exit. Verifies join
         completed successfully before clearing reference.
+
+        Safe to call from monitor thread - detects and avoids self-join.
         """
         if self._monitor_thread and self._monitor_thread.is_alive():
+            # If called from within the monitor thread itself (e.g., from
+            # callback), we can't join ourselves. The thread will exit
+            # naturally after breaking from its loop.
+            if threading.current_thread() == self._monitor_thread:
+                self.logger.debug("Monitor cleanup called from within monitor thread")
+                self._monitor_thread = None
+                return
+
             self._monitor_stop_event.set()
             self._monitor_thread.join(timeout=2.0)
             # Verify thread actually stopped
