@@ -484,7 +484,7 @@ class RecorderService:
         Handle recording warning from recording session.
 
         Called by RecordingSession when WARNING_TIME seconds remaining.
-        Silent operation - just log, no audio.
+        Triggers LED warning sequence (green-orange-red animation).
         """
         warning_minutes = WARNING_TIME // 60
         warning_seconds = WARNING_TIME % 60
@@ -495,7 +495,9 @@ class RecorderService:
         else:
             time_remaining = f"{warning_seconds} seconds"
         self.logger.info(f"Recording warning: {time_remaining} remaining")
-        # Silent - no audio feedback
+
+        # Flash LED warning sequence (green-orange-red)
+        self.led.play_warning_sequence()
 
     def _handle_recording_complete(self):
         """
@@ -726,7 +728,7 @@ class RecorderService:
 
                     if deleted_count > 0:
                         self.logger.info(
-                            f"Cleanup complete: deleted {deleted_count} videos"
+                            f"Cleanup complete: deleted {deleted_count} videos",
                         )
                     else:
                         self.logger.debug("Cleanup complete: no videos to delete")

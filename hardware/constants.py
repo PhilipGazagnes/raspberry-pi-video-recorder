@@ -60,6 +60,10 @@ LED_BLINK_INTERVAL_FAST = 0.1
 # How long to flash error LED (in seconds)
 LED_ERROR_FLASH_DURATION = 2.0
 
+# Warning sequence pattern timing (in seconds per color)
+# Green-Orange-Red cycle plays once when warning triggered
+LED_WARNING_SEQUENCE_INTERVAL = 0.2  # 200ms per color
+
 
 # =============================================================================
 # AUDIO CONFIGURATION
@@ -186,15 +190,20 @@ class LEDPattern(Enum):
     # Red solid for errors
     ERROR = "error"
 
+    # Green-Orange-Red sequence during warning (special animation pattern)
+    WARNING = "warning"
+
 
 # Map each pattern to its LED states
 # Format: (green_on, orange_on, red_on, should_blink, blink_color)
+# Special: WARNING pattern uses "sequence" as blink_color to trigger animation
 LED_PATTERN_CONFIG = {
     LEDPattern.OFF: (False, False, False, False, None),
     LEDPattern.READY: (True, False, False, False, None),
     LEDPattern.RECORDING: (False, False, False, True, LEDColor.GREEN),
     LEDPattern.PROCESSING: (False, True, False, False, None),
     LEDPattern.ERROR: (False, False, True, False, None),
+    LEDPattern.WARNING: (False, False, False, True, "sequence"),  # Special animation
 }
 
 

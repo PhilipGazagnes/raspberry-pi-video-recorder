@@ -20,6 +20,7 @@ This demonstrates SOLID principles:
 
 import logging
 import threading
+import time
 from typing import Any, Dict, Optional
 
 from hardware.constants import (
@@ -30,6 +31,7 @@ from hardware.constants import (
     LED_BLINK_INTERVAL_NORMAL,
     LED_ERROR_FLASH_DURATION,
     LED_PATTERN_CONFIG,
+    LED_WARNING_SEQUENCE_INTERVAL,
     LEDColor,
     LEDPattern,
 )
@@ -144,19 +146,29 @@ class LEDController:
         green_on, orange_on, red_on, should_blink, blink_color = config
 
         if should_blink:
-            # Start blinking pattern
-            self._set_all_leds(False, False, False)  # Start with all off
-            # Type safety: blink_color should always be set if should_blink is True
-            if blink_color is not None:
-                self._start_blinking(
-                    blink_color,
-                    LED_BLINK_INTERVAL_NORMAL,
+            # Special case: sequence animation (warning pattern)
+            if blink_color == "sequence":
+                # Play the warning sequence in background thread
+                sequence_thread = threading.Thread(
+                    target=self.play_warning_sequence,
+                    daemon=True,
+                    name="LED-Warning-Sequence",
                 )
+                sequence_thread.start()
             else:
-                self.logger.error(
-                    f"Invalid LED config: {pattern} has should_blink=True "
-                    "but no blink_color",
-                )
+                # Standard blinking pattern
+                self._set_all_leds(False, False, False)  # Start with all off
+                # Type safety: blink_color should be LEDColor enum (not "sequence")
+                if blink_color is not None and isinstance(blink_color, LEDColor):
+                    self._start_blinking(
+                        blink_color,
+                        LED_BLINK_INTERVAL_NORMAL,
+                    )
+                else:
+                    self.logger.error(
+                        f"Invalid LED config: {pattern} has should_blink=True "
+                        "but invalid blink_color",
+                    )
         else:
             # Static pattern - just set the LEDs
             self._set_all_leds(green_on, orange_on, red_on)
@@ -290,6 +302,52 @@ class LEDController:
             lambda: self._restore_pattern(original_pattern),
         )
         timer.start()
+
+    def play_warning_sequence(self) -> None:
+        """
+        Play green-orange-red warning sequence animation.
+
+        This is called when recording time warning is reached.
+        Plays one full cycle of colors, then returns to recording pattern.
+
+        The sequence creates a quick visual pulse: G-O-R-G-O-R-G-O-R...
+        Each color displays for LED_WARNING_SEQUENCE_INTERVAL seconds.
+
+        Example:
+            led.play_warning_sequence()  # Plays the warning animation
+        """
+        self.logger.info("Playing warning sequence (green-orange-red)")
+
+        # Save current pattern to restore later
+        original_pattern = self.current_pattern
+
+        # Stop any current blinking
+        self._stop_blinking()
+
+        # Define the warning sequence colors
+        warning_colors = [LEDColor.GREEN, LEDColor.ORANGE, LEDColor.RED]
+
+        # Play the sequence 3 times (one full cycle)
+        for _cycle in range(3):
+            for color in warning_colors:
+                # Turn off all LEDs
+                self._set_all_leds(False, False, False)
+
+                # Turn on the current color
+                if color == LEDColor.GREEN:
+                    self._set_all_leds(True, False, False)
+                elif color == LEDColor.ORANGE:
+                    self._set_all_leds(False, True, False)
+                elif color == LEDColor.RED:
+                    self._set_all_leds(False, False, True)
+
+                # Wait for the interval
+                time.sleep(LED_WARNING_SEQUENCE_INTERVAL)
+
+        self.logger.debug("Warning sequence complete, restoring pattern")
+
+        # Restore the original pattern
+        self._restore_pattern(original_pattern)
 
     def _restore_pattern(self, pattern: LEDPattern) -> None:
         """
