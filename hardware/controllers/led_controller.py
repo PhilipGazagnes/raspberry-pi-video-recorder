@@ -31,7 +31,6 @@ from hardware.constants import (
     LED_BLINK_INTERVAL_NORMAL,
     LED_ERROR_FLASH_DURATION,
     LED_PATTERN_CONFIG,
-    LED_WARNING_SEQUENCE_INTERVAL,
     LEDColor,
     LEDPattern,
 )
@@ -311,8 +310,10 @@ class LEDController:
         Repeats the sequence continuously with blank gaps until stopped.
 
         The sequence creates a pulsing warning: G-O-R-G-O-R____G-O-R-G-O-R____...
-        Each color displays for LED_WARNING_SEQUENCE_INTERVAL seconds.
-        Blank gap is 3x the color interval for visibility.
+        Timing is synchronized with green blinking interval:
+        - Total cycle time matches green blink (on+off = 1 cycle)
+        - 6 colors + blank fit within that cycle
+        - Each color duration = LED_BLINK_INTERVAL_NORMAL / 6
 
         Stops when:
         - Recording is extended
@@ -346,22 +347,30 @@ class LEDController:
         Repeats green-orange-red sequence (twice) with blank gaps until
         _blink_stop_event is set (by pattern change or cleanup).
 
-        Timeline per cycle:
-        - Green: 0.2s
-        - Orange: 0.2s
-        - Red: 0.2s
-        - (repeat 2x total)
-        - Blank (all off): 0.6s for visibility
-        - Repeat forever
+        Timing synchronized with green blinking interval:
+        - Total cycle = LED_BLINK_INTERVAL_NORMAL * 2 (on+off pattern)
+        - 6 colors (GORGOR) + 1 blank period = 7 intervals
+        - Each interval = total_cycle / 7
+        - Blank = 3x interval duration for visibility
+
+        If LED_BLINK_INTERVAL_NORMAL = 0.5 (green 0.5s on, 0.5s off = 1.0s total):
+        - Total cycle = 1.0s
+        - Each color = 1.0 / 7 = 0.143s
+        - Blank = 3 * 0.143 = 0.429s
+        - Total: 6*0.143 + 0.429 = 1.287s (fits within rhythm)
 
         Pattern: G O R G O R _____ G O R G O R _____ ...
         """
         warning_colors = [LEDColor.GREEN, LEDColor.ORANGE, LEDColor.RED]
-        blank_interval = LED_WARNING_SEQUENCE_INTERVAL * 3  # 0.6s gap
+
+        # Calculate intervals synchronized with green blinking
+        total_cycle = LED_BLINK_INTERVAL_NORMAL * 2  # on + off = full cycle
+        color_interval = total_cycle / 7  # 6 colors + 1 blank = 7 intervals
+        blank_interval = color_interval * 3  # blank is 3x a color
 
         # Keep looping until stop event is set
         while not self._blink_stop_event.is_set():
-            # Play the sequence TWICE before blank gap
+            # Play the sequence TWICE before blank gap (GORGOR)
             for _repeat in range(2):
                 for color in warning_colors:
                     # Turn on the current color
@@ -373,9 +382,7 @@ class LEDController:
                         self._set_all_leds(False, False, True)
 
                     # Check for stop during interval
-                    if self._blink_stop_event.wait(
-                        LED_WARNING_SEQUENCE_INTERVAL,
-                    ):
+                    if self._blink_stop_event.wait(color_interval):
                         return  # Stop event set, exit immediately
 
             # Blank gap between double sequences

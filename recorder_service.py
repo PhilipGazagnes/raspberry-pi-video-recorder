@@ -476,6 +476,9 @@ class RecorderService:
                 self.logger.info(f"Recording extended by {time_str}")
             else:
                 self.logger.info(f"Recording extended by {extension_minutes} minutes")
+
+            # Restore LED to recording pattern (no longer in warning zone)
+            self.led.set_status(LEDPattern.RECORDING)
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")
 
