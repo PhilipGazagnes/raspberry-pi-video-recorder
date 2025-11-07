@@ -363,11 +363,14 @@ class LEDController:
         This is called when recording time warning is reached.
         Repeats the sequence continuously with blank gaps until stopped.
 
-        The sequence creates a pulsing warning: G-O-R-G-O-R____G-O-R-G-O-R____...
-        Timing is synchronized with green blinking interval:
-        - Total cycle time matches green blink (on+off = 1 cycle)
-        - 6 colors + blank fit within that cycle
-        - Each color duration = LED_BLINK_INTERVAL_NORMAL / 6
+        Timing perfectly matches green blinking for visual harmony:
+        - GORGOR sequence = 0.5s (same duration as green ON in recording)
+        - Blank gap = 0.5s (same duration as green OFF in recording)
+        - Total cycle = 1.0s (identical rhythm to recording pattern)
+
+        Pattern visualization:
+        Recording:  [GREEN....][     ][GREEN....][     ]...
+        Warning:    [G-O-R-G-O-R][     ][G-O-R-G-O-R][     ]...
 
         Stops when:
         - Recording is extended
@@ -402,33 +405,35 @@ class LEDController:
         """
         Background worker for continuous warning sequence animation.
 
-        Repeats green-orange-red sequence (twice) with blank gaps until
-        _blink_stop_event is set (by pattern change or cleanup).
+        Repeats green-orange-red sequence (twice) with blank gaps.
+        Timing perfectly synchronized with green blinking pattern.
 
-        Timing synchronized with green blinking interval:
-        - Total cycle = LED_BLINK_INTERVAL_NORMAL * 2 (on+off pattern)
-        - 6 colors (GORGOR) + 1 blank period = 7 intervals
-        - Each interval = total_cycle / 7
-        - Blank = 3x interval duration for visibility
+        Pattern timing:
+        - GORGOR sequence = LED_BLINK_INTERVAL_NORMAL (0.5s, same as green ON)
+        - Blank = LED_BLINK_INTERVAL_NORMAL (0.5s, same as green OFF)
+        - Total cycle = 1.0s (identical to green blink rhythm)
+        - Each color in GORGOR = 0.5s / 6 = ~0.083s
 
-        If LED_BLINK_INTERVAL_NORMAL = 0.5 (green 0.5s on, 0.5s off = 1.0s total):
-        - Total cycle = 1.0s
-        - Each color = 1.0 / 7 = 0.143s
-        - Blank = 3 * 0.143 = 0.429s
-        - Total: 6*0.143 + 0.429 = 1.287s (fits within rhythm)
+        If LED_BLINK_INTERVAL_NORMAL = 0.5:
+        - Each color = 0.5 / 6 = 0.0833s
+        - GORGOR total = 0.5s
+        - Blank = 0.5s
+        - Cycle total = 1.0s ✓
 
-        Pattern: G O R G O R _____ G O R G O R _____ ...
+        Visual alignment:
+        Green:    [GGGG 0.5s][____ 0.5s][GGGG 0.5s][____ 0.5s]...
+        Warning:  [GORGOR 0.5s][BLANK 0.5s][GORGOR 0.5s][BLANK 0.5s]...
         """
         warning_colors = [LEDColor.GREEN, LEDColor.ORANGE, LEDColor.RED]
 
-        # Calculate intervals synchronized with green blinking
-        total_cycle = LED_BLINK_INTERVAL_NORMAL * 2  # on + off = full cycle
-        color_interval = total_cycle / 7  # 6 colors + 1 blank = 7 intervals
-        blank_interval = color_interval * 3  # blank is 3x a color
+        # Match green blink intervals exactly
+        gorgor_duration = LED_BLINK_INTERVAL_NORMAL  # 0.5s
+        color_interval = gorgor_duration / 6  # Time per color in GORGOR
+        blank_interval = LED_BLINK_INTERVAL_NORMAL  # 0.5s (matches green OFF)
 
         # Keep looping until stop event is set
         while not self._blink_stop_event.is_set():
-            # Play the sequence TWICE before blank gap (GORGOR)
+            # Play the sequence TWICE (GORGOR) within gorgor_duration
             for _repeat in range(2):
                 for color in warning_colors:
                     # Turn on the current color
@@ -443,7 +448,7 @@ class LEDController:
                     if self._blink_stop_event.wait(color_interval):
                         return  # Stop event set, exit immediately
 
-            # Blank gap between double sequences
+            # Blank gap (exactly same as green OFF duration)
             self._set_all_leds(False, False, False)
 
             # Check for stop during gap
