@@ -873,7 +873,7 @@ def setup_logging():
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    log_file = "/var/log/recorder-service.log"
+    log_file = "/var/log/recorder/service.log"
     try:
         file_handler = logging.handlers.TimedRotatingFileHandler(
             log_file,
@@ -885,7 +885,7 @@ def setup_logging():
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(file_format)
         logger.addHandler(file_handler)
-    except PermissionError:
+    except (PermissionError, FileNotFoundError):
         # Fallback to local logs directory if /var/log not writable
         # Create logs directory if it doesn't exist
         from pathlib import Path
@@ -898,7 +898,8 @@ def setup_logging():
             f"Cannot write to {log_file}, using fallback: {fallback_log}",
         )
         logger.info(
-            "To use /var/log/, run: sudo chown $(whoami) /var/log/recorder-service.log",
+            "To fix: sudo mkdir -p /var/log/recorder && "
+            "sudo chown $(whoami) /var/log/recorder",
         )
 
         file_handler = logging.handlers.TimedRotatingFileHandler(

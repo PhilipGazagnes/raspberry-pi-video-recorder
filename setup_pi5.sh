@@ -105,25 +105,25 @@ if [ ! -f "requirements.txt" ] && [ ! -f "requirements-upload.txt" ]; then
 fi
 
 echo ""
-echo "Step 6: Setting up log file..."
+echo "Step 6: Setting up log directory..."
 echo "----------------------------------------"
 
-# Create log file in /var/log/ with proper permissions
-LOG_FILE="/var/log/recorder-service.log"
+# Create log directory in /var/log/ with proper permissions
+LOG_DIR="/var/log/recorder"
 
-if [ ! -f "$LOG_FILE" ]; then
-    echo "Creating $LOG_FILE..."
-    sudo touch "$LOG_FILE"
-    sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_FILE"
-    sudo chmod 664 "$LOG_FILE"
-    echo "✓ Log file created with proper permissions"
+if [ ! -d "$LOG_DIR" ]; then
+    echo "Creating $LOG_DIR..."
+    sudo mkdir -p "$LOG_DIR"
+    sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_DIR"
+    sudo chmod 755 "$LOG_DIR"
+    echo "✓ Log directory created with proper permissions"
 else
-    echo "✓ Log file already exists"
+    echo "✓ Log directory already exists"
     # Fix ownership if needed
-    if [ ! -w "$LOG_FILE" ]; then
+    if [ ! -w "$LOG_DIR" ]; then
         echo "  Fixing permissions..."
-        sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_FILE"
-        sudo chmod 664 "$LOG_FILE"
+        sudo chown $CURRENT_USER:$CURRENT_USER "$LOG_DIR"
+        sudo chmod 755 "$LOG_DIR"
         echo "  ✓ Permissions updated"
     fi
 fi

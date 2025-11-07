@@ -19,6 +19,7 @@ This demonstrates SOLID principles:
 """
 
 import logging
+import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
@@ -43,10 +44,14 @@ class ButtonPress:
 
     Using a class with constants instead of Enum for simpler usage.
     Controllers can check: if press_type == ButtonPress.SHORT
+
+    Behavior:
+    - SHORT: Press and release before long_press_duration (triggers on release)
+    - LONG: Hold for long_press_duration (triggers immediately, release ignored)
     """
 
     SHORT = "short"   # Press & release < long press duration
-    LONG = "long"     # Press & hold >= long press duration
+    LONG = "long"     # Hold >= long press duration (triggers while holding)
 
 
 class ButtonController:
@@ -55,16 +60,21 @@ class ButtonController:
 
     Features:
     - Hardware debouncing (ignores electrical noise)
-    - Short vs long press detection (based on hold duration)
+    - Short vs long press detection (on-threshold for LONG)
     - Interrupt-driven (efficient - no polling)
     - Works with real GPIO or mock for testing
+
+    Press Detection:
+    - SHORT: Triggered on button release (if held < 2s)
+    - LONG: Triggered immediately when threshold reached (while holding)
+    - After LONG triggers, button release is ignored
 
     Usage:
         def on_button(press_type):
             if press_type == ButtonPress.SHORT:
                 print("Short press!")
             elif press_type == ButtonPress.LONG:
-                print("Long press!")
+                print("Long press - immediate feedback!")
 
         button = ButtonController()
         button.register_callback(on_button)
@@ -116,6 +126,10 @@ class ButtonController:
         self.button_press_time: Optional[float] = None  # When button pressed down
         self.last_event_time = 0.0  # For debouncing
         self.callback_func: Optional[Callable[[str], None]] = None
+
+        # Long press timer (fires when threshold reached)
+        self._long_press_timer: Optional[threading.Timer] = None
+        self.long_press_triggered = False  # Prevents SHORT on release after LONG
 
         self._cleaned_up = False
 
@@ -180,10 +194,10 @@ class ButtonController:
             channel: GPIO pin that triggered (always our button pin)
 
         How this works:
-        1. Button pressed → interrupt fires, record press time
-        2. Button released → interrupt fires, calculate hold duration
-        3. If held >= long_press_duration → LONG press callback
-        4. If held < long_press_duration → SHORT press callback
+        1. Button pressed → Start timer to fire LONG at threshold
+        2. Timer reaches threshold → LONG callback (while still holding)
+        3. Button released before threshold → Cancel timer, trigger SHORT
+        4. Button released after LONG → Do nothing (already handled)
         """
         current_time = time.time()
 
@@ -226,11 +240,30 @@ class ButtonController:
             is_pressed = (pin_state == PinState.HIGH)
 
         if is_pressed:
-            # Button pressed down - record the time
+            # Button pressed down - start timer for long press detection
             self.button_press_time = current_time
-            self.logger.debug("Button pressed down")
+            self.long_press_triggered = False
+
+            # Cancel any existing timer (from previous press)
+            if self._long_press_timer:
+                self._long_press_timer.cancel()
+
+            # Start timer that fires when long press threshold reached
+            # WHY threading.Timer?
+            # Context: We want immediate feedback when threshold is reached,
+            #   without waiting for button release. Timer runs in separate
+            #   thread and fires automatically after long_press_duration.
+            #   This gives instant user feedback (e.g., LED change, extend
+            #   recording) while they're still holding the button.
+            self._long_press_timer = threading.Timer(
+                self.long_press_duration,
+                self._trigger_long_press,
+            )
+            self._long_press_timer.start()
+
+            self.logger.debug("Button pressed down, timer started")
         else:
-            # Button released - calculate hold duration and trigger callback
+            # Button released - handle based on whether LONG already triggered
             if self.button_press_time is None:
                 # Spurious release event (no matching press)
                 self.logger.debug("Button release ignored (no press recorded)")
@@ -239,18 +272,44 @@ class ButtonController:
             hold_duration = current_time - self.button_press_time
             self.button_press_time = None  # Clear for next press
 
-            # Determine press type based on hold duration
-            if hold_duration >= self.long_press_duration:
-                self.logger.debug(
-                    f"Long press detected (held {hold_duration:.2f}s)",
-                )
-                self._trigger_callback(ButtonPress.LONG)
-            else:
-                self.logger.debug(
-                    f"Short press detected (held {hold_duration:.2f}s)",
-                )
-                self._trigger_callback(ButtonPress.SHORT)
+            # Cancel timer if still running
+            if self._long_press_timer:
+                self._long_press_timer.cancel()
+                self._long_press_timer = None
 
+            # If LONG already triggered, do nothing (user feedback already given)
+            if self.long_press_triggered:
+                self.logger.debug(
+                    f"Button released after LONG (held {hold_duration:.2f}s) "
+                    f"- ignored",
+                )
+                return
+
+            # Otherwise, trigger SHORT press
+            self.logger.debug(
+                f"Short press detected (held {hold_duration:.2f}s)",
+            )
+            self._trigger_callback(ButtonPress.SHORT)
+
+    def _trigger_long_press(self) -> None:
+        """
+        Timer callback - called when button held for long_press_duration.
+
+        This runs in Timer's thread (separate from GPIO interrupt thread).
+        Sets flag to prevent SHORT callback on subsequent release.
+
+        WHY this method exists:
+        Context: Timer.start() requires a callable with no arguments.
+        We need to set the flag and trigger the callback, so we wrap
+        this logic in a dedicated method that Timer can call.
+        """
+        if self.button_press_time and not self.long_press_triggered:
+            self.long_press_triggered = True
+            hold_duration = time.time() - self.button_press_time
+            self.logger.debug(
+                f"Long press threshold reached (held {hold_duration:.2f}s)",
+            )
+            self._trigger_callback(ButtonPress.LONG)
 
     def _trigger_callback(self, press_type: str) -> None:
         """
@@ -285,9 +344,9 @@ class ButtonController:
         Example:
             def on_press(press_type):
                 if press_type == ButtonPress.SHORT:
-                    start_recording()
+                    start_recording()  # Triggers on release
                 elif press_type == ButtonPress.LONG:
-                    extend_recording()
+                    extend_recording()  # Triggers at 2s (immediate)
 
             button.register_callback(on_press)
 
@@ -403,6 +462,11 @@ class ButtonController:
             return
 
         self.logger.info("Cleaning up Button Controller")
+
+        # Cancel long press timer if active
+        if self._long_press_timer:
+            self._long_press_timer.cancel()
+            self._long_press_timer = None
 
         # Remove interrupt callback
         try:
