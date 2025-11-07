@@ -722,12 +722,11 @@ class RecorderService:
                     self.logger.info("Running automatic cleanup...")
 
                     # Run cleanup
-                    summary = self.storage.cleanup_old_videos(dry_run=False)
+                    deleted_count = self.storage.cleanup_old_videos(dry_run=False)
 
-                    if summary["deleted_count"] > 0:
+                    if deleted_count > 0:
                         self.logger.info(
-                            f"Cleanup complete: deleted {summary['deleted_count']} "
-                            f"videos, freed {summary['space_freed_mb']:.1f} MB",
+                            f"Cleanup complete: deleted {deleted_count} videos"
                         )
                     else:
                         self.logger.debug("Cleanup complete: no videos to delete")
