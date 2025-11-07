@@ -35,9 +35,9 @@ SPEAKER_DEVICE = "hw:1,0"  # USB speaker device
 # =============================================================================
 
 # Recording Durations (in seconds)
-DEFAULT_RECORDING_DURATION = 300  # 300 seconds (10 minute)
-EXTENSION_DURATION = 150  # 150 seconds (5 minute)
-MAX_RECORDING_DURATION = 600  # 600 seconds (20 minutes)
+DEFAULT_RECORDING_DURATION = 600  # (10 minute)
+EXTENSION_DURATION = 300  # (5 minute)
+MAX_RECORDING_DURATION = 1500  # (25 minutes)
 WARNING_TIME = 60  # 60 seconds before end
 
 # Video Settings

@@ -248,7 +248,18 @@ def get_ffmpeg_command(
         "-pix_fmt",
         "yuv420p",  # Pixel format (compatible)
         "-movflags",
-        "+faststart",  # Optimize for streaming
+        # WHY frag_keyframe+empty_moov: Ensures valid MP4 even if interrupted
+        # Context: We stop FFmpeg with SIGTERM (manual stop), not natural
+        # completion. Standard movflags require FFmpeg to finish normally to
+        # finalize the moov atom (MP4 metadata). If interrupted, file is
+        # corrupted ("moov atom not found").
+        # These flags create fragmented MP4:
+        #   - empty_moov: Write moov atom at start (empty placeholder)
+        #   - frag_keyframe: Create fragments at each keyframe
+        # Result: File is always valid, even if SIGTERM interrupts recording
+        # Tradeoff: Slightly larger file size (~2-5%) vs guaranteed validity
+        # Alternative: +faststart requires natural completion (not suitable)
+        "+frag_keyframe+empty_moov",
         # Logging
         "-loglevel",
         FFMPEG_LOG_LEVEL,
