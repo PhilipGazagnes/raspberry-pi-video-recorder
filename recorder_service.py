@@ -479,6 +479,9 @@ class RecorderService:
 
             # Restore LED to recording pattern (no longer in warning zone)
             self.led.set_status(LEDPattern.RECORDING)
+
+            # Flash green 5x quickly to confirm extension success
+            self.led.flash_extension_success()
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")
 

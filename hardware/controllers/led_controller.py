@@ -302,6 +302,60 @@ class LEDController:
         )
         timer.start()
 
+    def flash_extension_success(self) -> None:
+        """
+        Flash green LED 5 times quickly to confirm time extension.
+
+        Quick visual feedback that recording extension was successful.
+        Returns to recording pattern (warning or normal green blinking).
+
+        Pattern: G_G_G_G_G_ (on/off 5 times, 0.1s each = 1 second total)
+
+        Example:
+            led.flash_extension_success()  # Quick confirmation flash
+        """
+        self.logger.info("Flashing extension success (5x green)")
+
+        # Save current pattern to restore later
+        original_pattern = self.current_pattern
+
+        # Run flash sequence in background thread (non-blocking)
+        flash_thread = threading.Thread(
+            target=self._extension_flash_worker,
+            args=(original_pattern,),
+            daemon=True,
+            name="LED-Extension-Flash",
+        )
+        flash_thread.start()
+
+    def _extension_flash_worker(self, restore_pattern: LEDPattern) -> None:
+        """
+        Background worker for extension success flash.
+
+        Flashes green 5 times quickly, then restores original pattern.
+
+        Args:
+            restore_pattern: Pattern to restore after flashing
+        """
+        flash_count = 5
+        flash_interval = 0.1  # 0.1s on, 0.1s off = fast and snappy
+
+        # Stop any current animation
+        self._stop_blinking()
+
+        # Flash 5 times
+        for _flash in range(flash_count):
+            # Green ON
+            self._set_all_leds(True, False, False)
+            time.sleep(flash_interval)
+
+            # Green OFF
+            self._set_all_leds(False, False, False)
+            time.sleep(flash_interval)
+
+        # Restore original pattern
+        self._restore_pattern(restore_pattern)
+
     def play_warning_sequence(self) -> None:
         """
         Start continuous green-orange-red warning sequence animation.
