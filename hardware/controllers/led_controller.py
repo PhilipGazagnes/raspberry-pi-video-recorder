@@ -118,8 +118,12 @@ class LEDController:
 
         Uses shared utility instead of repeating setup logic.
         This is DRY (Don't Repeat Yourself) in action.
+        Includes main LEDs (G, O, R) and status LEDs (WHITE, BLUE).
         """
+        # Main status LEDs (green, orange, red)
         pin_list = list(self.pins.values())
+        # Network and upload status LEDs (white, blue)
+        pin_list.extend([GPIO_LED_WHITE, GPIO_LED_BLUE])
         setup_led_pins(self.gpio, pin_list, initial_state=PinState.LOW)
         self.logger.debug(f"Initialized LED pins: {pin_list}")
 
