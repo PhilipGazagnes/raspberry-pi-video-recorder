@@ -329,6 +329,10 @@ class LEDController:
         # Stop any current blinking
         self._stop_blinking()
 
+        # Update current pattern so set_status() knows we're in warning mode
+        # This allows set_status(LEDPattern.RECORDING) to properly restore
+        self.current_pattern = LEDPattern.WARNING
+
         # Reset stop event - this allows the sequence to start fresh
         self._blink_stop_event.clear()
 
