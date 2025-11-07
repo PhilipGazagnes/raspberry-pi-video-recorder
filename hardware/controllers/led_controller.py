@@ -305,49 +305,85 @@ class LEDController:
 
     def play_warning_sequence(self) -> None:
         """
-        Play green-orange-red warning sequence animation.
+        Start continuous green-orange-red warning sequence animation.
 
         This is called when recording time warning is reached.
-        Plays one full cycle of colors, then returns to recording pattern.
+        Repeats the sequence continuously with blank gaps until stopped.
 
-        The sequence creates a quick visual pulse: G-O-R-G-O-R-G-O-R...
+        The sequence creates a pulsing warning: G-O-R-G-O-R____G-O-R-G-O-R____...
         Each color displays for LED_WARNING_SEQUENCE_INTERVAL seconds.
+        Blank gap is 3x the color interval for visibility.
+
+        Stops when:
+        - Recording is extended
+        - Recording completes
+        - Pattern changes to something else
+        (All handled by existing LED pattern switching)
 
         Example:
-            led.play_warning_sequence()  # Plays the warning animation
+            led.play_warning_sequence()  # Starts continuous warning
         """
-        self.logger.info("Playing warning sequence (green-orange-red)")
-
-        # Save current pattern to restore later
-        original_pattern = self.current_pattern
+        self.logger.info("Starting warning sequence (continuous G-O-R with gaps)")
 
         # Stop any current blinking
         self._stop_blinking()
 
-        # Define the warning sequence colors
+        # Reset stop event - this allows the sequence to start fresh
+        self._blink_stop_event.clear()
+
+        # Start warning sequence in background thread
+        self._blink_thread = threading.Thread(
+            target=self._warning_sequence_worker,
+            daemon=True,
+            name="LED-Warning-Sequence",
+        )
+        self._blink_thread.start()
+
+    def _warning_sequence_worker(self) -> None:
+        """
+        Background worker for continuous warning sequence animation.
+
+        Repeats green-orange-red sequence (twice) with blank gaps until
+        _blink_stop_event is set (by pattern change or cleanup).
+
+        Timeline per cycle:
+        - Green: 0.2s
+        - Orange: 0.2s
+        - Red: 0.2s
+        - (repeat 2x total)
+        - Blank (all off): 0.6s for visibility
+        - Repeat forever
+
+        Pattern: G O R G O R _____ G O R G O R _____ ...
+        """
         warning_colors = [LEDColor.GREEN, LEDColor.ORANGE, LEDColor.RED]
+        blank_interval = LED_WARNING_SEQUENCE_INTERVAL * 3  # 0.6s gap
 
-        # Play the sequence 3 times (one full cycle)
-        for _cycle in range(3):
-            for color in warning_colors:
-                # Turn off all LEDs
-                self._set_all_leds(False, False, False)
+        # Keep looping until stop event is set
+        while not self._blink_stop_event.is_set():
+            # Play the sequence TWICE before blank gap
+            for _repeat in range(2):
+                for color in warning_colors:
+                    # Turn on the current color
+                    if color == LEDColor.GREEN:
+                        self._set_all_leds(True, False, False)
+                    elif color == LEDColor.ORANGE:
+                        self._set_all_leds(False, True, False)
+                    elif color == LEDColor.RED:
+                        self._set_all_leds(False, False, True)
 
-                # Turn on the current color
-                if color == LEDColor.GREEN:
-                    self._set_all_leds(True, False, False)
-                elif color == LEDColor.ORANGE:
-                    self._set_all_leds(False, True, False)
-                elif color == LEDColor.RED:
-                    self._set_all_leds(False, False, True)
+                    # Check for stop during interval
+                    if self._blink_stop_event.wait(
+                        LED_WARNING_SEQUENCE_INTERVAL,
+                    ):
+                        return  # Stop event set, exit immediately
 
-                # Wait for the interval
-                time.sleep(LED_WARNING_SEQUENCE_INTERVAL)
+            # Blank gap between double sequences
+            self._set_all_leds(False, False, False)
 
-        self.logger.debug("Warning sequence complete, restoring pattern")
-
-        # Restore the original pattern
-        self._restore_pattern(original_pattern)
+            # Check for stop during gap
+            if self._blink_stop_event.wait(blank_interval):
+                return  # Stop event set, exit immediately
 
     def _restore_pattern(self, pattern: LEDPattern) -> None:
         """
@@ -375,7 +411,6 @@ class LEDController:
             led = LEDController()
             led.test_sequence()  # Watch the light show!
         """
-        import time
 
         self.logger.info("Starting LED test sequence")
         original_pattern = self.current_pattern
