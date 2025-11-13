@@ -23,9 +23,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 pip install -r requirements-upload.txt
 
-# 5. Setup log file (included in setup_pi5.sh)
-sudo touch /var/log/recorder-service.log
-sudo chown $(whoami) /var/log/recorder-service.log
+# 5. Setup log directory (included in setup_pi5.sh)
+sudo mkdir -p /var/log/recorder
+sudo chown $(whoami):$(whoami) /var/log/recorder
 
 # 6. Reboot (required for gpio group)
 sudo reboot
@@ -133,8 +133,51 @@ pip install -r requirements-upload.txt
 
 ---
 
+## 🚀 Production Deployment (systemd Services)
+
+**After manual testing works**, install systemd services for production:
+
+```bash
+# Install systemd services
+./systemd/install.sh
+
+# Configure watchdog sudo permissions
+sudo visudo -f /etc/sudoers.d/recorder-watchdog
+# Paste the lines shown by install.sh (specific to your user)
+
+# Test auto-recovery
+./systemd/test-checklist.sh
+```
+
+**Production features:**
+- ✅ Auto-start on boot
+- ✅ Auto-restart on crash (systemd)
+- ✅ Auto-restart on freeze (watchdog)
+- ✅ System reboot if unrecoverable
+- ✅ Prometheus metrics on port 9101
+
+**Service management:**
+```bash
+# Check status
+sudo systemctl status recorder.service
+
+# View logs
+sudo journalctl -u recorder.service -f
+
+# Restart service
+sudo systemctl restart recorder.service
+
+# Health check
+./systemd/test-summary.sh
+```
+
+See `systemd/README.md` for complete documentation.
+
+---
+
 ## 📖 Full Documentation
 
 - **Complete guide:** `INSTALL.md`
 - **Troubleshooting:** `INSTALL.md#troubleshooting`
 - **Automated setup:** Run `./setup_pi5.sh`
+- **Production deployment:** See section above or `systemd/README.md`

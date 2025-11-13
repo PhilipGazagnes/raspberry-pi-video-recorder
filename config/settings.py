@@ -128,6 +128,7 @@ WATCHDOG_RESTART_WINDOW = int(
 
 # Metrics Configuration
 METRICS_PORT = int(os.getenv("METRICS_PORT", "9101"))
+NODE_EXPORTER_PORT = int(os.getenv("NODE_EXPORTER_PORT", "9100"))
 
 # Logging Configuration
 LOG_DIR = "/var/log/recorder"
