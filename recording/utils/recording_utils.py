@@ -34,10 +34,13 @@ def generate_filename(
 
     Example:
         path = generate_filename(Path("/recordings"))
-        # Returns: /recordings/recording_2025-01-15_143022.mp4
+        # Returns: /recordings/recording_2025-01-15_143022_456.mp4
     """
-    timestamp = datetime.now().strftime(format_string)
-    filename = f"{timestamp}.{extension}"
+    now = datetime.now()
+    timestamp = now.strftime(format_string)
+    # Add milliseconds (first 3 digits of microseconds)
+    milliseconds = now.microsecond // 1000
+    filename = f"{timestamp}_{milliseconds:03d}.{extension}"
     return base_path / filename
 
 
