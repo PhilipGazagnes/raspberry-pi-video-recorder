@@ -164,7 +164,7 @@ class MetricsExporter:
 
         # Storage metrics - disk space and video counts
         try:
-            stats = self.storage.get_storage_stats()
+            stats = self.storage.get_stats()
 
             # Disk space - free bytes and usage ratio
             metrics.append("# HELP recorder_disk_free_bytes Free disk space")
