@@ -60,7 +60,7 @@ from config.settings import (
 from core.network import check_internet_connectivity
 from hardware import ButtonController, LEDController
 from hardware.constants import LEDPattern
-from recording import CameraManager, RecordingSession
+from recording import CameraManager, RecordingSession, generate_filename
 from storage import StorageController, VideoFile
 from upload import UploadController
 
@@ -418,13 +418,10 @@ class RecorderService:
             self._transition_to_error("Camera not available")
             return
 
-        # Generate output filename with timestamp
-        timestamp = datetime.now()
-        filename = f"recording_{timestamp.strftime('%Y-%m-%d_%H%M%S')}.mp4"
-        self.current_output_file = STORAGE_BASE_PATH / "pending" / filename
-
-        # Ensure pending directory exists
-        self.current_output_file.parent.mkdir(parents=True, exist_ok=True)
+        # Generate output filename with timestamp (includes milliseconds)
+        pending_dir = STORAGE_BASE_PATH / "pending"
+        pending_dir.mkdir(parents=True, exist_ok=True)
+        self.current_output_file = generate_filename(pending_dir, extension="mp4")
 
         # Create recording session
         self.current_session = RecordingSession(camera_manager=self.camera)

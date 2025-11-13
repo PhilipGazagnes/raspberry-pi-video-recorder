@@ -35,6 +35,7 @@ from recording.interfaces.video_capture_interface import (
     CaptureError,
     VideoCaptureInterface,
 )
+from recording.utils.recording_utils import generate_filename
 
 __all__ = [
     "CameraManager",
@@ -44,4 +45,5 @@ __all__ = [
     "RecordingState",
     "VideoCaptureInterface",
     "create_capture",
+    "generate_filename",
 ]
