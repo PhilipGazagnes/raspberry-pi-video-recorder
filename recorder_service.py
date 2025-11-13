@@ -32,8 +32,10 @@ Upload Queue:
 - Silent on success, logs failures
 """
 
+import json
 import logging
 import logging.handlers
+import os
 import queue
 import signal
 import sys
@@ -41,13 +43,14 @@ import threading
 import time
 from datetime import datetime
 from enum import Enum
-from pathlib import Path  # noqa: TC003
+from pathlib import Path
 from typing import Optional
 
 from config.settings import (
     CLEANUP_INTERVAL_SECONDS,
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
+    HEARTBEAT_INTERVAL,
     MAX_UPLOAD_RETRIES,
     NETWORK_CHECK_INTERVAL,
     RETRY_DELAY_SECONDS,
@@ -104,6 +107,11 @@ class RecorderService:
         self.state = SystemState.BOOTING
         self.state_start_time = time.time()
         self.running = False
+
+        # Heartbeat setup for liveness monitoring
+        # /tmp is intentional - watchdog needs a standard location to monitor
+        self.heartbeat_file = Path("/tmp/recorder_heartbeat.json")  # noqa: S108
+        self.last_heartbeat = time.time()
 
         # Recording session tracking
         self.current_session: Optional[RecordingSession] = None
@@ -196,6 +204,12 @@ class RecorderService:
         - Upload queue
         - Error conditions
         """
+        # Write heartbeat for liveness monitoring
+        current_time = time.time()
+        if current_time - self.last_heartbeat >= HEARTBEAT_INTERVAL:
+            self._write_heartbeat()
+            self.last_heartbeat = current_time
+
         # If recording, check session health
         if self.state == SystemState.RECORDING and self.current_session:
             # RecordingSession handles its own timing and warnings
@@ -203,6 +217,48 @@ class RecorderService:
             if not self.camera.is_recording():
                 self.logger.error("Camera stopped unexpectedly!")
                 self._handle_recording_error("Camera stopped unexpectedly")
+
+    def _write_heartbeat(self):
+        """
+        Write heartbeat for liveness detection.
+
+        Creates a JSON file with current system state that external
+        watchdog can monitor. Atomic write prevents partial reads.
+
+        Heartbeat data includes:
+        - timestamp: Current time (ISO format)
+        - uptime_seconds: Time since service started
+        - state: Current system state (booting/ready/recording/etc)
+        - recording_active: Whether currently recording
+        - upload_queue_size: Number of videos waiting to upload
+        - currently_uploading: Filename being uploaded (if any)
+        - pid: Process ID for monitoring
+        """
+        try:
+            heartbeat = {
+                "timestamp": datetime.now().isoformat(),
+                "uptime_seconds": time.time() - self.state_start_time,
+                "state": self.state.value,
+                "recording_active": self.current_session is not None,
+                "upload_queue_size": self.upload_queue.qsize(),
+                "currently_uploading": (
+                    self.currently_uploading.filename
+                    if self.currently_uploading
+                    else None
+                ),
+                "pid": os.getpid(),
+            }
+
+            # Atomic write (write to temp file, then rename)
+            # This prevents watchdog from reading partial/corrupted JSON
+            tmp_file = self.heartbeat_file.with_suffix(".tmp")
+            tmp_file.write_text(json.dumps(heartbeat, indent=2))
+            tmp_file.rename(self.heartbeat_file)
+
+        except Exception as e:
+            # Never crash on heartbeat failure - just log and continue
+            # Heartbeat is for monitoring, not critical functionality
+            self.logger.warning(f"Failed to write heartbeat: {e}")
 
     # =========================================================================
     # STATE TRANSITIONS

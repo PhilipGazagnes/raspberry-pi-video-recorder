@@ -105,6 +105,13 @@ CLEANUP_BATCH_SIZE = 10  # Files per batch during cleanup
 AUTO_CLEANUP_ENABLED = True
 
 # =============================================================================
+# MONITORING CONFIGURATION
+# =============================================================================
+
+# Heartbeat Configuration
+HEARTBEAT_INTERVAL = float(os.getenv("HEARTBEAT_INTERVAL", "1.0"))  # seconds
+
+# =============================================================================
 # UPLOAD CONFIGURATION
 # =============================================================================
 
