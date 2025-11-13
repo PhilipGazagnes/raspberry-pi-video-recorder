@@ -16,31 +16,39 @@ echo ""
 
 # Check we're running from the correct directory
 if [ ! -f "recorder_service.py" ]; then
-    echo "❌ Error: Must run from /opt/raspberry-pi-video-recorder"
+    echo "❌ Error: Must run from project directory"
+    echo "   Current directory: $(pwd)"
+    echo "   Expected files: recorder_service.py, watchdog.py, etc."
     exit 1
 fi
 
-# Check we're the correct user
-if [ "$USER" != "philip" ]; then
-    echo "⚠️  Warning: Expected user 'philip', but running as '$USER'"
-    read -p "Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-fi
+CURRENT_USER=$(whoami)
 
 echo "Step 1: Creating log directory..."
 sudo mkdir -p /var/log/recorder
-sudo chown philip:philip /var/log/recorder
-echo "✅ Log directory created"
+sudo chown $CURRENT_USER:$CURRENT_USER /var/log/recorder
+echo "✅ Log directory created for user: $CURRENT_USER"
 echo ""
 
-echo "Step 2: Copying systemd service files..."
-sudo cp systemd/recorder.service /etc/systemd/system/
-sudo cp systemd/recorder-watchdog.service /etc/systemd/system/
-sudo cp systemd/recorder-metrics.service /etc/systemd/system/
-echo "✅ Service files copied"
+echo "Step 2: Installing systemd service files..."
+# Substitute current user and working directory into service files
+CURRENT_DIR=$(pwd)
+
+# Create temporary service files with substituted values
+sed -e "s|User=philip|User=$CURRENT_USER|g" \
+    -e "s|/opt/raspberry-pi-video-recorder|$CURRENT_DIR|g" \
+    systemd/recorder.service | sudo tee /etc/systemd/system/recorder.service > /dev/null
+
+sed -e "s|User=philip|User=$CURRENT_USER|g" \
+    -e "s|/opt/raspberry-pi-video-recorder|$CURRENT_DIR|g" \
+    systemd/recorder-watchdog.service | sudo tee /etc/systemd/system/recorder-watchdog.service > /dev/null
+
+sed -e "s|User=philip|User=$CURRENT_USER|g" \
+    -e "s|/opt/raspberry-pi-video-recorder|$CURRENT_DIR|g" \
+    systemd/recorder-metrics.service | sudo tee /etc/systemd/system/recorder-metrics.service > /dev/null
+
+echo "✅ Service files installed for user: $CURRENT_USER"
+echo "✅ Working directory: $CURRENT_DIR"
 echo ""
 
 echo "Step 3: Reloading systemd daemon..."
@@ -79,10 +87,18 @@ echo "Installation Complete!"
 echo "============================================================"
 echo ""
 echo "Next steps:"
-echo "1. Configure watchdog sudo permissions (see systemd/sudoers.conf)"
-echo "2. Run: sudo visudo -f /etc/sudoers.d/recorder-watchdog"
-echo "3. Paste the contents of systemd/sudoers.conf"
-echo "4. Test auto-recovery (see systemd/TESTING.md)"
+echo "1. Configure watchdog sudo permissions:"
+echo ""
+echo "   sudo visudo -f /etc/sudoers.d/recorder-watchdog"
+echo ""
+echo "   Then paste these lines:"
+echo "   ----------------------------------------"
+echo "   $CURRENT_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart recorder.service"
+echo "   $CURRENT_USER ALL=(ALL) NOPASSWD: /bin/systemctl status recorder.service"
+echo "   $CURRENT_USER ALL=(ALL) NOPASSWD: /sbin/reboot"
+echo "   ----------------------------------------"
+echo ""
+echo "2. Test auto-recovery (see systemd/TESTING.md)"
 echo ""
 echo "Useful commands:"
 echo "  sudo systemctl status recorder.service"
