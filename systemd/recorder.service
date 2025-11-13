@@ -1,0 +1,31 @@
+[Unit]
+Description=Raspberry Pi Video Recorder Service
+Documentation=https://github.com/yourusername/raspberry-pi-video-recorder
+After=network.target
+
+[Service]
+Type=simple
+User=philip
+WorkingDirectory=/opt/raspberry-pi-video-recorder
+ExecStart=/opt/raspberry-pi-video-recorder/.venv/bin/python recorder_service.py
+
+# Auto-restart configuration
+# Restart on any failure (crash, non-zero exit, timeout, etc)
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=600
+
+# Watchdog configuration (belt-and-suspenders with external watchdog)
+# Service should notify systemd every 60s, otherwise systemd restarts it
+WatchdogSec=60
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

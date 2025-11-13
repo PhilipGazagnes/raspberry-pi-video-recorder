@@ -1,0 +1,21 @@
+[Unit]
+Description=Recorder Service Watchdog
+Documentation=Monitors recorder service heartbeat and restarts if frozen
+After=recorder.service
+
+[Service]
+Type=simple
+User=philip
+WorkingDirectory=/opt/raspberry-pi-video-recorder
+ExecStart=/opt/raspberry-pi-video-recorder/.venv/bin/python watchdog.py
+
+# Always restart watchdog - it's critical for recovery
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

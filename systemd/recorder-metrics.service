@@ -1,0 +1,21 @@
+[Unit]
+Description=Recorder Metrics Exporter
+Documentation=Exposes Prometheus metrics on port 9101
+After=recorder.service
+
+[Service]
+Type=simple
+User=philip
+WorkingDirectory=/opt/raspberry-pi-video-recorder
+ExecStart=/opt/raspberry-pi-video-recorder/.venv/bin/python metrics_exporter.py
+
+# Always restart metrics exporter
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
