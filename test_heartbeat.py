@@ -13,8 +13,11 @@ import sys
 import time
 from pathlib import Path
 
-# /tmp is intentional - matches production heartbeat location
-HEARTBEAT_FILE = Path("/tmp/recorder_heartbeat.json")  # noqa: S108
+# Import from configuration
+sys.path.insert(0, str(Path(__file__).parent))
+from config.settings import HEARTBEAT_FILE
+
+HEARTBEAT_FILE = Path(HEARTBEAT_FILE)
 
 
 def test_heartbeat():

@@ -50,6 +50,7 @@ from config.settings import (
     CLEANUP_INTERVAL_SECONDS,
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
+    HEARTBEAT_FILE,
     HEARTBEAT_INTERVAL,
     MAX_UPLOAD_RETRIES,
     NETWORK_CHECK_INTERVAL,
@@ -109,8 +110,7 @@ class RecorderService:
         self.running = False
 
         # Heartbeat setup for liveness monitoring
-        # /tmp is intentional - watchdog needs a standard location to monitor
-        self.heartbeat_file = Path("/tmp/recorder_heartbeat.json")  # noqa: S108
+        self.heartbeat_file = Path(HEARTBEAT_FILE)
         self.last_heartbeat = time.time()
 
         # Recording session tracking

@@ -110,6 +110,30 @@ AUTO_CLEANUP_ENABLED = True
 
 # Heartbeat Configuration
 HEARTBEAT_INTERVAL = float(os.getenv("HEARTBEAT_INTERVAL", "1.0"))  # seconds
+# /tmp is intentional - standard location for watchdog monitoring
+HEARTBEAT_FILE = os.getenv(
+    "HEARTBEAT_FILE",
+    "/tmp/recorder_heartbeat.json",  # noqa: S108
+)
+HEARTBEAT_TIMEOUT = int(os.getenv("HEARTBEAT_TIMEOUT", "30"))  # seconds
+
+# Watchdog Configuration
+WATCHDOG_CHECK_INTERVAL = int(os.getenv("WATCHDOG_CHECK_INTERVAL", "10"))  # seconds
+WATCHDOG_MAX_RESTART_ATTEMPTS = int(
+    os.getenv("WATCHDOG_MAX_RESTART_ATTEMPTS", "3"),
+)
+WATCHDOG_RESTART_WINDOW = int(
+    os.getenv("WATCHDOG_RESTART_WINDOW", "600"),
+)  # seconds
+
+# Metrics Configuration
+METRICS_PORT = int(os.getenv("METRICS_PORT", "9101"))
+
+# Logging Configuration
+LOG_DIR = "/var/log/recorder"
+LOG_SERVICE_FILE = "service.log"
+LOG_WATCHDOG_FILE = "watchdog.log"
+LOG_REBOOT_TRIGGER_FILE = "reboot_trigger.log"
 
 # =============================================================================
 # UPLOAD CONFIGURATION
