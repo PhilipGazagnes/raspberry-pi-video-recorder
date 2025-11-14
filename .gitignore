@@ -47,4 +47,4 @@ logs/
 .ruff_cache/
 
 # credentials
-credentials/
+credentials/*

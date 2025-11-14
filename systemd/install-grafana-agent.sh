@@ -115,8 +115,14 @@ sudo mkdir -p /etc/grafana-agent
 echo "✅ Created /etc/grafana-agent"
 echo ""
 
-echo "Step 6: Generating configuration..."
+echo "Step 6: Creating data directory for WAL..."
 CURRENT_USER=$(whoami)
+sudo mkdir -p /var/lib/grafana-agent/data
+sudo chown -R $CURRENT_USER:$CURRENT_USER /var/lib/grafana-agent
+echo "✅ Created /var/lib/grafana-agent/data"
+echo ""
+
+echo "Step 7: Generating configuration..."
 
 # Create Grafana Agent config with credentials
 sudo tee /etc/grafana-agent/config.yaml > /dev/null <<EOF
@@ -124,6 +130,7 @@ server:
   log_level: info
 
 metrics:
+  wal_directory: /var/lib/grafana-agent/data
   global:
     scrape_interval: 15s
     remote_write:
@@ -198,7 +205,7 @@ EOF
 echo "✅ Configuration created"
 echo ""
 
-echo "Step 7: Creating systemd service..."
+echo "Step 8: Creating systemd service..."
 sudo tee /etc/systemd/system/grafana-agent.service > /dev/null <<EOF
 [Unit]
 Description=Grafana Agent
@@ -219,14 +226,14 @@ EOF
 echo "✅ Service file created"
 echo ""
 
-echo "Step 8: Enabling and starting service..."
+echo "Step 9: Enabling and starting service..."
 sudo systemctl daemon-reload
 sudo systemctl enable grafana-agent.service
 sudo systemctl start grafana-agent.service
 echo "✅ Service started"
 echo ""
 
-echo "Step 9: Verifying installation..."
+echo "Step 10: Verifying installation..."
 sleep 3
 
 if sudo systemctl is-active --quiet grafana-agent.service; then
@@ -240,7 +247,7 @@ else
 fi
 
 echo ""
-echo "Step 10: Checking logs for errors..."
+echo "Step 11: Checking logs for errors..."
 sleep 2
 ERRORS=$(sudo journalctl -u grafana-agent.service --since "1 minute ago" | grep -i error | wc -l)
 
