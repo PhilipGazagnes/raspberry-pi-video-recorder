@@ -33,7 +33,11 @@ TTS_VOLUME = 0.8  # 0.0 to 1.0
 SPEAKER_DEVICE = "hw:1,0"  # USB speaker device
 
 # Audio Input Configuration (for recording)
-AUDIO_INPUT_DEVICE = "hw:2,0"  # Camera microphone (card 2, device 0)
+# Using PulseAudio default source (camera microphone)
+# "default" tells PulseAudio to use the default input device
+# which is the camera's mono microphone
+AUDIO_INPUT_DEVICE = "default"  # PulseAudio default source
+AUDIO_INPUT_FORMAT = "pulse"  # Use PulseAudio (not raw ALSA)
 AUDIO_CHANNELS = 1  # 1 = mono, 2 = stereo (camera is mono)
 AUDIO_SAMPLE_RATE = 44100  # Hz - CD quality
 AUDIO_CODEC = "aac"  # AAC audio codec (widely compatible)

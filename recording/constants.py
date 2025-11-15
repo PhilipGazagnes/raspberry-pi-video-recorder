@@ -23,6 +23,7 @@ from config.settings import (
     AUDIO_CHANNELS,
     AUDIO_CODEC,
     AUDIO_INPUT_DEVICE,
+    AUDIO_INPUT_FORMAT,
     AUDIO_SAMPLE_RATE,
     VIDEO_CODEC,
     VIDEO_CRF,
@@ -243,14 +244,17 @@ def get_ffmpeg_command(
     # Add audio input if enabled
     if CAPTURE_AUDIO:
         # WHY separate audio input: Linux separates video/audio devices
-        # Context: USB cameras expose video as /dev/videoN and audio as
-        #   ALSA device (hw:X,Y). Must specify both inputs to FFmpeg
-        # The -f alsa tells FFmpeg to use ALSA (Advanced Linux Sound Arch)
-        # The hw:2,0 is card 2, device 0 (from arecord -l output)
+        # Context: USB cameras expose video as /dev/videoN and audio via
+        #   PulseAudio/ALSA. Must specify both inputs to FFmpeg
+        # Using PulseAudio (not raw ALSA) for better compatibility:
+        #   - PulseAudio auto-handles sample rate conversion
+        #   - Automatically selects default input device (camera mic)
+        #   - More robust than raw ALSA hw:X,Y device access
+        # The "default" device tells PulseAudio to use system default input
         command.extend(
             [
                 "-f",
-                "alsa",  # ALSA audio input
+                AUDIO_INPUT_FORMAT,  # PulseAudio input (more reliable)
                 "-ac",
                 str(AUDIO_CHANNELS),  # Audio channels (1=mono, 2=stereo)
                 "-ar",
@@ -258,7 +262,7 @@ def get_ffmpeg_command(
                 "-thread_queue_size",
                 str(THREAD_QUEUE_SIZE),  # Audio buffer (same as video)
                 "-i",
-                AUDIO_INPUT_DEVICE,  # Audio input device (hw:2,0)
+                AUDIO_INPUT_DEVICE,  # "default" = PulseAudio default source
             ],
         )
 
