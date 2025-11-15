@@ -57,7 +57,8 @@ def test_audio_recording() -> None:
     print()
 
     # Check if audio input is included
-    if "-f" in command and "alsa" in command:
+    # Audio could be via ALSA or PulseAudio
+    if "-f" in command and ("alsa" in command or "pulse" in command):
         print("✓ Audio input detected in command")
     else:
         print("✗ WARNING: No audio input in command!")
