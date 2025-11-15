@@ -16,9 +16,10 @@ RestartSec=10
 StartLimitBurst=5
 StartLimitIntervalSec=600
 
-# Watchdog configuration (belt-and-suspenders with external watchdog)
-# Service should notify systemd every 60s, otherwise systemd restarts it
-WatchdogSec=60
+# Watchdog monitoring
+# We use an external watchdog.py script that monitors the heartbeat file
+# instead of systemd's built-in watchdog (which requires sd_notify() calls)
+# The external watchdog is more flexible and provides better diagnostics
 
 # Environment
 Environment=PYTHONUNBUFFERED=1
