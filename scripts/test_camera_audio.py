@@ -45,6 +45,7 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
     try:
         result = subprocess.run(
             ["ffmpeg", "-sources", "pulse"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5.0,
@@ -57,6 +58,7 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
             print("   PulseAudio not available, trying ALSA...")
             result = subprocess.run(
                 ["ffmpeg", "-sources", "alsa"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=5.0,
@@ -73,6 +75,7 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
     try:
         result = subprocess.run(
             ["ffmpeg", "-f", "v4l2", "-list_formats", "all", "-i", camera_device],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5.0,
@@ -96,6 +99,7 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
     try:
         result = subprocess.run(
             ["ffprobe", "-show_streams", camera_device],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5.0,
@@ -106,7 +110,10 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
             print("   ✓ Audio stream detected in camera!")
             print("\n   Relevant audio info:")
             for line in output.split("\n"):
-                if any(keyword in line.lower() for keyword in ["audio", "codec_type", "sample_rate", "channels"]):
+                if any(
+                    keyword in line.lower()
+                    for keyword in ["audio", "codec_type", "sample_rate", "channels"]
+                ):
                     print(f"   {line}")
         else:
             print("   ℹ No audio stream detected")
@@ -120,6 +127,7 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
     try:
         result = subprocess.run(
             ["arecord", "-l"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5.0,
@@ -130,13 +138,19 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
 
             # Check if USB camera appears
             if "usb" in result.stdout.lower() or "webcam" in result.stdout.lower():
-                print("\n   ✓ USB audio device found - your camera likely has a microphone!")
-                print("   Note the 'card' and 'device' numbers above (e.g., card 1: USB PnP)")
+                print(
+                    "\n   ✓ USB audio device found - your camera likely has a microphone!"
+                )
+                print(
+                    "   Note the 'card' and 'device' numbers above (e.g., card 1: USB PnP)"
+                )
         else:
             print("   No audio capture devices found")
 
     except FileNotFoundError:
-        print("   ℹ 'arecord' not found (install alsa-utils: sudo apt-get install alsa-utils)")
+        print(
+            "   ℹ 'arecord' not found (install alsa-utils: sudo apt-get install alsa-utils)"
+        )
     except Exception as e:
         print(f"   ⚠ Could not list audio devices: {e}")
 

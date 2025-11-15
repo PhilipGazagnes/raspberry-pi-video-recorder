@@ -32,6 +32,13 @@ TTS_RATE = 150  # Words per minute
 TTS_VOLUME = 0.8  # 0.0 to 1.0
 SPEAKER_DEVICE = "hw:1,0"  # USB speaker device
 
+# Audio Input Configuration (for recording)
+AUDIO_INPUT_DEVICE = "hw:2,0"  # Camera microphone (card 2, device 0)
+AUDIO_CHANNELS = 1  # 1 = mono, 2 = stereo (camera is mono)
+AUDIO_SAMPLE_RATE = 44100  # Hz - CD quality
+AUDIO_CODEC = "aac"  # AAC audio codec (widely compatible)
+AUDIO_BITRATE = "128k"  # 128 kbps - good quality for speech/ambient
+
 # =============================================================================
 # RECORDING CONFIGURATION
 # =============================================================================

@@ -19,6 +19,11 @@ from enum import Enum
 from pathlib import Path
 
 from config.settings import (
+    AUDIO_BITRATE,
+    AUDIO_CHANNELS,
+    AUDIO_CODEC,
+    AUDIO_INPUT_DEVICE,
+    AUDIO_SAMPLE_RATE,
     VIDEO_CODEC,
     VIDEO_CRF,
     VIDEO_FPS,
@@ -44,18 +49,12 @@ from config.settings import (
 
 
 # =============================================================================
-# AUDIO CAPTURE CONFIGURATION (Future Enhancement)
+# AUDIO CAPTURE CONFIGURATION
 # =============================================================================
 
 # Whether to capture audio with video
-# False for v1 (no audio recording), True for future versions
-CAPTURE_AUDIO = False
-
-# Audio codec (if audio enabled)
-AUDIO_CODEC = "aac"
-
-# Audio bitrate
-AUDIO_BITRATE = "128k"
+# Camera has built-in microphone (card 2: H264 USB Camera)
+CAPTURE_AUDIO = True
 
 
 # =============================================================================
@@ -208,6 +207,7 @@ def get_ffmpeg_command(
 
     This creates the command-line arguments for FFmpeg to capture
     video from a USB webcam and encode it to a file.
+    If CAPTURE_AUDIO is enabled, also captures audio from camera microphone.
 
     Args:
         input_device: Camera device path (e.g., /dev/video0)
@@ -225,7 +225,7 @@ def get_ffmpeg_command(
     """
     command = [
         "ffmpeg",
-        # Input options
+        # Video input options
         "-f",
         VIDEO_INPUT_FORMAT,  # Video4Linux2 input
         "-input_format",
@@ -237,36 +237,83 @@ def get_ffmpeg_command(
         "-thread_queue_size",
         str(THREAD_QUEUE_SIZE),  # Buffer size
         "-i",
-        input_device,  # Input device
-        # Output options
-        "-c:v",
-        VIDEO_CODEC,  # H264 video codec
-        "-preset",
-        VIDEO_PRESET,  # Encoding speed
-        "-crf",
-        str(VIDEO_CRF),  # Quality level
-        "-pix_fmt",
-        "yuv420p",  # Pixel format (compatible)
-        "-movflags",
-        # WHY frag_keyframe+empty_moov: Ensures valid MP4 even if interrupted
-        # Context: We stop FFmpeg with SIGTERM (manual stop), not natural
-        # completion. Standard movflags require FFmpeg to finish normally to
-        # finalize the moov atom (MP4 metadata). If interrupted, file is
-        # corrupted ("moov atom not found").
-        # These flags create fragmented MP4:
-        #   - empty_moov: Write moov atom at start (empty placeholder)
-        #   - frag_keyframe: Create fragments at each keyframe
-        # Result: File is always valid, even if SIGTERM interrupts recording
-        # Tradeoff: Slightly larger file size (~2-5%) vs guaranteed validity
-        # Alternative: +faststart requires natural completion (not suitable)
-        "+frag_keyframe+empty_moov",
-        # Logging
-        "-loglevel",
-        FFMPEG_LOG_LEVEL,
-        # Output file (overwrite if exists)
-        "-y",
-        output_file,
+        input_device,  # Video input device
     ]
+
+    # Add audio input if enabled
+    if CAPTURE_AUDIO:
+        # WHY separate audio input: Linux separates video/audio devices
+        # Context: USB cameras expose video as /dev/videoN and audio as
+        #   ALSA device (hw:X,Y). Must specify both inputs to FFmpeg
+        # The -f alsa tells FFmpeg to use ALSA (Advanced Linux Sound Arch)
+        # The hw:2,0 is card 2, device 0 (from arecord -l output)
+        command.extend(
+            [
+                "-f",
+                "alsa",  # ALSA audio input
+                "-ac",
+                str(AUDIO_CHANNELS),  # Audio channels (1=mono, 2=stereo)
+                "-ar",
+                str(AUDIO_SAMPLE_RATE),  # Sample rate (44100 Hz)
+                "-thread_queue_size",
+                str(THREAD_QUEUE_SIZE),  # Audio buffer (same as video)
+                "-i",
+                AUDIO_INPUT_DEVICE,  # Audio input device (hw:2,0)
+            ],
+        )
+
+    # Output options
+    command.extend(
+        [
+            # Video encoding
+            "-c:v",
+            VIDEO_CODEC,  # H264 video codec
+            "-preset",
+            VIDEO_PRESET,  # Encoding speed
+            "-crf",
+            str(VIDEO_CRF),  # Quality level
+            "-pix_fmt",
+            "yuv420p",  # Pixel format (compatible)
+        ],
+    )
+
+    # Add audio encoding if enabled
+    if CAPTURE_AUDIO:
+        command.extend(
+            [
+                "-c:a",
+                AUDIO_CODEC,  # AAC audio codec
+                "-b:a",
+                AUDIO_BITRATE,  # Audio bitrate (128k)
+            ],
+        )
+
+    # Final output options
+    command.extend(
+        [
+            "-movflags",
+            # WHY frag_keyframe+empty_moov: Ensures valid MP4 even if
+            # interrupted. Context: We stop FFmpeg with SIGTERM (manual stop),
+            # not natural completion. Standard movflags require FFmpeg to
+            # finish normally to finalize the moov atom (MP4 metadata). If
+            # interrupted, file is corrupted ("moov atom not found").
+            # These flags create fragmented MP4:
+            #   - empty_moov: Write moov atom at start (empty placeholder)
+            #   - frag_keyframe: Create fragments at each keyframe
+            # Result: File is always valid, even if SIGTERM interrupts
+            # recording. Tradeoff: Slightly larger file size (~2-5%) vs
+            # guaranteed validity
+            # Alternative: +faststart requires natural completion (not
+            # suitable)
+            "+frag_keyframe+empty_moov",
+            # Logging
+            "-loglevel",
+            FFMPEG_LOG_LEVEL,
+            # Output file (overwrite if exists)
+            "-y",
+            output_file,
+        ],
+    )
 
     return command
 
