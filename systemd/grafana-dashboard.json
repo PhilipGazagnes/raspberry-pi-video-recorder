@@ -1,0 +1,387 @@
+{
+  "dashboard": {
+    "title": "Raspberry Pi Video Recorder",
+    "description": "System health and recorder status monitoring",
+    "tags": ["raspberry-pi", "video-recorder", "monitoring"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "System Health",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+        "collapsed": false
+      },
+      {
+        "title": "CPU Usage",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 6, "x": 0, "y": 1 },
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",job=\"node\"}[5m])) * 100)",
+            "legendFormat": "CPU %",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 70, "color": "yellow" },
+                { "value": 90, "color": "red" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "legend": { "displayMode": "list", "placement": "bottom" }
+        }
+      },
+      {
+        "title": "CPU Temperature",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 6, "x": 6, "y": 1 },
+        "targets": [
+          {
+            "expr": "node_hwmon_temp_celsius{job=\"node\"}",
+            "legendFormat": "CPU Temp",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "celsius",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 70, "color": "yellow" },
+                { "value": 80, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Memory Usage",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
+        "targets": [
+          {
+            "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"}))",
+            "legendFormat": "Memory %",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 80, "color": "yellow" },
+                { "value": 95, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Disk Space",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+        "targets": [
+          {
+            "expr": "100 * (1 - (recorder_disk_free_bytes{job=\"recorder\"} / (recorder_disk_free_bytes{job=\"recorder\"} + (recorder_disk_usage_ratio{job=\"recorder\"} * recorder_disk_free_bytes{job=\"recorder\"} / (1 - recorder_disk_usage_ratio{job=\"recorder\"})))))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 80, "color": "yellow" },
+                { "value": 95, "color": "red" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "title": "Recorder Status",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+        "collapsed": false
+      },
+      {
+        "title": "Service Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 10 },
+        "targets": [
+          {
+            "expr": "recorder_up{job=\"recorder\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              { "type": "value", "value": "1", "text": "UP" },
+              { "type": "value", "value": "0", "text": "DOWN" }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "value"
+        }
+      },
+      {
+        "title": "Current State",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 10 },
+        "targets": [
+          {
+            "expr": "max by (state) (recorder_state{job=\"recorder\"} == 1)",
+            "legendFormat": "{{state}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "blue" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "name"
+        }
+      },
+      {
+        "title": "Recording Active",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 10 },
+        "targets": [
+          {
+            "expr": "recorder_recording_active{job=\"recorder\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              { "type": "value", "value": "1", "text": "RECORDING" },
+              { "type": "value", "value": "0", "text": "IDLE" }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 1, "color": "orange" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "value"
+        }
+      },
+      {
+        "title": "Upload Queue",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 10 },
+        "targets": [
+          {
+            "expr": "recorder_upload_queue_size{job=\"recorder\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 5, "color": "yellow" },
+                { "value": 10, "color": "red" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "area",
+          "colorMode": "background"
+        }
+      },
+      {
+        "title": "Service Uptime",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 12, "x": 0, "y": 14 },
+        "targets": [
+          {
+            "expr": "recorder_uptime_seconds{job=\"recorder\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "blue" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background"
+        }
+      },
+      {
+        "title": "Upload Success Rate",
+        "type": "gauge",
+        "gridPos": { "h": 4, "w": 12, "x": 12, "y": 14 },
+        "targets": [
+          {
+            "expr": "recorder_upload_success_rate{job=\"recorder\"} * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "red" },
+                { "value": 80, "color": "yellow" },
+                { "value": 95, "color": "green" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "title": "Upload Activity",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+        "collapsed": false
+      },
+      {
+        "title": "Video Counts by Status",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+        "targets": [
+          {
+            "expr": "recorder_videos_total{job=\"recorder\"}",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "options": {
+          "legend": { "displayMode": "table", "placement": "right", "calcs": ["last"] }
+        }
+      },
+      {
+        "title": "Upload Queue Size Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+        "targets": [
+          {
+            "expr": "recorder_upload_queue_size{job=\"recorder\"}",
+            "legendFormat": "Queue Size",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0
+          }
+        }
+      },
+      {
+        "title": "Logs",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+        "collapsed": false
+      },
+      {
+        "title": "Recorder Service Logs",
+        "type": "logs",
+        "gridPos": { "h": 12, "w": 24, "x": 0, "y": 28 },
+        "targets": [
+          {
+            "expr": "{job=\"recorder-service\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": false,
+          "showCommonLabels": false,
+          "wrapLogMessage": true,
+          "sortOrder": "Descending",
+          "dedupStrategy": "none"
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

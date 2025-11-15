@@ -76,9 +76,7 @@ class MetricsExporter:
                 timestamp = datetime.fromisoformat(
                     self.last_heartbeat["timestamp"],
                 )
-                self.heartbeat_age = (
-                    datetime.now() - timestamp
-                ).total_seconds()
+                self.heartbeat_age = (datetime.now() - timestamp).total_seconds()
             else:
                 self.heartbeat_age = 999
 
@@ -176,8 +174,7 @@ class MetricsExporter:
             )
             metrics.append("# TYPE recorder_disk_usage_ratio gauge")
             metrics.append(
-                f"recorder_disk_usage_ratio "
-                f"{stats.space_usage_percent / 100:.3f}",
+                f"recorder_disk_usage_ratio " f"{stats.space_usage_percent / 100:.3f}",
             )
 
             # Video counts - labeled by status
