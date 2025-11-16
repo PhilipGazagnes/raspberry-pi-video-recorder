@@ -54,6 +54,7 @@ from config.settings import (
     HEARTBEAT_INTERVAL,
     MAX_UPLOAD_RETRIES,
     NETWORK_CHECK_INTERVAL,
+    RESTART_COUNTER_FILE,
     RETRY_DELAY_SECONDS,
     STORAGE_BASE_PATH,
     WARNING_TIME,
@@ -108,6 +109,11 @@ class RecorderService:
         self.state = SystemState.BOOTING
         self.state_start_time = time.time()
         self.running = False
+        self.error_count = 0  # Track total errors (red LED activations)
+
+        # Restart counter (persistent across service restarts)
+        self.restart_counter_file = Path(RESTART_COUNTER_FILE)
+        self.restart_count = self._increment_restart_counter()
 
         # Heartbeat setup for liveness monitoring
         self.heartbeat_file = Path(HEARTBEAT_FILE)
@@ -130,6 +136,7 @@ class RecorderService:
 
         # Network monitoring worker
         self.network_monitor_thread: Optional[threading.Thread] = None
+        self.internet_connected = False  # Track internet connectivity status
 
         # Initialize hardware controllers
         self.logger.info("Initializing hardware controllers...")
@@ -218,6 +225,33 @@ class RecorderService:
                 self.logger.error("Camera stopped unexpectedly!")
                 self._handle_recording_error("Camera stopped unexpectedly")
 
+    def _increment_restart_counter(self) -> int:
+        """
+        Increment and persist restart counter.
+
+        Reads current count from file, increments it, writes back.
+        This survives service restarts to track total restart count.
+
+        Returns:
+            New restart count (int)
+        """
+        try:
+            # Read current count (default to 0 if file doesn't exist)
+            if self.restart_counter_file.exists():
+                current_count = int(self.restart_counter_file.read_text().strip())
+            else:
+                current_count = 0
+
+            # Increment and save
+            new_count = current_count + 1
+            self.restart_counter_file.write_text(str(new_count))
+            self.logger.info(f"Service restart #{new_count}")
+            return new_count
+
+        except Exception as e:
+            self.logger.error(f"Failed to update restart counter: {e}")
+            return 0  # Default to 0 on error
+
     def _write_heartbeat(self):
         """
         Write heartbeat for liveness detection.
@@ -233,6 +267,9 @@ class RecorderService:
         - upload_queue_size: Number of videos waiting to upload
         - currently_uploading: Filename being uploaded (if any)
         - pid: Process ID for monitoring
+        - error_count: Total errors since service start
+        - restart_count: Total service restarts (persistent)
+        - internet_connected: Whether internet is currently available
         """
         try:
             heartbeat = {
@@ -247,6 +284,9 @@ class RecorderService:
                     else None
                 ),
                 "pid": os.getpid(),
+                "error_count": self.error_count,
+                "restart_count": self.restart_count,
+                "internet_connected": self.internet_connected,
             }
 
             # Atomic write (write to temp file, then rename)
@@ -316,6 +356,7 @@ class RecorderService:
             error_message: Description of error for logging
         """
         self.logger.error(f"Transitioning to ERROR state: {error_message}")
+        self.error_count += 1  # Increment error counter for metrics
         self.state = SystemState.ERROR
         self.state_start_time = time.time()
 
@@ -854,6 +895,9 @@ class RecorderService:
             try:
                 # Check internet connectivity
                 is_connected = check_internet_connectivity()
+
+                # Store status for metrics
+                self.internet_connected = is_connected
 
                 # Update WHITE LED status
                 self.led.set_network_status(is_connected)

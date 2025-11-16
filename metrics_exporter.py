@@ -160,6 +160,32 @@ class MetricsExporter:
             uptime = self.last_heartbeat.get("uptime_seconds", 0)
             metrics.append(f"recorder_uptime_seconds {uptime:.0f}")
 
+            # Error count - total number of errors (red LED activations)
+            metrics.append(
+                "# HELP recorder_error_count Total errors since service start",
+            )
+            metrics.append("# TYPE recorder_error_count counter")
+            error_count = self.last_heartbeat.get("error_count", 0)
+            metrics.append(f"recorder_error_count {error_count}")
+
+            # Restart count - total service restarts (persistent)
+            metrics.append(
+                "# HELP recorder_restart_count Total service restarts",
+            )
+            metrics.append("# TYPE recorder_restart_count counter")
+            restart_count = self.last_heartbeat.get("restart_count", 0)
+            metrics.append(f"recorder_restart_count {restart_count}")
+
+            # Internet connectivity status
+            metrics.append(
+                "# HELP recorder_internet_connected Internet connectivity status",
+            )
+            metrics.append("# TYPE recorder_internet_connected gauge")
+            internet_connected = (
+                1 if self.last_heartbeat.get("internet_connected") else 0
+            )
+            metrics.append(f"recorder_internet_connected {internet_connected}")
+
         # Storage metrics - disk space and video counts
         try:
             stats = self.storage.get_stats()

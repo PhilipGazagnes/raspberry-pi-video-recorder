@@ -128,6 +128,12 @@ HEARTBEAT_FILE = os.getenv(
 )
 HEARTBEAT_TIMEOUT = int(os.getenv("HEARTBEAT_TIMEOUT", "30"))  # seconds
 
+# Restart Counter (persistent across service restarts)
+RESTART_COUNTER_FILE = os.getenv(
+    "RESTART_COUNTER_FILE",
+    "/tmp/recorder_restart_count.txt",  # noqa: S108
+)
+
 # Watchdog Configuration
 WATCHDOG_CHECK_INTERVAL = int(os.getenv("WATCHDOG_CHECK_INTERVAL", "10"))  # seconds
 WATCHDOG_MAX_RESTART_ATTEMPTS = int(
