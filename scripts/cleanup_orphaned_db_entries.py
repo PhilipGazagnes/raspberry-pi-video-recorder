@@ -79,7 +79,8 @@ def cleanup_orphaned_entries(dry_run: bool = True) -> dict:
         for video in orphaned:
             try:
                 # Delete from database only (file already gone)
-                storage.db.delete_video(video.filename)
+                # remove_file=False because the file doesn't exist anymore
+                storage.delete_video(video, remove_file=False)
                 deleted_count += 1
                 logger.info(f"✓ Deleted DB entry: {video.filename}")
             except Exception as e:
