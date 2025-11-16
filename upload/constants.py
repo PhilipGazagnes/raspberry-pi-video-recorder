@@ -47,10 +47,7 @@ HTTP_TIMEOUT = 30
 
 # These constants remain here for backward compatibility but should be
 # imported from config.settings in new code
-from config.settings import (
-    DEFAULT_PRIVACY_STATUS,
-    DEFAULT_VIDEO_TAGS,
-)
+from config.settings import DEFAULT_PRIVACY_STATUS, DEFAULT_VIDEO_TAGS
 from config.settings import SESSION_TITLE_PREFIX as VIDEO_TITLE_PREFIX
 from config.settings import YOUTUBE_CATEGORY_ID as YOUTUBE_CATEGORY_SPORTS
 
@@ -80,7 +77,7 @@ SUPPORTED_VIDEO_FORMATS = [".mp4", ".avi", ".mov", ".mkv"]
 
 # Maximum file size (bytes) - YouTube limit is 256 GB
 # Setting to 2 GB for practical limit (longer videos unlikely in your use case)
-MAX_VIDEO_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB
+MAX_VIDEO_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 2 GB
 
 # Minimum file size (bytes) - sanity check for corrupted files
 MIN_VIDEO_FILE_SIZE = 1 * 1024 * 1024  # 1 MB

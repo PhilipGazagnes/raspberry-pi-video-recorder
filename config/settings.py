@@ -25,7 +25,7 @@ GPIO_LED_WHITE = 27  # Status LED for network connectivity (dimmed)
 GPIO_LED_BLUE = 17  # Status LED for upload activity (dimmed, blinking)
 
 # Button Configuration
-BUTTON_LONG_PRESS_DURATION = 2.0  # seconds - hold duration for long press
+BUTTON_LONG_PRESS_DURATION = 1.0  # seconds - hold duration for long press
 
 # Audio/TTS Configuration
 TTS_RATE = 150  # Words per minute
@@ -98,7 +98,7 @@ MIN_FREE_SPACE_BYTES = 5 * 1024 * 1024 * 1024  # 5 GB
 LOW_SPACE_WARNING_BYTES = 10 * 1024 * 1024 * 1024  # 10 GB
 
 # Video Retention
-MAX_UPLOADED_VIDEOS = 30  # Maximum videos in uploaded directory
+MAX_UPLOADED_VIDEOS = 20  # Maximum videos in uploaded directory
 UPLOADED_RETENTION_DAYS = 7  # Days to keep uploaded videos
 
 # Upload Retry Configuration
