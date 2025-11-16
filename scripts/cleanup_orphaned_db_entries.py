@@ -50,7 +50,8 @@ def cleanup_orphaned_entries(dry_run: bool = True) -> dict:
     storage = create_storage()
 
     # Get all videos from database
-    all_videos = storage.list_all_videos()
+    # list_videos() with no args returns all videos regardless of status
+    all_videos = storage.list_videos()
     logger.info(f"Found {len(all_videos)} total videos in database")
 
     # Check which files exist
