@@ -23,6 +23,11 @@ StartLimitIntervalSec=600
 
 # Environment
 Environment=PYTHONUNBUFFERED=1
+# PulseAudio environment (needed for audio capture from camera microphone)
+# XDG_RUNTIME_DIR: User runtime directory where PulseAudio socket lives
+# PULSE_SERVER: Direct path to PulseAudio socket
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
 
 # Logging
 StandardOutput=journal
