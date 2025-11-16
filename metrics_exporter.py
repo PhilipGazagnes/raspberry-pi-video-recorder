@@ -174,7 +174,7 @@ class MetricsExporter:
             )
             metrics.append("# TYPE recorder_disk_usage_ratio gauge")
             metrics.append(
-                f"recorder_disk_usage_ratio " f"{stats.space_usage_percent / 100:.3f}",
+                f"recorder_disk_usage_ratio {stats.space_usage_percent / 100:.3f}",
             )
 
             # Video counts - labeled by status

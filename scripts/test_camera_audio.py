@@ -139,17 +139,17 @@ def check_camera_audio_support(camera_device: str = DEFAULT_CAMERA_DEVICE) -> No
             # Check if USB camera appears
             if "usb" in result.stdout.lower() or "webcam" in result.stdout.lower():
                 print(
-                    "\n   ✓ USB audio device found - your camera likely has a microphone!"
+                    "\n   ✓ USB audio device found - your camera likely has a microphone!",
                 )
                 print(
-                    "   Note the 'card' and 'device' numbers above (e.g., card 1: USB PnP)"
+                    "   Note the 'card' and 'device' numbers above (e.g., card 1: USB PnP)",
                 )
         else:
             print("   No audio capture devices found")
 
     except FileNotFoundError:
         print(
-            "   ℹ 'arecord' not found (install alsa-utils: sudo apt-get install alsa-utils)"
+            "   ℹ 'arecord' not found (install alsa-utils: sudo apt-get install alsa-utils)",
         )
     except Exception as e:
         print(f"   ⚠ Could not list audio devices: {e}")

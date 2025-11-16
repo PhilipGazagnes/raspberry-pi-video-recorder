@@ -140,8 +140,14 @@ class CleanupManager:
         # Get videos exceeding max count
         count_based = self.enforce_max_count(sorted_videos)
 
-        # Combine (use set to avoid duplicates)
-        to_cleanup = list(set(age_based + count_based))
+        # Combine and deduplicate by filename (unique identifier)
+        # VideoFile objects are not hashable, so we can't use set()
+        seen_filenames = set()
+        to_cleanup = []
+        for video in age_based + count_based:
+            if video.filename not in seen_filenames:
+                seen_filenames.add(video.filename)
+                to_cleanup.append(video)
 
         # Sort final list oldest first
         to_cleanup.sort(key=lambda v: v.created_at)
