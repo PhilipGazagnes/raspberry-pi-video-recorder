@@ -48,6 +48,7 @@ from typing import Optional
 
 from config.settings import (
     CLEANUP_INTERVAL_SECONDS,
+    CONTROL_FILE,
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
     HEARTBEAT_FILE,
@@ -118,6 +119,9 @@ class RecorderService:
         # Heartbeat setup for liveness monitoring
         self.heartbeat_file = Path(HEARTBEAT_FILE)
         self.last_heartbeat = time.time()
+
+        # Remote control file for SSH/script commands
+        self.control_file = Path(CONTROL_FILE)
 
         # Recording session tracking
         self.current_session: Optional[RecordingSession] = None
@@ -217,6 +221,9 @@ class RecorderService:
             self._write_heartbeat()
             self.last_heartbeat = current_time
 
+        # Check for remote control commands (SSH/script control)
+        self._check_control_commands()
+
         # If recording, check session health
         if self.state == SystemState.RECORDING and self.current_session:
             # RecordingSession handles its own timing and warnings
@@ -299,6 +306,105 @@ class RecorderService:
             # Never crash on heartbeat failure - just log and continue
             # Heartbeat is for monitoring, not critical functionality
             self.logger.warning(f"Failed to write heartbeat: {e}")
+
+    def _check_control_commands(self):
+        """
+        Check for and process remote control commands.
+
+        Monitors control file for commands sent via SSH/scripts.
+        File-based approach: cheap to check (tmpfs), flexible, simple.
+
+        Supported commands:
+        - START: Start recording (like short button press in READY state)
+        - STOP: Stop recording (like short button press in RECORDING state)
+        - EXTEND: Extend recording by 5 minutes (like long press in
+          RECORDING)
+        - STATUS: Log current state (for debugging)
+
+        WHY file-based control instead of signals or sockets:
+        - Simple: echo "START" > /tmp/recorder_control.cmd
+        - No parsing overhead (just read small text file)
+        - Testable: can manually create file to test
+        - tmpfs = RAM-backed, no disk I/O
+        - Self-cleaning: file deleted after processing
+
+        Performance impact: Negligible (~1µs Path.exists() check per loop)
+        """
+        if not self.control_file.exists():
+            return  # No command waiting - most common case
+
+        try:
+            # Read command from file
+            command = self.control_file.read_text().strip().upper()
+
+            # Delete file immediately to prevent re-processing
+            self.control_file.unlink()
+
+            self.logger.info(f"Remote command received: {command}")
+
+            # Process command using helper method
+            self._process_remote_command(command)
+
+        except Exception as e:
+            # Never crash on control command failure
+            self.logger.error(f"Failed to process control command: {e}")
+            # Try to clean up the file even if processing failed
+            try:
+                if self.control_file.exists():
+                    self.control_file.unlink()
+            except Exception:  # noqa: S110
+                # Silently ignore cleanup failures - already in error path
+                # Main error already logged above
+                pass
+
+    def _process_remote_command(self, command: str):
+        """
+        Process a specific remote command.
+
+        Separated from _check_control_commands to reduce complexity.
+
+        Args:
+            command: Command string (START, STOP, EXTEND, STATUS)
+        """
+        if command == "START":
+            if self.state == SystemState.READY:
+                self.logger.info("Remote START → starting recording")
+                self._start_recording()
+            else:
+                self.logger.warning(
+                    f"Remote START ignored - state is {self.state.value} "
+                    "(must be READY)",
+                )
+
+        elif command == "STOP":
+            if self.state == SystemState.RECORDING:
+                self.logger.info("Remote STOP → stopping recording")
+                self._stop_recording()
+            else:
+                self.logger.warning(
+                    f"Remote STOP ignored - state is {self.state.value} "
+                    "(must be RECORDING)",
+                )
+
+        elif command == "EXTEND":
+            if self.state == SystemState.RECORDING:
+                self.logger.info("Remote EXTEND → extending recording")
+                self._extend_recording()
+            else:
+                self.logger.warning(
+                    f"Remote EXTEND ignored - state is {self.state.value} "
+                    "(must be RECORDING)",
+                )
+
+        elif command == "STATUS":
+            self.logger.info(
+                f"Remote STATUS → state: {self.state.value}, "
+                f"recording: {self.current_session is not None}, "
+                f"queue: {self.upload_queue.qsize()}",
+            )
+
+        else:
+            self.logger.warning(f"Unknown remote command: {command}")
 
     # =========================================================================
     # STATE TRANSITIONS

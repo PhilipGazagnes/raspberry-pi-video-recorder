@@ -128,6 +128,14 @@ HEARTBEAT_FILE = os.getenv(
 )
 HEARTBEAT_TIMEOUT = int(os.getenv("HEARTBEAT_TIMEOUT", "30"))  # seconds
 
+# Remote Control Configuration
+# File-based control for triggering actions via SSH/scripts
+# Commands: START, STOP, EXTEND, STATUS
+CONTROL_FILE = os.getenv(
+    "CONTROL_FILE",
+    "/tmp/recorder_control.cmd",  # noqa: S108
+)
+
 # Restart Counter (persistent across service restarts)
 RESTART_COUNTER_FILE = os.getenv(
     "RESTART_COUNTER_FILE",
