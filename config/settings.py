@@ -9,8 +9,14 @@ Guidelines:
 - Keep values generic and domain-agnostic
 """
 
+import logging
 import os
 from pathlib import Path
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+
+load_dotenv()  # Load .env from current directory or parent directories
 
 # =============================================================================
 # HARDWARE CONFIGURATION
@@ -192,3 +198,9 @@ YOUTUBE_CLIENT_SECRET_PATH = os.getenv(
 )
 YOUTUBE_TOKEN_PATH = os.getenv("YOUTUBE_TOKEN_PATH", "credentials/token.json")
 YOUTUBE_PLAYLIST_ID = os.getenv("YOUTUBE_PLAYLIST_ID", "")  # Optional playlist ID
+
+# Debug log to verify .env is loaded correctly (remove after debugging)
+_config_logger = logging.getLogger(__name__)
+_config_logger.info(
+    f"🔍 DEBUG: config/settings.py loaded YOUTUBE_PLAYLIST_ID='{YOUTUBE_PLAYLIST_ID}'",
+)
