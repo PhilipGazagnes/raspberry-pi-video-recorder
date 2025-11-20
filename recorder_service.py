@@ -59,6 +59,7 @@ from config.settings import (
     RETRY_DELAY_SECONDS,
     STORAGE_BASE_PATH,
     WARNING_TIME,
+    YOUTUBE_PLAYLIST_ID,
 )
 from core.network import check_internet_connectivity
 from hardware import ButtonController, LEDController
@@ -154,7 +155,7 @@ class RecorderService:
         # Initialize storage and upload
         self.logger.info("Initializing storage and upload...")
         self.storage = StorageController()
-        self.uploader = UploadController()
+        self.uploader = UploadController(playlist_id=YOUTUBE_PLAYLIST_ID)
 
         # Wire up callbacks
         self._setup_callbacks()
