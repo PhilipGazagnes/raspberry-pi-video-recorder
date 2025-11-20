@@ -65,8 +65,18 @@ class UploadController:
         self.logger = logging.getLogger(__name__)
 
         # Create or use provided uploader
-        self.uploader = uploader or create_uploader()
+        # CRITICAL: Pass playlist_id to create_uploader so it gets to YouTubeUploader
+        self.uploader = uploader or create_uploader(playlist_id=playlist_id)
         self.default_playlist_id = playlist_id
+
+        self.logger.info(
+            f"🔍 DEBUG: UploadController.__init__ received "
+            f"playlist_id={playlist_id}",
+        )
+        self.logger.info(
+            f"🔍 DEBUG: UploadController.default_playlist_id set to "
+            f"{self.default_playlist_id}",
+        )
 
         # Verify uploader is ready
         if not self.uploader.is_available():
@@ -115,9 +125,19 @@ class UploadController:
         target_playlist = playlist_id or self.default_playlist_id
 
         self.logger.info(f"Uploading video: {video_path}")
+        self.logger.info(
+            f"🔍 DEBUG: UploadController.upload_video() - "
+            f"playlist_id param={playlist_id}, "
+            f"default_playlist_id={self.default_playlist_id}, "
+            f"target_playlist={target_playlist}",
+        )
         self.logger.debug(f"Title: {title}, Playlist: {target_playlist}")
 
         # Delegate to uploader
+        self.logger.info(
+            f"🔍 DEBUG: Calling uploader.upload_video() with "
+            f"playlist_id={target_playlist}",
+        )
         result = self.uploader.upload_video(
             video_path=video_path,
             title=title,

@@ -155,6 +155,10 @@ class RecorderService:
         # Initialize storage and upload
         self.logger.info("Initializing storage and upload...")
         self.storage = StorageController()
+        self.logger.info(
+            f"🔍 DEBUG: Initializing UploadController with "
+            f"playlist_id={YOUTUBE_PLAYLIST_ID}",
+        )
         self.uploader = UploadController(playlist_id=YOUTUBE_PLAYLIST_ID)
 
         # Wire up callbacks

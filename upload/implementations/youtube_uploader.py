@@ -223,8 +223,24 @@ class YouTubeUploader(UploaderInterface):
 
             # Add to playlist if specified
             target_playlist = playlist_id or self.default_playlist_id
+            self.logger.info(
+                f"🔍 DEBUG: YouTubeUploader.upload_video() - "
+                f"playlist_id param={playlist_id}, "
+                f"default_playlist_id={self.default_playlist_id}, "
+                f"target_playlist={target_playlist}, "
+                f"video_id={video_id}",
+            )
             if target_playlist and video_id:
+                self.logger.info(
+                    f"🔍 DEBUG: Calling _add_to_playlist with "
+                    f"video_id={video_id}, playlist_id={target_playlist}",
+                )
                 self._add_to_playlist(video_id, target_playlist)
+            else:
+                self.logger.warning(
+                    f"⚠️ DEBUG: NOT adding to playlist - "
+                    f"target_playlist={target_playlist}, video_id={video_id}",
+                )
 
             # Calculate upload duration
             upload_duration = time.time() - start_time

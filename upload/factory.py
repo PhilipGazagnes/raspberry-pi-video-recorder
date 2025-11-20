@@ -130,6 +130,13 @@ class UploaderFactory:
         # Get playlist ID (argument overrides config)
         target_playlist = playlist_id or settings.YOUTUBE_PLAYLIST_ID
 
+        cls._logger.info(
+            f"🔍 DEBUG: UploaderFactory._create_youtube_uploader() - "
+            f"playlist_id param={playlist_id}, "
+            f"settings.YOUTUBE_PLAYLIST_ID={settings.YOUTUBE_PLAYLIST_ID}, "
+            f"target_playlist={target_playlist}",
+        )
+
         # Create OAuth manager
         oauth_manager = OAuthManager(
             client_secret_path=client_secret_path,
@@ -137,6 +144,10 @@ class UploaderFactory:
         )
 
         # Create uploader
+        cls._logger.info(
+            f"🔍 DEBUG: Creating YouTubeUploader with "
+            f"playlist_id={target_playlist}",
+        )
         uploader = YouTubeUploader(
             oauth_manager=oauth_manager,
             playlist_id=target_playlist,
