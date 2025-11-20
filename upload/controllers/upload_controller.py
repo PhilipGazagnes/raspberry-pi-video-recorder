@@ -65,7 +65,8 @@ class UploadController:
         self.logger = logging.getLogger(__name__)
 
         # Create or use provided uploader
-        self.uploader = uploader or create_uploader()
+        # Pass playlist_id to factory so it reaches YouTubeUploader
+        self.uploader = uploader or create_uploader(playlist_id=playlist_id)
         self.default_playlist_id = playlist_id
 
         # Verify uploader is ready
