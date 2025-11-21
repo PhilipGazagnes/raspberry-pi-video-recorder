@@ -1162,29 +1162,18 @@ def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # Console handlers (split by level for systemd priority detection)
+    # Console handler (stdout)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
     console_format = logging.Formatter(
-        "%(message)s | %(name)s",
+        "%(levelname)s - %(message)s | %(name)s",
     )
-
-    # stdout for INFO and DEBUG
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.DEBUG)
-    stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
-    stdout_handler.setFormatter(console_format)
-    logger.addHandler(stdout_handler)
-
-    # stderr for WARNING, ERROR, CRITICAL
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.WARNING)
-    stderr_handler.setFormatter(console_format)
-    logger.addHandler(stderr_handler)
-
-    # File handler with rotation
+    console_handler.setFormatter(console_format)
+    logger.addHandler(console_handler)    # File handler with rotation
     # Rotates daily, keeps 7 days
     # Define format once for both try and except blocks
     file_format = logging.Formatter(
-        "%(message)s | %(name)s",
+        "%(levelname)s - %(message)s | %(name)s",
     )
 
     log_file = "/var/log/recorder/service.log"

@@ -42,27 +42,13 @@ from config.settings import (
 )
 
 # Setup logging to both file and console
-# Use separate handlers for stdout/stderr so systemd can detect log levels
-log_format = logging.Formatter("%(message)s | %(name)s")
-
-# stdout for INFO and DEBUG
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.DEBUG)
-stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
-stdout_handler.setFormatter(log_format)
-
-# stderr for WARNING, ERROR, CRITICAL
-stderr_handler = logging.StreamHandler(sys.stderr)
-stderr_handler.setLevel(logging.WARNING)
-stderr_handler.setFormatter(log_format)
-
-# File handler
-file_handler = logging.FileHandler(Path(LOG_DIR) / LOG_WATCHDOG_FILE)
-file_handler.setFormatter(log_format)
-
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[file_handler, stdout_handler, stderr_handler],
+    format="%(levelname)s - %(message)s | %(name)s",
+    handlers=[
+        logging.FileHandler(Path(LOG_DIR) / LOG_WATCHDOG_FILE),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
 
