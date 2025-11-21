@@ -508,12 +508,14 @@ class LEDController:
             repeat_count=LED_EXTENSION_ADDED_REPEAT_COUNT,
         )
 
-        # Wait for extension pattern to complete
-        cycle_time = (
-            12 * LED_EXTENSION_ADDED_STEP_DURATION
-        ) + LED_EXTENSION_ADDED_PAUSE_DURATION
-        total_time = cycle_time * LED_EXTENSION_ADDED_REPEAT_COUNT
-        time.sleep(total_time + 0.1)  # Small buffer
+        # Wait for pattern thread to complete (join instead of sleep)
+        if self._blink_thread and self._blink_thread.is_alive():
+            # Calculate expected duration
+            cycle_time = (
+                12 * LED_EXTENSION_ADDED_STEP_DURATION
+            ) + LED_EXTENSION_ADDED_PAUSE_DURATION
+            total_time = cycle_time * LED_EXTENSION_ADDED_REPEAT_COUNT
+            self._blink_thread.join(timeout=total_time + 0.5)
 
         # Restore original pattern
         self._restore_pattern(restore_pattern)
@@ -557,12 +559,14 @@ class LEDController:
             repeat_count=LED_RECORDING_STARTED_REPEAT_COUNT,
         )
 
-        # Wait for pattern to complete
-        cycle_time = (
-            12 * LED_RECORDING_STARTED_STEP_DURATION
-        ) + LED_RECORDING_STARTED_PAUSE_DURATION
-        total_time = cycle_time * LED_RECORDING_STARTED_REPEAT_COUNT
-        time.sleep(total_time + 0.1)  # Small buffer
+        # Wait for pattern thread to complete (join instead of sleep)
+        if self._blink_thread and self._blink_thread.is_alive():
+            # Calculate expected duration
+            cycle_time = (
+                12 * LED_RECORDING_STARTED_STEP_DURATION
+            ) + LED_RECORDING_STARTED_PAUSE_DURATION
+            total_time = cycle_time * LED_RECORDING_STARTED_REPEAT_COUNT
+            self._blink_thread.join(timeout=total_time + 0.5)
 
         # Switch to recording pattern
         self.set_status(LEDPattern.RECORDING)
