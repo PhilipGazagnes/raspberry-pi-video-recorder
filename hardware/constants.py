@@ -47,22 +47,19 @@ BUTTON_DEBOUNCE_TIME = 0.05
 # =============================================================================
 # LED TIMING CONSTANTS
 # =============================================================================
-# LED blink rates for different states
-
-# Normal recording blink rate (in seconds)
-# 0.5s = 1Hz (on/off per second) - clearly visible but not annoying
-LED_BLINK_INTERVAL_NORMAL = 0.5
-
-# Fast error flash rate (in seconds)
-# 0.1s = 5Hz - rapid flashing grabs attention for errors
-LED_BLINK_INTERVAL_FAST = 0.1
-
-# How long to flash error LED (in seconds)
-LED_ERROR_FLASH_DURATION = 2.0
-
-# Warning sequence pattern timing (in seconds per color)
-# Green-Orange-Red cycle plays once when warning triggered
-LED_WARNING_SEQUENCE_INTERVAL = 0.2  # 200ms per color
+# =============================================================================
+# LED TIMING CONSTANTS (DEPRECATED - MOVED TO config/settings.py)
+# =============================================================================
+# LED animation configuration has been moved to config/settings.py
+# using the new 12-step pattern framework.
+#
+# Old constants kept here temporarily for backward compatibility.
+# These are no longer used by LEDController.
+#
+# Migration: Import from config.settings instead:
+#   from config.settings import LED_RECORDING_PATTERN
+#
+# TODO: Remove these after verifying no external dependencies
 
 
 # =============================================================================

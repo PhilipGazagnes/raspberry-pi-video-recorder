@@ -23,21 +23,51 @@ import threading
 import time
 from typing import Any, Dict, Optional
 
-from config.settings import GPIO_LED_BLUE, GPIO_LED_WHITE
+from config.settings import (
+    GPIO_LED_BLUE,
+    GPIO_LED_WHITE,
+    LED_ERROR_DURATION,
+    LED_ERROR_PATTERN,
+    LED_ERROR_PAUSE_DURATION,
+    LED_ERROR_STEP_DURATION,
+    LED_EXTENSION_ADDED_PATTERN,
+    LED_EXTENSION_ADDED_PAUSE_DURATION,
+    LED_EXTENSION_ADDED_REPEAT_COUNT,
+    LED_EXTENSION_ADDED_STEP_DURATION,
+    LED_RECORDING_PATTERN,
+    LED_RECORDING_PAUSE_DURATION,
+    LED_RECORDING_STARTED_PATTERN,
+    LED_RECORDING_STARTED_PAUSE_DURATION,
+    LED_RECORDING_STARTED_REPEAT_COUNT,
+    LED_RECORDING_STARTED_STEP_DURATION,
+    LED_RECORDING_STEP_DURATION,
+    LED_RECORDING_WARN1_PATTERN,
+    LED_RECORDING_WARN1_PAUSE_DURATION,
+    LED_RECORDING_WARN1_STEP_DURATION,
+    LED_RECORDING_WARN2_PATTERN,
+    LED_RECORDING_WARN2_PAUSE_DURATION,
+    LED_RECORDING_WARN2_STEP_DURATION,
+    LED_RECORDING_WARN3_PATTERN,
+    LED_RECORDING_WARN3_PAUSE_DURATION,
+    LED_RECORDING_WARN3_STEP_DURATION,
+    LED_UPLOAD_BLINK_INTERVAL,
+)
 from hardware.constants import (
     GPIO_LED_GREEN,
     GPIO_LED_ORANGE,
     GPIO_LED_RED,
-    LED_BLINK_INTERVAL_FAST,
-    LED_BLINK_INTERVAL_NORMAL,
-    LED_ERROR_FLASH_DURATION,
     LED_PATTERN_CONFIG,
     LEDColor,
     LEDPattern,
 )
 from hardware.factory import create_gpio
 from hardware.interfaces.gpio_interface import GPIOInterface, PinState
-from hardware.utils.gpio_utils import safe_gpio_cleanup, setup_led_pins, toggle_pin
+from hardware.utils import (
+    PatternParseError,
+    parse_pattern,
+    safe_gpio_cleanup,
+    setup_led_pins,
+)
 
 
 class LEDController:
@@ -161,29 +191,24 @@ class LEDController:
         green_on, orange_on, red_on, should_blink, blink_color = config
 
         if should_blink:
-            # Special case: sequence animation (warning pattern)
-            if blink_color == "sequence":
-                # Play the warning sequence in background thread
-                sequence_thread = threading.Thread(
-                    target=self.play_warning_sequence,
-                    daemon=True,
-                    name="LED-Warning-Sequence",
+            # Use 12-step pattern framework
+            if pattern == LEDPattern.RECORDING:
+                # Normal recording - green blink
+                self._start_pattern(
+                    LED_RECORDING_PATTERN,
+                    LED_RECORDING_STEP_DURATION,
+                    LED_RECORDING_PAUSE_DURATION,
+                    repeat_count=None,  # Continuous
                 )
-                sequence_thread.start()
+            elif pattern == LEDPattern.WARNING:
+                # Warning pattern - will be set by play_warning_sequence()
+                # This is called from external code, keep compatibility
+                self.play_warning_sequence()
             else:
-                # Standard blinking pattern
-                self._set_all_leds(False, False, False)  # Start with all off
-                # Type safety: blink_color should be LEDColor enum (not "sequence")
-                if blink_color is not None and isinstance(blink_color, LEDColor):
-                    self._start_blinking(
-                        blink_color,
-                        LED_BLINK_INTERVAL_NORMAL,
-                    )
-                else:
-                    self.logger.error(
-                        f"Invalid LED config: {pattern} has should_blink=True "
-                        "but invalid blink_color",
-                    )
+                self.logger.warning(
+                    f"Pattern {pattern.value} has should_blink=True "
+                    "but no pattern configuration",
+                )
         else:
             # Static pattern - just set the LEDs
             self._set_all_leds(green_on, orange_on, red_on)
@@ -268,34 +293,119 @@ class LEDController:
             self._blink_thread = None
             self.logger.debug("Stopped LED blinking")
 
-    def _blink_worker(self, color: LEDColor, interval: float) -> None:
+    def _start_pattern(
+        self,
+        pattern: str,
+        step_duration: float,
+        pause_duration: float,
+        repeat_count: Optional[int] = None,
+    ) -> None:
         """
-        Background thread that blinks an LED.
-
-        This runs in a separate thread so blinking doesn't block other operations.
-        Uses threading.Event.wait() for clean shutdown.
+        Start a pattern animation using the universal pattern engine.
 
         Args:
-            color: LED to blink
-            interval: Time between state changes
+            pattern: 12-step pattern string (e.g., "G-x-G-x-G-x-G-x-G-x-G-x")
+            step_duration: Seconds per step
+            pause_duration: Seconds of blank gap between cycles
+            repeat_count: Number of cycles (None = infinite)
         """
-        pin = self.pins[color]
-        current_state = PinState.LOW
+        # Stop any current blinking
+        self._stop_blinking()
 
-        # Keep blinking until stop event is set
-        while not self._blink_stop_event.wait(interval):
-            # Toggle LED state using shared utility
-            current_state = toggle_pin(self.gpio, pin, current_state)
+        # Reset stop event
+        self._blink_stop_event.clear()
 
-    def flash_error(self, duration: float = LED_ERROR_FLASH_DURATION) -> None:
+        # Start new pattern thread
+        self._blink_thread = threading.Thread(
+            target=self._pattern_worker,
+            args=(pattern, step_duration, pause_duration, repeat_count),
+            daemon=True,
+            name="LED-Pattern-Worker",
+        )
+        self._blink_thread.start()
+
+        self.logger.debug(
+            f"Started pattern: {pattern[:20]}... "
+            f"(step={step_duration}s, pause={pause_duration}s, "
+            f"repeat={repeat_count if repeat_count else 'infinite'})",
+        )
+
+    def _pattern_worker(
+        self,
+        pattern: str,
+        step_duration: float,
+        pause_duration: float,
+        repeat_count: Optional[int] = None,
+    ) -> None:
         """
-        Flash red LED rapidly to indicate error.
+        Universal pattern execution engine.
+
+        All LED animations use this single worker.
+        Parses pattern string and executes LED state sequences.
+
+        Args:
+            pattern: 12-step pattern string
+            step_duration: Seconds per step
+            pause_duration: Seconds between cycles
+            repeat_count: Number of cycles (None = infinite)
+
+        Pattern Format:
+            "G-O-R-GOR-x-x-G-O-R-GOR-x-x"
+            - 12 steps separated by "-"
+            - G=Green, O=Orange, R=Red, x=Blank
+            - Multi-LED: GO, GOR, OR, GR
+
+        Examples:
+            "G-x-G-x-G-x-G-x-G-x-G-x" → Simple blink
+            "GO-x-GO-x-GO-x-GO-x-GO-x-GO-x" → Green+Orange blink
+            "G-O-R-GOR-G-O-R-GOR-x-x-x-x" → Complex sequence
+        """
+        try:
+            # Parse pattern to LED states
+            led_states = parse_pattern(pattern)
+        except PatternParseError as e:
+            self.logger.error(f"Invalid pattern: {e}")
+            return
+
+        cycle_count = 0
+
+        # Execute pattern cycles
+        while not self._blink_stop_event.is_set():
+            # Execute 12 steps
+            for green, orange, red in led_states:
+                self._set_all_leds(green, orange, red)
+
+                # Check for stop during step
+                if self._blink_stop_event.wait(step_duration):
+                    self._set_all_leds(False, False, False)  # Turn off on exit
+                    return
+
+            # Pause between cycles (if configured)
+            if pause_duration > 0:
+                self._set_all_leds(False, False, False)
+
+                # Check for stop during pause
+                if self._blink_stop_event.wait(pause_duration):
+                    return
+
+            # Check repeat limit
+            cycle_count += 1
+            if repeat_count is not None and cycle_count >= repeat_count:
+                self._set_all_leds(False, False, False)
+                self.logger.debug(
+                    f"Pattern completed {cycle_count} cycles, stopping",
+                )
+                return
+
+    def flash_error(self, duration: float = LED_ERROR_DURATION) -> None:
+        """
+        Flash red LED rapidly to indicate error using 12-step pattern.
 
         This is attention-grabbing for critical errors.
         After flashing, returns to previous pattern.
 
         Args:
-            duration: How long to flash in seconds (default from constants)
+            duration: How long to flash in seconds (default from settings)
 
         Example:
             led.flash_error()  # Flash for 2 seconds, then restore
@@ -305,32 +415,66 @@ class LEDController:
         # Save current pattern to restore later
         original_pattern = self.current_pattern
 
-        # Switch to rapid red flashing
-        self._stop_blinking()
-        self._set_all_leds(False, False, False)
-        self._start_blinking(LEDColor.RED, LED_BLINK_INTERVAL_FAST)
+        # Calculate how many cycles to flash for the duration
+        cycle_time = (12 * LED_ERROR_STEP_DURATION) + LED_ERROR_PAUSE_DURATION
+        repeat_count = max(1, int(duration / cycle_time))
 
-        # Schedule restoration after duration
-        # Timer creates its own thread - non-blocking
-        timer = threading.Timer(
-            duration,
-            lambda: self._restore_pattern(original_pattern),
+        # Start error pattern in background thread with automatic restore
+        flash_thread = threading.Thread(
+            target=self._flash_error_worker,
+            args=(original_pattern, repeat_count),
+            daemon=True,
+            name="LED-Error-Flash",
         )
-        timer.start()
+        flash_thread.start()
+
+    def _flash_error_worker(
+        self,
+        restore_pattern: LEDPattern,
+        repeat_count: int,
+    ) -> None:
+        """
+        Background worker for error flash.
+
+        Flashes error pattern, then restores original pattern.
+
+        Args:
+            restore_pattern: Pattern to restore after flashing
+            repeat_count: Number of error pattern cycles
+        """
+        # Stop current animation
+        self._stop_blinking()
+
+        # Execute error pattern
+        self._start_pattern(
+            LED_ERROR_PATTERN,
+            LED_ERROR_STEP_DURATION,
+            LED_ERROR_PAUSE_DURATION,
+            repeat_count=repeat_count,
+        )
+
+        # Wait for error pattern to complete
+        # Calculate total duration
+        cycle_time = (12 * LED_ERROR_STEP_DURATION) + LED_ERROR_PAUSE_DURATION
+        total_time = cycle_time * repeat_count
+        time.sleep(total_time + 0.1)  # Small buffer
+
+        # Restore original pattern
+        self._restore_pattern(restore_pattern)
 
     def flash_extension_success(self) -> None:
         """
-        Flash green LED 5 times quickly to confirm time extension.
+        Flash green LED using 12-step pattern to confirm time extension.
 
         Quick visual feedback that recording extension was successful.
         Returns to recording pattern (warning or normal green blinking).
 
-        Pattern: G_G_G_G_G_ (on/off 5 times, 0.1s each = 1 second total)
+        Uses LED_EXTENSION_ADDED pattern from settings.
 
         Example:
             led.flash_extension_success()  # Quick confirmation flash
         """
-        self.logger.info("Flashing extension success (5x green)")
+        self.logger.info("Flashing extension success")
 
         # Save current pattern to restore later
         original_pattern = self.current_pattern
@@ -346,130 +490,134 @@ class LEDController:
 
     def _extension_flash_worker(self, restore_pattern: LEDPattern) -> None:
         """
-        Background worker for extension success flash.
+        Background worker for extension success flash using pattern framework.
 
-        Flashes green 5 times quickly, then restores original pattern.
+        Executes extension pattern, then restores original pattern.
 
         Args:
             restore_pattern: Pattern to restore after flashing
         """
-        flash_count = 5
-        flash_interval = 0.1  # 0.1s on, 0.1s off = fast and snappy
-
         # Stop any current animation
         self._stop_blinking()
 
-        # Flash 5 times
-        for _flash in range(flash_count):
-            # Green ON
-            self._set_all_leds(True, False, False)
-            time.sleep(flash_interval)
+        # Execute extension pattern
+        self._start_pattern(
+            LED_EXTENSION_ADDED_PATTERN,
+            LED_EXTENSION_ADDED_STEP_DURATION,
+            LED_EXTENSION_ADDED_PAUSE_DURATION,
+            repeat_count=LED_EXTENSION_ADDED_REPEAT_COUNT,
+        )
 
-            # Green OFF
-            self._set_all_leds(False, False, False)
-            time.sleep(flash_interval)
+        # Wait for extension pattern to complete
+        cycle_time = (
+            12 * LED_EXTENSION_ADDED_STEP_DURATION
+        ) + LED_EXTENSION_ADDED_PAUSE_DURATION
+        total_time = cycle_time * LED_EXTENSION_ADDED_REPEAT_COUNT
+        time.sleep(total_time + 0.1)  # Small buffer
 
         # Restore original pattern
         self._restore_pattern(restore_pattern)
 
-    def play_warning_sequence(self) -> None:
+    def flash_recording_started(self) -> None:
         """
-        Start continuous green-orange-red warning sequence animation.
+        Flash green LED using 12-step pattern when recording starts.
+
+        Quick visual feedback that recording has begun.
+        After flashing, continues to recording pattern.
+
+        Uses LED_RECORDING_STARTED pattern from settings.
+
+        Example:
+            led.flash_recording_started()  # Quick flash when recording begins
+        """
+        self.logger.info("Flashing recording started")
+
+        # Run flash sequence in background thread (non-blocking)
+        flash_thread = threading.Thread(
+            target=self._recording_started_flash_worker,
+            daemon=True,
+            name="LED-Recording-Started-Flash",
+        )
+        flash_thread.start()
+
+    def _recording_started_flash_worker(self) -> None:
+        """
+        Background worker for recording started flash.
+
+        Executes recording started pattern, then switches to recording pattern.
+        """
+        # Stop any current animation
+        self._stop_blinking()
+
+        # Execute recording started pattern
+        self._start_pattern(
+            LED_RECORDING_STARTED_PATTERN,
+            LED_RECORDING_STARTED_STEP_DURATION,
+            LED_RECORDING_STARTED_PAUSE_DURATION,
+            repeat_count=LED_RECORDING_STARTED_REPEAT_COUNT,
+        )
+
+        # Wait for pattern to complete
+        cycle_time = (
+            12 * LED_RECORDING_STARTED_STEP_DURATION
+        ) + LED_RECORDING_STARTED_PAUSE_DURATION
+        total_time = cycle_time * LED_RECORDING_STARTED_REPEAT_COUNT
+        time.sleep(total_time + 0.1)  # Small buffer
+
+        # Switch to recording pattern
+        self.set_status(LEDPattern.RECORDING)
+
+    def play_warning_sequence(self, level: int = 3) -> None:
+        """
+        Start warning sequence animation using 12-step pattern framework.
 
         This is called when recording time warning is reached.
-        Repeats the sequence continuously with blank gaps until stopped.
+        Supports multiple warning levels with different patterns.
 
-        Timing perfectly matches green blinking for visual harmony:
-        - GORGOR sequence = 0.5s (same duration as green ON in recording)
-        - Blank gap = 0.5s (same duration as green OFF in recording)
-        - Total cycle = 1.0s (identical rhythm to recording pattern)
-
-        Pattern visualization:
-        Recording:  [GREEN....][     ][GREEN....][     ]...
-        Warning:    [G-O-R-G-O-R][     ][G-O-R-G-O-R][     ]...
+        Args:
+            level: Warning level (1, 2, or 3)
+                   1 = Early warning (3 minutes) - Green+Orange double blink
+                   2 = Mid warning (2 minutes) - All colors rapid sequence
+                   3 = Final warning (1 minute) - Fast all-LED flash
 
         Stops when:
         - Recording is extended
         - Recording completes
         - Pattern changes to something else
-        (All handled by existing LED pattern switching)
 
         Example:
-            led.play_warning_sequence()  # Starts continuous warning
+            led.play_warning_sequence(1)  # Level 1 warning
+            led.play_warning_sequence(3)  # Level 3 warning (default)
         """
-        self.logger.info("Starting warning sequence (continuous G-O-R with gaps)")
+        self.logger.info(f"Starting warning sequence level {level}")
 
         # Stop any current blinking
         self._stop_blinking()
 
         # Update current pattern so set_status() knows we're in warning mode
-        # This allows set_status(LEDPattern.RECORDING) to properly restore
         self.current_pattern = LEDPattern.WARNING
 
-        # Reset stop event - this allows the sequence to start fresh
-        self._blink_stop_event.clear()
+        # Select pattern based on level
+        if level == 1:
+            pattern = LED_RECORDING_WARN1_PATTERN
+            step_duration = LED_RECORDING_WARN1_STEP_DURATION
+            pause_duration = LED_RECORDING_WARN1_PAUSE_DURATION
+        elif level == 2:
+            pattern = LED_RECORDING_WARN2_PATTERN
+            step_duration = LED_RECORDING_WARN2_STEP_DURATION
+            pause_duration = LED_RECORDING_WARN2_PAUSE_DURATION
+        else:  # level 3 (default)
+            pattern = LED_RECORDING_WARN3_PATTERN
+            step_duration = LED_RECORDING_WARN3_STEP_DURATION
+            pause_duration = LED_RECORDING_WARN3_PAUSE_DURATION
 
-        # Start warning sequence in background thread
-        self._blink_thread = threading.Thread(
-            target=self._warning_sequence_worker,
-            daemon=True,
-            name="LED-Warning-Sequence",
+        # Start warning pattern (continuous, no repeat limit)
+        self._start_pattern(
+            pattern,
+            step_duration,
+            pause_duration,
+            repeat_count=None,  # Infinite
         )
-        self._blink_thread.start()
-
-    def _warning_sequence_worker(self) -> None:
-        """
-        Background worker for continuous warning sequence animation.
-
-        Repeats green-orange-red sequence (twice) with blank gaps.
-        Timing perfectly synchronized with green blinking pattern.
-
-        Pattern timing:
-        - GORGOR sequence = LED_BLINK_INTERVAL_NORMAL (0.5s, same as green ON)
-        - Blank = LED_BLINK_INTERVAL_NORMAL (0.5s, same as green OFF)
-        - Total cycle = 1.0s (identical to green blink rhythm)
-        - Each color in GORGOR = 0.5s / 6 = ~0.083s
-
-        If LED_BLINK_INTERVAL_NORMAL = 0.5:
-        - Each color = 0.5 / 6 = 0.0833s
-        - GORGOR total = 0.5s
-        - Blank = 0.5s
-        - Cycle total = 1.0s ✓
-
-        Visual alignment:
-        Green:    [GGGG 0.5s][____ 0.5s][GGGG 0.5s][____ 0.5s]...
-        Warning:  [GORGOR 0.5s][BLANK 0.5s][GORGOR 0.5s][BLANK 0.5s]...
-        """
-        warning_colors = [LEDColor.GREEN, LEDColor.ORANGE, LEDColor.RED]
-
-        # Match green blink intervals exactly
-        gorgor_duration = LED_BLINK_INTERVAL_NORMAL  # 0.5s
-        color_interval = gorgor_duration / 6  # Time per color in GORGOR
-        blank_interval = LED_BLINK_INTERVAL_NORMAL  # 0.5s (matches green OFF)
-
-        # Keep looping until stop event is set
-        while not self._blink_stop_event.is_set():
-            # Play the sequence TWICE (GORGOR) within gorgor_duration
-            for _repeat in range(2):
-                for color in warning_colors:
-                    # Turn on the current color
-                    if color == LEDColor.GREEN:
-                        self._set_all_leds(True, False, False)
-                    elif color == LEDColor.ORANGE:
-                        self._set_all_leds(False, True, False)
-                    elif color == LEDColor.RED:
-                        self._set_all_leds(False, False, True)
-
-                    # Check for stop during interval
-                    if self._blink_stop_event.wait(color_interval):
-                        return  # Stop event set, exit immediately
-
-            # Blank gap (exactly same as green OFF duration)
-            self._set_all_leds(False, False, False)
-
-            # Check for stop during gap
-            if self._blink_stop_event.wait(blank_interval):
-                return  # Stop event set, exit immediately
 
     def _restore_pattern(self, pattern: LEDPattern) -> None:
         """
@@ -591,7 +739,7 @@ class LEDController:
         """
         Background worker for BLUE LED upload blinking.
 
-        Blinks at 50% brightness with normal blink interval (0.5s).
+        Blinks with interval from settings.
         Continues until _upload_blink_event is set.
         """
         # _upload_blink_event is guaranteed to be set by set_upload_active()
@@ -600,7 +748,7 @@ class LEDController:
             self.logger.error("Upload blink event is None")
             return
 
-        blink_interval = LED_BLINK_INTERVAL_NORMAL
+        blink_interval = LED_UPLOAD_BLINK_INTERVAL
         brightness_high = PinState.HIGH
         brightness_low = PinState.LOW
 
