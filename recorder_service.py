@@ -1166,14 +1166,14 @@ def setup_logging():
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_format = logging.Formatter(
-        "%(levelname)s - %(message)s | %(name)s",
+        "%(message)s | %(name)s | %(levelname)s",
     )
     console_handler.setFormatter(console_format)
     logger.addHandler(console_handler)    # File handler with rotation
     # Rotates daily, keeps 7 days
     # Define format once for both try and except blocks
     file_format = logging.Formatter(
-        "%(levelname)s - %(message)s | %(name)s",
+        "%(message)s | %(name)s | %(levelname)s",
     )
 
     log_file = "/var/log/recorder/service.log"

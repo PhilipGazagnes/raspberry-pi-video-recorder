@@ -39,7 +39,7 @@ from storage import StorageController
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(levelname)s - %(message)s | %(name)s",
+    format="%(message)s | %(name)s | %(levelname)s",
 )
 logger = logging.getLogger(__name__)
 
