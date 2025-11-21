@@ -37,7 +37,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config.settings import HEARTBEAT_FILE, HEARTBEAT_TIMEOUT, METRICS_PORT
 from storage import StorageController
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s | %(name)s",
+)
 logger = logging.getLogger(__name__)
 
 

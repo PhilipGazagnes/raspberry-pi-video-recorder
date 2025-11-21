@@ -44,7 +44,7 @@ from config.settings import (
 # Setup logging to both file and console
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(message)s | %(name)s",
     handlers=[
         logging.FileHandler(Path(LOG_DIR) / LOG_WATCHDOG_FILE),
         logging.StreamHandler(sys.stdout),

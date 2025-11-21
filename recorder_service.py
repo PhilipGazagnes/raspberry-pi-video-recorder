@@ -1166,7 +1166,7 @@ def setup_logging():
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_format = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "%(message)s | %(name)s",
     )
     console_handler.setFormatter(console_format)
     logger.addHandler(console_handler)
@@ -1175,7 +1175,7 @@ def setup_logging():
     # Rotates daily, keeps 7 days
     # Define format once for both try and except blocks
     file_format = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "%(message)s | %(name)s",
     )
 
     log_file = "/var/log/recorder/service.log"
