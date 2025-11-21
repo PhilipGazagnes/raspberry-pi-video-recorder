@@ -435,8 +435,8 @@ class RecorderService:
         self.state = SystemState.RECORDING
         self.state_start_time = time.time()
 
-        # Update LED to recording (blinking green)
-        self.led.set_status(LEDPattern.RECORDING)
+        # Flash to indicate recording started, then show recording pattern
+        self.led.flash_recording_started()
 
     def _transition_to_processing(self):
         """
@@ -686,10 +686,8 @@ class RecorderService:
             else:
                 self.logger.info(f"Recording extended by {extension_minutes} minutes")
 
-            # Restore LED to recording pattern (no longer in warning zone)
-            self.led.set_status(LEDPattern.RECORDING)
-
-            # Flash green 5x quickly to confirm extension success
+            # Flash green to confirm extension, then restore previous pattern
+            # (flash worker handles restoring recording or warning pattern)
             self.led.flash_extension_success()
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")

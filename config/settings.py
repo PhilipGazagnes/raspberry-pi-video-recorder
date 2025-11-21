@@ -56,43 +56,44 @@ BUTTON_LONG_PRESS_DURATION = 1.0  # seconds - hold duration for long press
 # Ready State - Green solid (handled separately, no pattern needed)
 # This is a static state, not animated
 
-# Recording - Normal green blink (0.5s on, 0.5s off = 1.0s cycle)
-LED_RECORDING_PATTERN = "G-x-G-x-G-x-G-x-G-x-G-x"
-LED_RECORDING_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
+# Recording - Normal green blink (1s on, 1s off = 2s cycle)
+# Pattern simplified to reduce GPIO operations (less CPU wake-ups, quieter Pi)
+LED_RECORDING_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
+LED_RECORDING_STEP_DURATION = 0.167  # 12 * 0.167 = ~2.0s per cycle
 LED_RECORDING_PAUSE_DURATION = 0.0  # Continuous, no gap between cycles
 
 # Recording Started - 3 quick green flashes when recording begins
-LED_RECORDING_STARTED_PATTERN = "GGG-x-x-x-GGG-x-x-x-x-x-x-x"
-LED_RECORDING_STARTED_STEP_DURATION = 0.05  # 12 * 0.05 = 0.6s per cycle
-LED_RECORDING_STARTED_PAUSE_DURATION = 0.2  # 0.2s gap between flashes
+LED_RECORDING_STARTED_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
+LED_RECORDING_STARTED_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
+LED_RECORDING_STARTED_PAUSE_DURATION = 0.3  # 0.3s gap between flashes
 LED_RECORDING_STARTED_REPEAT_COUNT = 3  # Flash 3 times then stop
 
 # Warning Level 1 (WARNING_TIME_1) - Green+Orange double blink
-LED_RECORDING_WARN1_PATTERN = "GO-x-GO-x-x-x-GO-x-GO-x-x-x"
-LED_RECORDING_WARN1_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s
+LED_RECORDING_WARN1_PATTERN = "GO-GO-GO-x-x-x-GO-GO-GO-x-x-x"
+LED_RECORDING_WARN1_STEP_DURATION = 0.167  # 12 * 0.167 = ~2.0s
 LED_RECORDING_WARN1_PAUSE_DURATION = 0.0  # Continuous
 
-# Warning Level 2 (WARNING_TIME_2) - All colors rapid sequence
-LED_RECORDING_WARN2_PATTERN = "G-O-R-GOR-G-O-R-GOR-G-O-R-GOR"
-LED_RECORDING_WARN2_STEP_DURATION = 0.042  # 12 * 0.042 = ~0.5s per cycle
-LED_RECORDING_WARN2_PAUSE_DURATION = 0.5  # 0.5s blank gap between sequences
+# Warning Level 2 (WARNING_TIME_2) - All colors alternating sequence
+LED_RECORDING_WARN2_PATTERN = "G-G-O-O-R-R-GOR-GOR-x-x-x-x"
+LED_RECORDING_WARN2_STEP_DURATION = 0.125  # 12 * 0.125 = ~1.5s per cycle
+LED_RECORDING_WARN2_PAUSE_DURATION = 0.3  # 0.3s blank gap between sequences
 
-# Warning Level 3 (WARNING_TIME_3) - Fast all-LED flash
-LED_RECORDING_WARN3_PATTERN = "GOR-x-GOR-x-GOR-x-GOR-x-GOR-x-GOR-x"
-LED_RECORDING_WARN3_STEP_DURATION = 0.042  # 12 * 0.042 = ~0.5s
-LED_RECORDING_WARN3_PAUSE_DURATION = 0.0  # Continuous rapid flash
+# Warning Level 3 (WARNING_TIME_3) - All-LED urgent flash
+LED_RECORDING_WARN3_PATTERN = "GOR-GOR-GOR-x-x-x-GOR-GOR-GOR-x-x-x"
+LED_RECORDING_WARN3_STEP_DURATION = 0.125  # 12 * 0.125 = ~1.5s
+LED_RECORDING_WARN3_PAUSE_DURATION = 0.0  # Continuous
 
 # Extension Added - 5 quick green pulses to confirm time added
-LED_EXTENSION_ADDED_PATTERN = "GGG-x-x-x-GGG-x-x-x-x-x-x-x"
-LED_EXTENSION_ADDED_STEP_DURATION = 0.05  # 12 * 0.05 = 0.6s per cycle
-LED_EXTENSION_ADDED_PAUSE_DURATION = 0.15  # 0.15s between pulses
+LED_EXTENSION_ADDED_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
+LED_EXTENSION_ADDED_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
+LED_EXTENSION_ADDED_PAUSE_DURATION = 0.2  # 0.2s between pulses
 LED_EXTENSION_ADDED_REPEAT_COUNT = 5  # 5 pulses then restore previous pattern
 
-# Error - Fast red flash to grab attention
-LED_ERROR_PATTERN = "R-x-R-x-R-x-R-x-R-x-R-x"
-LED_ERROR_STEP_DURATION = 0.017  # 12 * 0.017 = ~0.2s per cycle (very fast)
-LED_ERROR_PAUSE_DURATION = 0.0  # Continuous rapid flash
-LED_ERROR_DURATION = 2.0  # Total duration to flash error before restoring
+# Error - Red flash to grab attention (slowed down to reduce noise)
+LED_ERROR_PATTERN = "R-R-R-R-R-R-x-x-x-x-x-x"
+LED_ERROR_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
+LED_ERROR_PAUSE_DURATION = 0.0  # Continuous flash
+LED_ERROR_DURATION = 3.0  # Total duration to flash error before restoring
 
 # Processing/Uploading - Orange solid (handled separately, no pattern needed)
 # This is a static state, not animated
