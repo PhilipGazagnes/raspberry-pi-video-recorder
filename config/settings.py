@@ -22,7 +22,7 @@ load_dotenv()
 # =============================================================================
 
 # GPIO Pin Assignments
-GPIO_BUTTON_PIN = 18  # Hardware PWM pin (physical pin 12)
+GPIO_BUTTON_PIN = 3  # Hardware PWM pin (physical pin 12)
 GPIO_LED_GREEN = 13  # Hardware PWM pin (physical pin 33)
 GPIO_LED_ORANGE = 12  # Hardware PWM pin (physical pin 32)
 GPIO_LED_RED = 19  # Hardware PWM pin (physical pin 35)
