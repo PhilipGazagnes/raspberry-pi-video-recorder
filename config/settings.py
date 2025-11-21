@@ -67,17 +67,17 @@ LED_RECORDING_STARTED_STEP_DURATION = 0.05  # 12 * 0.05 = 0.6s per cycle
 LED_RECORDING_STARTED_PAUSE_DURATION = 0.2  # 0.2s gap between flashes
 LED_RECORDING_STARTED_REPEAT_COUNT = 3  # Flash 3 times then stop
 
-# Warning Level 1 (at 3 minutes remaining) - Green+Orange double blink
+# Warning Level 1 (WARNING_TIME_1) - Green+Orange double blink
 LED_RECORDING_WARN1_PATTERN = "GO-x-GO-x-x-x-GO-x-GO-x-x-x"
 LED_RECORDING_WARN1_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s
 LED_RECORDING_WARN1_PAUSE_DURATION = 0.0  # Continuous
 
-# Warning Level 2 (at 2 minutes remaining) - All colors rapid sequence
+# Warning Level 2 (WARNING_TIME_2) - All colors rapid sequence
 LED_RECORDING_WARN2_PATTERN = "G-O-R-GOR-G-O-R-GOR-G-O-R-GOR"
 LED_RECORDING_WARN2_STEP_DURATION = 0.042  # 12 * 0.042 = ~0.5s per cycle
 LED_RECORDING_WARN2_PAUSE_DURATION = 0.5  # 0.5s blank gap between sequences
 
-# Warning Level 3 (at 1 minute remaining) - Fast all-LED flash
+# Warning Level 3 (WARNING_TIME_3) - Fast all-LED flash
 LED_RECORDING_WARN3_PATTERN = "GOR-x-GOR-x-GOR-x-GOR-x-GOR-x-GOR-x"
 LED_RECORDING_WARN3_STEP_DURATION = 0.042  # 12 * 0.042 = ~0.5s
 LED_RECORDING_WARN3_PAUSE_DURATION = 0.0  # Continuous rapid flash
@@ -125,7 +125,17 @@ AUDIO_BITRATE = "128k"  # 128 kbps - good quality for speech/ambient
 DEFAULT_RECORDING_DURATION = 600  # (10 minute)
 EXTENSION_DURATION = 300  # (5 minute)
 MAX_RECORDING_DURATION = 1500  # (25 minutes)
-WARNING_TIME = 60  # 60 seconds before end
+
+# Progressive Warning System (seconds before end)
+# Multiple warning levels provide escalating visual feedback as time runs out
+# Set to 0 to disable a warning level
+WARNING_TIME_1 = 120  # Level 1: 2 minutes
+WARNING_TIME_2 = 60  # Level 2: 1 minute
+WARNING_TIME_3 = 30  # Level 3: 30 seconds
+
+# Legacy: Single warning threshold (kept for backward compatibility)
+# If you only want one warning, set WARNING_TIME_1 and WARNING_TIME_2 to 0
+WARNING_TIME = WARNING_TIME_2  # Default to final warning level
 
 # Network Connectivity Monitoring
 NETWORK_CHECK_INTERVAL = 30  # Check internet every 30 seconds (configurable)

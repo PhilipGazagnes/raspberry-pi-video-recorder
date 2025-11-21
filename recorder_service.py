@@ -58,7 +58,9 @@ from config.settings import (
     RESTART_COUNTER_FILE,
     RETRY_DELAY_SECONDS,
     STORAGE_BASE_PATH,
-    WARNING_TIME,
+    WARNING_TIME_1,
+    WARNING_TIME_2,
+    WARNING_TIME_3,
     YOUTUBE_PLAYLIST_ID,
 )
 from core.network import check_internet_connectivity
@@ -575,9 +577,9 @@ class RecorderService:
         self.current_session = RecordingSession(camera_manager=self.camera)
 
         # Setup session callbacks (silent - no audio warning)
-        self.current_session.on_warning = (
-            self._handle_recording_warning
-        )  # Just log, no audio
+        self.current_session.on_warning = lambda level: self._handle_recording_warning(
+            level,
+        )
         self.current_session.on_complete = self._handle_recording_complete
 
         # Start recording
@@ -692,25 +694,29 @@ class RecorderService:
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")
 
-    def _handle_recording_warning(self):
+    def _handle_recording_warning(self, level: int):
         """
         Handle recording warning from recording session.
 
-        Called by RecordingSession when WARNING_TIME seconds remaining.
-        Triggers LED warning sequence (green-orange-red animation).
+        Called by RecordingSession at progressive warning thresholds.
+        Args:
+            level: Warning level (1=180s, 2=120s, 3=60s remaining)
         """
-        warning_minutes = WARNING_TIME // 60
-        warning_seconds = WARNING_TIME % 60
+        warning_times = {1: WARNING_TIME_1, 2: WARNING_TIME_2, 3: WARNING_TIME_3}
+        warning_time = warning_times.get(level, WARNING_TIME_3)
+
+        warning_minutes = warning_time // 60
+        warning_seconds = warning_time % 60
         if warning_minutes > 0 and warning_seconds > 0:
             time_remaining = f"{warning_minutes}:{warning_seconds:02d}"
         elif warning_minutes > 0:
             time_remaining = f"{warning_minutes} minute(s)"
         else:
             time_remaining = f"{warning_seconds} seconds"
-        self.logger.info(f"Recording warning: {time_remaining} remaining")
+        self.logger.info(f"Recording warning level {level}: {time_remaining} remaining")
 
-        # Flash LED warning sequence (green-orange-red)
-        self.led.play_warning_sequence()
+        # Play LED warning sequence with appropriate intensity
+        self.led.play_warning_sequence(level=level)
 
     def _handle_recording_complete(self):
         """

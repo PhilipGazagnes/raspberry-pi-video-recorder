@@ -22,7 +22,9 @@ from config.settings import (
     DEFAULT_RECORDING_DURATION,
     EXTENSION_DURATION,
     MAX_RECORDING_DURATION,
-    WARNING_TIME,
+    WARNING_TIME_1,
+    WARNING_TIME_2,
+    WARNING_TIME_3,
 )
 from recording.constants import RecordingState, format_duration
 from recording.controllers.camera_manager import CameraManager
@@ -90,7 +92,7 @@ class RecordingSession:
         self._extension_count: int = 0
 
         # Warning/completion tracking
-        self._warning_issued = False
+        self._warning_level = 0  # 0=none, 1-3=level issued
         self._completed = False
 
         # Monitoring thread
@@ -100,7 +102,7 @@ class RecordingSession:
         # Callbacks for events
         # These are called when specific events occur
         self.on_start: Optional[Callable[[], None]] = None
-        self.on_warning: Optional[Callable[[], None]] = None
+        self.on_warning: Optional[Callable[[int], None]] = None  # Receives level 1-3
         self.on_complete: Optional[Callable[[], None]] = None
         self.on_error: Optional[Callable[[str], None]] = None
         self.on_extension: Optional[Callable[[int], None]] = None
@@ -151,7 +153,7 @@ class RecordingSession:
         self._initial_duration = duration
         self._current_duration_limit = duration
         self._extension_count = 0
-        self._warning_issued = False
+        self._warning_level = 0  # Reset warning level
         self._completed = False
 
         try:
@@ -270,12 +272,21 @@ class RecordingSession:
         self._current_duration_limit = new_limit
         self._extension_count += 1
 
-        # Reset warning flag (may need to warn again)
-        self._warning_issued = False
+        # Reset warning level - determine appropriate level based on remaining time
+        remaining = self.get_remaining_time()
+        if remaining > WARNING_TIME_1:
+            self._warning_level = 0
+        elif remaining > WARNING_TIME_2:
+            self._warning_level = 1
+        elif remaining > WARNING_TIME_3:
+            self._warning_level = 2
+        else:
+            self._warning_level = 3
 
         self.logger.info(
             f"Recording extended to {format_duration(new_limit)} "
-            f"(extension #{self._extension_count})",
+            f"(extension #{self._extension_count}), "
+            f"warning_level={self._warning_level}",
         )
 
         # Trigger callback
@@ -378,6 +389,34 @@ class RecordingSession:
                 self.logger.debug("Monitoring thread stopped")
             self._monitor_thread = None
 
+    def _check_warning_thresholds(self, remaining: float) -> None:
+        """Check if any warning thresholds are reached and trigger callbacks."""
+        if remaining <= 0:
+            return
+
+        # Issue warnings in order: 3min -> 2min -> 1min (level 1 first, then 2, then 3)
+        if self._warning_level < 1 and remaining <= WARNING_TIME_1:
+            self.logger.info(
+                f"Warning Level 1: {format_duration(remaining)} remaining "
+                f"(threshold: {WARNING_TIME_1}s)",
+            )
+            self._warning_level = 1
+            self._trigger_warning_callback(1)
+        elif self._warning_level < 2 and remaining <= WARNING_TIME_2:
+            self.logger.info(
+                f"Warning Level 2: {format_duration(remaining)} remaining "
+                f"(threshold: {WARNING_TIME_2}s)",
+            )
+            self._warning_level = 2
+            self._trigger_warning_callback(2)
+        elif self._warning_level < 3 and remaining <= WARNING_TIME_3:
+            self.logger.info(
+                f"Warning Level 3: {format_duration(remaining)} remaining "
+                f"(threshold: {WARNING_TIME_3}s)",
+            )
+            self._warning_level = 3
+            self._trigger_warning_callback(3)
+
     def _monitor_worker(self) -> None:
         """
         Background thread that monitors recording progress.
@@ -397,17 +436,8 @@ class RecordingSession:
             try:
                 remaining = self.get_remaining_time()
 
-                # Check for warning time
-                if (
-                    not self._warning_issued
-                    and remaining <= WARNING_TIME
-                    and remaining > 0
-                ):
-                    self.logger.info(
-                        f"Warning: {format_duration(remaining)} remaining",
-                    )
-                    self._warning_issued = True
-                    self._trigger_warning_callback()
+                # Check for progressive warnings (level 1, 2, 3)
+                self._check_warning_thresholds(remaining)
 
                 # Check for auto-stop
                 if remaining <= 0:
@@ -476,11 +506,11 @@ class RecordingSession:
             except Exception as e:
                 self.logger.error(f"Error in start callback: {e}")
 
-    def _trigger_warning_callback(self) -> None:
-        """Trigger on_warning callback"""
+    def _trigger_warning_callback(self, level: int) -> None:
+        """Trigger on_warning callback with warning level (1-3)"""
         if self.on_warning:
             try:
-                self.on_warning()
+                self.on_warning(level)
             except Exception as e:
                 self.logger.error(f"Error in warning callback: {e}")
 
