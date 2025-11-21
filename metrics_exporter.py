@@ -37,9 +37,23 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config.settings import HEARTBEAT_FILE, HEARTBEAT_TIMEOUT, METRICS_PORT
 from storage import StorageController
 
+# Setup logging with separate stdout/stderr for systemd priority detection
+log_format = logging.Formatter("%(message)s | %(name)s")
+
+# stdout for INFO and DEBUG
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+stdout_handler.setFormatter(log_format)
+
+# stderr for WARNING, ERROR, CRITICAL
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.WARNING)
+stderr_handler.setFormatter(log_format)
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(message)s | %(name)s",
+    handlers=[stdout_handler, stderr_handler],
 )
 logger = logging.getLogger(__name__)
 
