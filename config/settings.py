@@ -56,44 +56,48 @@ BUTTON_LONG_PRESS_DURATION = 1.0  # seconds - hold duration for long press
 # Ready State - Green solid (handled separately, no pattern needed)
 # This is a static state, not animated
 
-# Recording - Normal green blink (1s on, 1s off = 2s cycle)
-# Pattern simplified to reduce GPIO operations (less CPU wake-ups, quieter Pi)
-LED_RECORDING_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
-LED_RECORDING_STEP_DURATION = 0.167  # 12 * 0.167 = ~2.0s per cycle
-LED_RECORDING_PAUSE_DURATION = 0.0  # Continuous, no gap between cycles
+# Recording - Normal green blink
+LED_RECORDING_PATTERN = "G-G-G-G-G-G-G-x-x-x-x-x"
+LED_RECORDING_STEP_DURATION = 0.083
+LED_RECORDING_PAUSE_DURATION = 0.0
 
-# Recording Started - 3 quick green flashes when recording begins
-LED_RECORDING_STARTED_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
-LED_RECORDING_STARTED_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
-LED_RECORDING_STARTED_PAUSE_DURATION = 0.3  # 0.3s gap between flashes
-LED_RECORDING_STARTED_REPEAT_COUNT = 3  # Flash 3 times then stop
+# Recording Starting - Quick acknowledgment on button press
+LED_RECORDING_STARTING_PATTERN = "G-x-x-x-x-x-x-x-x-x-x-x"
+LED_RECORDING_STARTING_STEP_DURATION = 0.05  # 12 * 0.083 = ~1.0s per cycle
+LED_RECORDING_STARTING_PAUSE_DURATION = 0.0  # Continuous during camera init
 
-# Warning Level 1 (WARNING_TIME_1) - Green+Orange double blink
-LED_RECORDING_WARN1_PATTERN = "GO-GO-GO-x-x-x-GO-GO-GO-x-x-x"
-LED_RECORDING_WARN1_STEP_DURATION = 0.167  # 12 * 0.167 = ~2.0s
-LED_RECORDING_WARN1_PAUSE_DURATION = 0.0  # Continuous
+# Recording Started - Confirmation flash when camera ready
+LED_RECORDING_STARTED_PATTERN = "G-x-G-x-G-x-G-x-G-x-G-x"
+LED_RECORDING_STARTED_STEP_DURATION = 0.05
+LED_RECORDING_STARTED_PAUSE_DURATION = 0
+LED_RECORDING_STARTED_REPEAT_COUNT = 1
 
-# Warning Level 2 (WARNING_TIME_2) - All colors alternating sequence
-LED_RECORDING_WARN2_PATTERN = "G-G-O-O-R-R-GOR-GOR-x-x-x-x"
-LED_RECORDING_WARN2_STEP_DURATION = 0.125  # 12 * 0.125 = ~1.5s per cycle
-LED_RECORDING_WARN2_PAUSE_DURATION = 0.3  # 0.3s blank gap between sequences
+# Warning Level 1 (WARNING_TIME_1)
+LED_RECORDING_WARN1_PATTERN = "G-x-G-x-G-x-G-x-x-x-x-x"
+LED_RECORDING_WARN1_STEP_DURATION = 0.083
+LED_RECORDING_WARN1_PAUSE_DURATION = 0.0
 
-# Warning Level 3 (WARNING_TIME_3) - All-LED urgent flash
-LED_RECORDING_WARN3_PATTERN = "GOR-GOR-GOR-x-x-x-GOR-GOR-GOR-x-x-x"
-LED_RECORDING_WARN3_STEP_DURATION = 0.125  # 12 * 0.125 = ~1.5s
-LED_RECORDING_WARN3_PAUSE_DURATION = 0.0  # Continuous
+# Warning Level 2 (WARNING_TIME_2)
+LED_RECORDING_WARN2_PATTERN = "GO-x-GO-x-GO-x-GO-x-x-x-x-x"
+LED_RECORDING_WARN2_STEP_DURATION = 0.083
+LED_RECORDING_WARN2_PAUSE_DURATION = 0
 
-# Extension Added - 5 quick green pulses to confirm time added
-LED_EXTENSION_ADDED_PATTERN = "G-G-G-G-G-G-x-x-x-x-x-x"
-LED_EXTENSION_ADDED_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
-LED_EXTENSION_ADDED_PAUSE_DURATION = 0.2  # 0.2s between pulses
-LED_EXTENSION_ADDED_REPEAT_COUNT = 5  # 5 pulses then restore previous pattern
+# Warning Level 3 (WARNING_TIME_3)
+LED_RECORDING_WARN3_PATTERN = "GOR-x-GOR-x-GOR-x-GOR-x-x-x-x-x"
+LED_RECORDING_WARN3_STEP_DURATION = 0.083
+LED_RECORDING_WARN3_PAUSE_DURATION = 0.0
 
-# Error - Red flash to grab attention (slowed down to reduce noise)
+# Extension Added
+LED_EXTENSION_ADDED_PATTERN = "G-x-G-x-G-x-G-x-G-x-G-x"
+LED_EXTENSION_ADDED_STEP_DURATION = 0.05
+LED_EXTENSION_ADDED_PAUSE_DURATION = 0
+LED_EXTENSION_ADDED_REPEAT_COUNT = 0
+
+# Error - Red flash to grab attention
 LED_ERROR_PATTERN = "R-R-R-R-R-R-x-x-x-x-x-x"
-LED_ERROR_STEP_DURATION = 0.083  # 12 * 0.083 = ~1.0s per cycle
-LED_ERROR_PAUSE_DURATION = 0.0  # Continuous flash
-LED_ERROR_DURATION = 3.0  # Total duration to flash error before restoring
+LED_ERROR_STEP_DURATION = 0.083
+LED_ERROR_PAUSE_DURATION = 0.0
+LED_ERROR_DURATION = 3.0
 
 # Processing/Uploading - Orange solid (handled separately, no pattern needed)
 # This is a static state, not animated
@@ -125,7 +129,7 @@ AUDIO_BITRATE = "128k"  # 128 kbps - good quality for speech/ambient
 # Recording Durations (in seconds)
 DEFAULT_RECORDING_DURATION = 600  # (10 minute)
 EXTENSION_DURATION = 300  # (5 minute)
-MAX_RECORDING_DURATION = 1500  # (25 minutes)
+MAX_RECORDING_DURATION = 1200  # (20 minutes)
 
 # Progressive Warning System (seconds before end)
 # Multiple warning levels provide escalating visual feedback as time runs out
@@ -136,7 +140,7 @@ WARNING_TIME_3 = 30  # Level 3: 30 seconds
 
 # Legacy: Single warning threshold (kept for backward compatibility)
 # If you only want one warning, set WARNING_TIME_1 and WARNING_TIME_2 to 0
-WARNING_TIME = WARNING_TIME_2  # Default to final warning level
+WARNING_TIME = WARNING_TIME_1  # Default to final warning level
 
 # Network Connectivity Monitoring
 NETWORK_CHECK_INTERVAL = 30  # Check internet every 30 seconds (configurable)

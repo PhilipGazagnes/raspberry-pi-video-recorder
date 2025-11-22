@@ -506,6 +506,11 @@ class RecorderService:
         """
         # Both short and long press start recording in READY state
         self.logger.debug(f"{press.value} press in READY → start recording")
+
+        # Immediate LED feedback (button acknowledged)
+        self.led.flash_starting()
+
+        # Start recording (camera init takes ~1s)
         self._start_recording()
 
     def _handle_button_recording(self, press: ButtonPress):

@@ -40,6 +40,9 @@ from config.settings import (
     LED_RECORDING_STARTED_PAUSE_DURATION,
     LED_RECORDING_STARTED_REPEAT_COUNT,
     LED_RECORDING_STARTED_STEP_DURATION,
+    LED_RECORDING_STARTING_PATTERN,
+    LED_RECORDING_STARTING_PAUSE_DURATION,
+    LED_RECORDING_STARTING_STEP_DURATION,
     LED_RECORDING_STEP_DURATION,
     LED_RECORDING_WARN1_PATTERN,
     LED_RECORDING_WARN1_PAUSE_DURATION,
@@ -570,6 +573,32 @@ class LEDController:
 
         # Switch to recording pattern
         self.set_status(LEDPattern.RECORDING)
+
+    def flash_starting(self) -> None:
+        """
+        Start pulsing LED immediately on button press.
+
+        Provides instant feedback that button was registered.
+        Continues pulsing during camera initialization.
+        Will be interrupted by flash_recording_started() when camera ready.
+
+        Uses LED_RECORDING_STARTING pattern from settings.
+
+        Example:
+            led.flash_starting()  # Immediate feedback on button press
+        """
+        self.logger.info("Starting pattern (button acknowledged)")
+
+        # Stop any current animation
+        self._stop_blinking()
+
+        # Start continuous starting pattern (no repeat limit)
+        self._start_pattern(
+            LED_RECORDING_STARTING_PATTERN,
+            LED_RECORDING_STARTING_STEP_DURATION,
+            LED_RECORDING_STARTING_PAUSE_DURATION,
+            repeat_count=None,  # Continuous until interrupted
+        )
 
     def play_warning_sequence(self, level: int = 3) -> None:
         """
