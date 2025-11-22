@@ -470,19 +470,20 @@ class LEDController:
         Flash green LED using 12-step pattern to confirm time extension.
 
         Quick visual feedback that recording extension was successful.
-        Returns to recording pattern (warning or normal green blinking).
+        Blocks until flash completes. Caller should set appropriate pattern after.
 
         Uses LED_EXTENSION_ADDED pattern from settings.
 
         Example:
-            led.flash_extension_success()  # Quick confirmation flash
+            led.flash_extension_success()  # Quick confirmation flash (blocking)
+            led.set_status(LEDPattern.RECORDING)  # Set next pattern
         """
         self.logger.info("Flashing extension success")
 
-        # Save current pattern to restore later
+        # Save current pattern (no longer used for restore, kept for compatibility)
         original_pattern = self.current_pattern
 
-        # Run flash sequence in background thread (non-blocking)
+        # Run flash sequence and wait for completion (blocking)
         flash_thread = threading.Thread(
             target=self._extension_flash_worker,
             args=(original_pattern,),
@@ -490,6 +491,9 @@ class LEDController:
             name="LED-Extension-Flash",
         )
         flash_thread.start()
+
+        # Wait for flash to complete before returning
+        flash_thread.join()
 
     def _extension_flash_worker(self, restore_pattern: LEDPattern) -> None:
         """
@@ -520,8 +524,9 @@ class LEDController:
             total_time = cycle_time * LED_EXTENSION_ADDED_REPEAT_COUNT
             self._blink_thread.join(timeout=total_time + 0.5)
 
-        # Restore original pattern
-        self._restore_pattern(restore_pattern)
+        # Turn off LEDs after flash completes
+        # Caller (recorder_service) will set appropriate pattern based on remaining time
+        self._set_all_leds(False, False, False)
 
     def flash_recording_started(self) -> None:
         """

@@ -691,9 +691,19 @@ class RecorderService:
             else:
                 self.logger.info(f"Recording extended by {extension_minutes} minutes")
 
-            # Flash green to confirm extension, then restore previous pattern
-            # (flash worker handles restoring recording or warning pattern)
+            # Flash green to confirm extension (blocking call)
             self.led.flash_extension_success()
+
+            # Set appropriate LED pattern based on new remaining time
+            remaining = self.current_session.get_remaining_time()
+            if remaining > WARNING_TIME_1:
+                self.led.set_status(LEDPattern.RECORDING)
+            elif remaining > WARNING_TIME_2:
+                self.led.play_warning_sequence(level=1)
+            elif remaining > WARNING_TIME_3:
+                self.led.play_warning_sequence(level=2)
+            else:
+                self.led.play_warning_sequence(level=3)
         else:
             self.logger.warning("Failed to extend recording (max duration reached?)")
 
