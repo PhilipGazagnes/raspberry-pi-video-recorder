@@ -1169,7 +1169,7 @@ def setup_logging():
         "%(message)s | %(name)s | %(levelname)s",
     )
     console_handler.setFormatter(console_format)
-    logger.addHandler(console_handler)    # File handler with rotation
+    logger.addHandler(console_handler)  # File handler with rotation
     # Rotates daily, keeps 7 days
     # Define format once for both try and except blocks
     file_format = logging.Formatter(

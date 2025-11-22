@@ -144,29 +144,46 @@ class UploadController:
 
     def _format_video_title(self, timestamp: str) -> str:
         """
-        Format video title from timestamp.
+        Format video title from timestamp in French format.
 
         Args:
             timestamp: Timestamp string (format: "YYYY-MM-DD HH:MM:SS")
 
         Returns:
-            Formatted title: "{SESSION_TITLE_PREFIX} YYYY-MM-DD HH:MM:SS"
+            Formatted title: "Lundi 10/02/2026 - 19:46"
 
         Example:
-            _format_video_title("2025-10-12 18:30:45")
-            # Returns: "Video Session 2025-10-12 18:30:45"
-            # (customize SESSION_TITLE_PREFIX in config.settings)
+            _format_video_title("2026-02-10 19:46:30")
+            # Returns: "Lundi 10/02/2026 - 19:46"
         """
-        try:
-            # Validate timestamp format
-            datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
-            return f"{VIDEO_TITLE_PREFIX} {timestamp}"
+        # French day names (Monday=0, Sunday=6)
+        french_days = {
+            0: "Lundi",
+            1: "Mardi",
+            2: "Mercredi",
+            3: "Jeudi",
+            4: "Vendredi",
+            5: "Samedi",
+            6: "Dimanche",
+        }
 
-        except ValueError:
-            # Invalid format - use as-is with warning
+        try:
+            # Parse timestamp
+            dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+            # Get French day name
+            day_name = french_days[dt.weekday()]
+
+            # Format as: Lundi 10/02/2026 - 19:46
+            formatted = f"{day_name} {dt.strftime('%d/%m/%Y - %H:%M')}"
+
+            return formatted
+
+        except (ValueError, KeyError) as e:
+            # Invalid format - use fallback with warning
             self.logger.warning(
                 f"Invalid timestamp format: {timestamp}. "
-                f"Expected: YYYY-MM-DD HH:MM:SS",
+                f"Expected: YYYY-MM-DD HH:MM:SS. Error: {e}",
             )
             return f"{VIDEO_TITLE_PREFIX} {timestamp}"
 
