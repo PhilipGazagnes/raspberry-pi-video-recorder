@@ -57,6 +57,7 @@ from config.settings import (
     NETWORK_CHECK_INTERVAL,
     RESTART_COUNTER_FILE,
     RETRY_DELAY_SECONDS,
+    SNOOZE_TIMEOUT,
     STORAGE_BASE_PATH,
     WARNING_TIME_1,
     WARNING_TIME_2,
@@ -76,6 +77,7 @@ class SystemState(Enum):
 
     BOOTING = "booting"
     READY = "ready"
+    SNOOZE = "snooze"  # Low-power state after inactivity (LEDs off)
     RECORDING = "recording"
     PROCESSING = "processing"  # Brief state while saving to storage
     ERROR = "error"
@@ -112,6 +114,7 @@ class RecorderService:
         # State tracking
         self.state = SystemState.BOOTING
         self.state_start_time = time.time()
+        self.last_activity_time = time.time()  # Track last activity for snooze mode
         self.running = False
         self.error_count = 0  # Track total errors (red LED activations)
 
@@ -227,8 +230,15 @@ class RecorderService:
         # Check for remote control commands (SSH/script control)
         self._check_control_commands()
 
-        # If recording, check session health
+        # Check for snooze timeout when in READY state
+        if self.state == SystemState.READY:
+            if current_time - self.last_activity_time > SNOOZE_TIMEOUT:
+                self._transition_to_snooze()
+
+        # If recording, check session health and refresh activity timer
         if self.state == SystemState.RECORDING and self.current_session:
+            # Keep activity timer fresh during recording
+            self._refresh_activity()
             # RecordingSession handles its own timing and warnings
             # We just need to check if camera is still healthy
             if not self.camera.is_recording():
@@ -261,6 +271,10 @@ class RecorderService:
         except Exception as e:
             self.logger.error(f"Failed to update restart counter: {e}")
             return 0  # Default to 0 on error
+
+    def _refresh_activity(self):
+        """Update last activity time to prevent snooze mode."""
+        self.last_activity_time = time.time()
 
     def _write_heartbeat(self):
         """
@@ -423,17 +437,35 @@ class RecorderService:
         self.logger.info("Transitioning to READY state")
         self.state = SystemState.READY
         self.state_start_time = time.time()
+        self._refresh_activity()  # Reset snooze timer
 
         # Update LED status (silent - no audio)
         self.led.set_status(LEDPattern.READY)
 
         self.logger.info("System READY for recording")
 
+    def _transition_to_snooze(self):
+        """
+        Transition to SNOOZE state after inactivity.
+
+        Turns off all LEDs to indicate idle state.
+        System wakes on button press.
+        """
+        self.logger.info("Transitioning to SNOOZE state")
+        self.state = SystemState.SNOOZE
+        self.state_start_time = time.time()
+
+        # Turn off all LEDs (green, orange, red, white, blue)
+        self.led.all_leds_off()
+
+        self.logger.info("System entered SNOOZE mode (all LEDs off)")
+
     def _transition_to_recording(self):
         """Start recording session."""
         self.logger.info("Transitioning to RECORDING state")
         self.state = SystemState.RECORDING
         self.state_start_time = time.time()
+        self._refresh_activity()  # Reset snooze timer
 
         # Flash to indicate recording started, then show recording pattern
         self.led.flash_recording_started()
@@ -453,6 +485,7 @@ class RecorderService:
         self.logger.info("Transitioning to PROCESSING state")
         self.state = SystemState.PROCESSING
         self.state_start_time = time.time()
+        self._refresh_activity()  # Reset snooze timer
 
         # Update LED to orange (brief busy indicator)
         self.led.set_status(LEDPattern.PROCESSING)
@@ -468,6 +501,7 @@ class RecorderService:
         self.error_count += 1  # Increment error counter for metrics
         self.state = SystemState.ERROR
         self.state_start_time = time.time()
+        self._refresh_activity()  # Reset snooze timer
 
         # Update hardware - red LED (silent - no audio)
         self.led.set_status(LEDPattern.ERROR)
@@ -488,9 +522,14 @@ class RecorderService:
         press = ButtonPress.SHORT if press_type == "short" else ButtonPress.LONG
         self.logger.info(f"Button press: {press_type} in state {self.state.value}")
 
+        # Refresh activity timer on any button press
+        self._refresh_activity()
+
         # Delegate to state-specific handlers
         if self.state == SystemState.READY:
             self._handle_button_ready(press)
+        elif self.state == SystemState.SNOOZE:
+            self._handle_button_snooze(press)
         elif self.state == SystemState.RECORDING:
             self._handle_button_recording(press)
         elif self.state == SystemState.PROCESSING:
@@ -512,6 +551,16 @@ class RecorderService:
 
         # Start recording (camera init takes ~1s)
         self._start_recording()
+
+    def _handle_button_snooze(self, press: ButtonPress):
+        """
+        Handle button in SNOOZE state.
+
+        Any press (short or long): Wake up to READY state.
+        Does NOT start recording immediately - user must press again.
+        """
+        self.logger.info(f"{press.value} press in SNOOZE → waking to READY")
+        self._transition_to_ready()
 
     def _handle_button_recording(self, press: ButtonPress):
         """

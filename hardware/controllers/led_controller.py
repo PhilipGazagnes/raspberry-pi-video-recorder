@@ -257,6 +257,29 @@ class LEDController:
         else:
             self.logger.debug("All LEDs OFF")
 
+    def all_leds_off(self) -> None:
+        """
+        Turn off all LEDs (main status LEDs + network/upload indicators).
+
+        This includes:
+        - Green, Orange, Red (main status LEDs)
+        - White (network status)
+        - Blue (upload activity)
+
+        Used for snooze mode and cleanup.
+        """
+        # Stop any active patterns
+        self._stop_blinking()
+
+        # Turn off main LEDs
+        self._set_all_leds(False, False, False)
+
+        # Turn off status LEDs
+        self.gpio.write(GPIO_LED_WHITE, PinState.LOW)
+        self.gpio.write(GPIO_LED_BLUE, PinState.LOW)
+
+        self.logger.debug("All LEDs turned off (including network/upload indicators)")
+
     def _start_blinking(
         self,
         color: LEDColor,

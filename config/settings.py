@@ -208,6 +208,9 @@ AUTO_CLEANUP_ENABLED = True
 # MONITORING CONFIGURATION
 # =============================================================================
 
+# Snooze Mode Configuration
+SNOOZE_TIMEOUT = 7200  # 2 hours - time before entering snooze mode (all LEDs off)
+
 # Heartbeat Configuration
 HEARTBEAT_INTERVAL = float(os.getenv("HEARTBEAT_INTERVAL", "1.0"))  # seconds
 # /tmp is intentional - standard location for watchdog monitoring
