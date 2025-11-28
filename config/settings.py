@@ -62,9 +62,9 @@ LED_RECORDING_STEP_DURATION = 0.083
 LED_RECORDING_PAUSE_DURATION = 0.0
 
 # Recording Starting - Quick acknowledgment on button press
-LED_RECORDING_STARTING_PATTERN = "G-x-x-x-x-x-x-x-x-x-x-x"
-LED_RECORDING_STARTING_STEP_DURATION = 0.05  # 12 * 0.083 = ~1.0s per cycle
-LED_RECORDING_STARTING_PAUSE_DURATION = 0.0  # Continuous during camera init
+LED_RECORDING_STARTING_PATTERN = "x-x-x-x-x-x-x-x-x-x-x-G"
+LED_RECORDING_STARTING_STEP_DURATION = 0.02  # 12 * 0.083 = ~1.0s per cycle
+LED_RECORDING_STARTING_PAUSE_DURATION = 1  # Continuous during camera init
 
 # Recording Started - Confirmation flash when camera ready
 LED_RECORDING_STARTED_PATTERN = "G-x-G-x-G-x-G-x-G-x-G-x"
@@ -91,7 +91,7 @@ LED_RECORDING_WARN3_PAUSE_DURATION = 0.0
 LED_EXTENSION_ADDED_PATTERN = "G-x-G-x-G-x-G-x-G-x-G-x"
 LED_EXTENSION_ADDED_STEP_DURATION = 0.05
 LED_EXTENSION_ADDED_PAUSE_DURATION = 0
-LED_EXTENSION_ADDED_REPEAT_COUNT = 0
+LED_EXTENSION_ADDED_REPEAT_COUNT = 1
 
 # Error - Red flash to grab attention
 LED_ERROR_PATTERN = "R-R-R-R-R-R-x-x-x-x-x-x"
